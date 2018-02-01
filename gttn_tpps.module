@@ -1,0 +1,39 @@
+<?php
+function gttn_tpps_init() {
+
+//   drupal_set_message("Hello");
+}
+
+function gttn_tpps_menu(){
+    
+    $items = array();
+
+    $items['gttn'] = array(
+      'title' => 'GTTN TPPS Development',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('gttn_tpps_form'),
+      'access callback' => 'user_access',
+      'access arguments' => array('access content'),
+      'type' => MENU_NORMAL_ITEM,
+    );
+    
+    return $items;
+}
+
+function gttn_tpps_form ($form, &$form_state){
+    
+    $form['submit'] = array(
+      '#type' => 'button',
+      '#value' => 'Submit',
+    );
+    
+    return $form;
+}
+
+function gttn_tpps_form_validate ($form, &$form_state){
+    
+}
+
+function gttn_tpps_form_submit ($form, &$form_state){
+    
+}

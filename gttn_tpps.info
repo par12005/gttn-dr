@@ -1,0 +1,7 @@
+name = GTTN TPPS
+description = Tripal Plant PopGen Submit pipeline adapted for the requirements of the Global Timber Tracking Network.
+core = 7.x
+
+; NEW LINE
+configure = admin/config/content/gttn_tpps
+files[] = gttn_tpps.js
