@@ -17,17 +17,66 @@ function gttn_tpps_menu(){
       'type' => MENU_NORMAL_ITEM,
     );
     
+    $items['gttn/species/autocomplete'] = array(
+      'title' => 'Autocomplete for species',
+      'page callback' => '_gttn_species_autocomplete',
+      'access arguments' => array('access content'),
+      'type' => MENU_CALLBACK
+    );
+    
     return $items;
 }
 
 function gttn_tpps_form ($form, &$form_state){
     
-    $form['submit'] = array(
-      '#type' => 'button',
-      '#value' => 'Submit',
-    );
+    global $user;
+    if (isset($user->roles[1]) and $user->roles[1] == 'anonymous user'){
+        //user is not logged in
+        $destination = drupal_get_destination();
+        drupal_goto('user/login', array('query' => $destination));
+    }
+    elseif (!(isset($user->roles[5]) and $user->roles[5] == 'gttn' or isset($user->roles[3]) and $user->roles[3] == 'administrator')){
+        //user is logged in, but does not have adequate permissions
+        drupal_access_denied();
+    }
+    else{
+        
+        $form['species'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Species:'),
+          '#autocomplete_path' => "gttn/species/autocomplete",
+        );
+        
+        $form['submit'] = array(
+          '#type' => 'button',
+          '#value' => 'Submit',
+        );
+        return $form;
+    }
+}
+
+function _gttn_species_autocomplete($string){
+    $matches = array();
     
-    return $form;
+    $parts = explode(" ", $string);
+    if (!isset($parts[1])){
+        $parts[1] = "";
+    }
+    //var_dump($parts);
+    
+    $result = db_select('chado.organism', 'organism')
+        ->fields('organism', array('genus', 'species'))
+        ->condition('genus', db_like($parts[0]) . '%', 'LIKE')
+        ->condition('species', db_like($parts[1]) . '%', 'LIKE')
+        ->orderBy('genus')
+        ->orderBy('species')
+        ->execute();
+    
+    foreach($result as $row){
+        $matches[$row->genus . " " . $row->species] = check_plain($row->genus . " " . $row->species);
+    }
+    
+    drupal_json_output($matches);
 }
 
 function gttn_tpps_form_validate ($form, &$form_state){
