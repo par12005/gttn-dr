@@ -2,7 +2,7 @@ A collaboration between University of Connecticut's Plant Computational Genomics
 lab and the Global Timber Tracking Network. Allows for secure and convenient 
 submission of multiple tree descriptors through a web-based interface.
 
-ToDo:
+Done:
     -load trees spreadsheet from user
     -read columns from spreadsheet
     -sampling date
@@ -17,8 +17,6 @@ ToDo:
     -Phenotype spreadsheet
     -define phenotypes
     -compare tree ids in phenotype to metadata
-    
-Done:
     -login requirements
     -'gttn' group on tgwebdev
     -species field
