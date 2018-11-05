@@ -12,7 +12,7 @@
  * @param array $form_state The state of the form element.
  * @return array The populated form element.
  */
-function page_1_form($form, &$form_state){
+function page_1_form(&$form, &$form_state){
 
     // If the page was already visited and some of the fields were filled out,
     // then we need to load the old input to those fields.
@@ -24,38 +24,71 @@ function page_1_form($form, &$form_state){
         $values = array();
     }
     
+    // If the species number is already set and the "Add Species" button was
+    // pressed, then increase the species number.
+    if (isset($form_state['values']['species']['number']) and $form_state['triggering_element']['#name'] == "Add Species"){
+        $form_state['values']['species']['number']++;
+    }
+    // If the species number is already set and the "Remove Species" button was
+    // pressed and the species number is greater than 1, then decrease the 
+    // species number.
+    elseif (isset($form_state['values']['species']['number']) and $form_state['triggering_element']['#name'] == "Remove Species" and $form_state['values']['species']['number'] > 1){
+        $form_state['values']['species']['number']--;
+    }
+    // If the species number is already set, assign it to $species_number.
+    $species_number = isset($form_state['values']['species']['number']) ? $form_state['values']['species']['number'] : NULL;
+    
+    // If the species number is not already set, and there is a previously saved
+    // species number, then use that one.
+    if (!isset($species_number) and isset($values['species']['number'])){
+        $species_number = $values['species']['number'];
+    }
+    // If the species number is still not set, then set it to the default.
+    if (!isset($species_number)){
+        $species_number = 1;
+    }
+    
     // The group of species fields.
     $form['species'] = array(
       '#type' => 'fieldset',
       '#tree' => TRUE,
       '#title' => t('Species information:'),
-      '#description' => t('Up to 5 species per submission.'),
+      '#prefix' => '<div id="species-items">',
+      '#suffix' => '</div>'
     );
 
     // Button to add a new species.
     $form['species']['add'] = array(
       '#type' => 'button',
-      '#title' => t('Add Species'),
+      '#name' => t('Add Species'),
       '#button_type' => 'button',
-      '#value' => t('Add Species')
+      '#value' => t('Add Species'),
+      '#ajax' => array(
+        'callback' => 'update_species',
+        'wrapper' => "species-items"
+      ),
     );
 
     // Button to remove the last species.
     $form['species']['remove'] = array(
       '#type' => 'button',
-      '#title' => t('Remove Species'),
+      '#name' => t('Remove Species'),
       '#button_type' => 'button',
-      '#value' => t('Remove Species')
+      '#value' => t('Remove Species'),
+      '#ajax' => array(
+        'callback' => 'update_species',
+        'wrapper' => "species-items"
+      ),
     );
-
+    
     // Hidden field with the number of species sections that should be shown.
     $form['species']['number'] = array(
-      '#type' => 'textfield',
-      '#default_value' => isset($values['species']['number']) ? $values['species']['number'] : '1',
+      '#type' => 'hidden',
+      '#value' => $species_number,
     );
-
+    
     // Build 5 species sections. Not all of these sections will necessarily be shown.
-    for($i = 1; $i <= 5; $i++){
+    for($i = 1; $i <= $species_number; $i++){
 
         // The group of fields for Species $i.
         $form['species']["$i"] = array(
@@ -121,4 +154,17 @@ function page_1_form($form, &$form_state){
     );
     
     return $form;
+}
+
+/**
+ * Ajax callback for updating the species sections on the first page.
+ * 
+ * @param array $form The rebuilt form element.
+ * @param array $form_state The state of the rebuilt form element.
+ * @return array The part of the rebuilt form element that will be used to fill
+ * the ajax wrapper specified in the triggering form element.
+ */
+function update_species($form, $form_state){
+    
+    return $form['species'];
 }
