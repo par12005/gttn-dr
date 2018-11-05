@@ -5,7 +5,7 @@ function gttn_parse_xlsx($location){
     //modified from https://gist.github.com/searbe/3284011
     
     $content = array();
-    $dir = '/var/www/Drupal/sites/default/files';
+    $dir = drupal_realpath("public://gttn_tpps_xlsx");
     
     $zip = new ZipArchive();
     $zip->open($location);

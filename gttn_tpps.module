@@ -1,15 +1,27 @@
 <?php
+define("GTTN_JS_PATH", '/js/gttn_tpps.js');
 require_once 'includes/parse_xlsx.inc';
 
+/**
+ * Implements hook_init().
+ */
 function gttn_tpps_init() {
 
 //   drupal_set_message("Hello");
 }
 
+/**
+ * Implements hook_menu().
+ * 
+ * @return array The collection of menu items that the GTTN module creates.
+ */
 function gttn_tpps_menu(){
     
     $items = array();
 
+    /*
+     * Main Submission form
+     */
     $items['gttn'] = array(
       'title' => 'GTTN TPPS Development',
       'page callback' => 'drupal_get_form',
@@ -19,6 +31,9 @@ function gttn_tpps_menu(){
       'type' => MENU_NORMAL_ITEM,
     );
     
+    /*
+     * Ajax Callback
+     */
     $items['gttn/species/autocomplete'] = array(
       'title' => 'Autocomplete for species',
       'page callback' => '_gttn_species_autocomplete',
@@ -30,25 +45,31 @@ function gttn_tpps_menu(){
     return $items;
 }
 
+/**
+ * Provides the form based on which step the user is on.
+ * 
+ * @return array The main GTTN_TPPS form.
+ */
 function gttn_tpps_form ($form, &$form_state){
     
     global $user;
+    // check if user is not logged in
     if (isset($user->roles[1]) and $user->roles[1] == 'anonymous user'){
-        //user is not logged in
         $destination = drupal_get_destination();
         drupal_goto('user/login', array('query' => $destination));
     }
+    // check if user is logged in, but does not have adequate permissions
     elseif (!(isset($user->roles[5]) and $user->roles[5] == 'gttn' or isset($user->roles[3]) and $user->roles[3] == 'administrator')){
-        //user is logged in, but does not have adequate permissions
         drupal_access_denied();
     }
+    // otherwise, user is logged in correctly
     else{
-        //user is logged in correctly
-        
+        // if the stage is not already set, default to first page
         if (!isset($form_state['stage'])){
             $form_state['stage'] = 'first_page';
         }
         
+        // include the appropriate file and call the appropriate form function
         switch ($form_state['stage']){
             case 'first_page':
                 require_once('forms/build/page_1.php');
@@ -69,65 +90,88 @@ function gttn_tpps_form ($form, &$form_state){
                 break;
         }
         
+        // keep the stage in a hidden field, this way the JavaScript can see 
+        // which page we are on
         $form['step'] = array(
-          '#type' => 'textfield',
-          '#disabled' => TRUE,
-          '#default_value' => $form_state['stage'],
+          '#type' => 'hidden',
+          '#value' => $form_state['stage'],
         );
         
-        drupal_add_js(drupal_get_path('module', 'gttn_tpps') . "/gttn_tpps.js");
+        // add JavaScript
+        drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_JS_PATH);
         
         return $form;
     }
 }
 
+/**
+ * Implements hook_FORM_ID_validate().
+ * 
+ * @param array $form The form being validated.
+ * @param array $form_state The associated state of the form being validated.
+ */
 function gttn_tpps_form_validate ($form, &$form_state){
-    if ($form_state['triggering_element']['#value'] == 'Back'){
-        return;
-    }
-    
-    switch ($form_state['stage']){
-        case 'first_page':
-            require_once('forms/validate/page_1.php');
-            page_1_validate($form, $form_state);
-            drupal_add_js(drupal_get_path('module', 'gttn_tpps') . "/gttn_tpps.js");
-            break;
+    // we don't need to validate the information if the user is going back to
+    // an earlier part of the form.
+    if ($form_state['triggering_element']['#value'] != 'Back'){
+        // include the appropriate file and call the appropriate form validate function
+        switch ($form_state['stage']){
+            case 'first_page':
+                require_once('forms/validate/page_1.php');
+                page_1_validate($form, $form_state);
+                break;
+
+            case 'second_page':
+                require_once('forms/validate/page_2.php');
+                page_2_validate($form, $form_state);
+                break;
+
+            case 'results':
+                results_validate($form, $form_state);
+                break;
+
+            default:
+                break;
+        }
         
-        case 'second_page':
-            require_once('forms/validate/page_2.php');
-            page_2_validate($form, $form_state);
-            drupal_add_js(drupal_get_path('module', 'gttn_tpps') . "/gttn_tpps.js");
-            break;
-        
-        case 'results':
-            results_validate($form, $form_state);
-            drupal_add_js(drupal_get_path('module', 'gttn_tpps') . "/gttn_tpps.js");
-            break;
-        
-        default:
-            break;
+        // add JavaScript
+        drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_JS_PATH);
     }
 }
 
+/**
+ * Implements hook_FORM_ID_submit().
+ * 
+ * @param array $form The form being submitted.
+ * @param array $form_state The associated state of the form being submitted.
+ */
 function gttn_tpps_form_submit ($form, &$form_state){
     
+    // Add the newest $form_state['values'] to $form_state['saved_values'].
+    // This will overwrite any pre-existing saved values.
     $form_state['saved_values'][$form_state['stage']] = $form_state['values'];
     
+    // Based on the current stage, set up the next stage.
     switch ($form_state['stage']){
         case 'first_page':
+            // There's no 'Back' button on the first page, so we have to be
+            // moving to the second page
             $form_state['stage'] = 'second_page';
             break;
             
         case 'second_page':
+            // Move back if the 'Back' button was pressed.
             if ($form_state['triggering_element']['#value'] == 'Back'){
                 $form_state['stage'] = 'first_page';
             }
+            // Otherwise, move forward to the results
             else{
                 $form_state['stage'] = 'results';
             }
             break;
             
         case 'results':
+            // Move back if the 'Back' button was pressed
             if ($form_state['triggering_element']['#value'] == 'Back'){
                 $form_state['stage'] = 'second_page';
             }
@@ -138,10 +182,12 @@ function gttn_tpps_form_submit ($form, &$form_state){
             break;
     }
     
+    // Update form_build_id if necessary.
     if (isset($form_state['saved_values']['form_build_id'])){
         $form_state['values']['form_build_id'] = $form_state['saved_values']['form_build_id'];
     }
     $form_state['saved_values']['form_build_id'] = $form_state['values']['form_build_id'];
+    // We want Drupal to build the form again, this time with the new stage.
     $form_state['rebuild'] = TRUE;
 }
 
@@ -149,7 +195,7 @@ function get_species_ids($form_state){
     $species = $form_state['saved_values']['first_page']['species'];
     $species_number = $species['number'];
     $species_ids = array();
-
+    
     for ($i = 1; $i <= $species_number; $i++){
         $species_file = $species[$i]['spreadsheet']['file'];
         $file = file(file_load($species_file)->uri);
@@ -175,7 +221,11 @@ function get_species_ids($form_state){
             }
         }
         else{
-            $location = '/var/www/Drupal/sites/default/files/' . file_load($species_file)->filename;
+            // Load file from fid.
+            $file = file_load($species_file);
+            // Get full path to file.
+            $location = drupal_realpath($file->uri);
+            
             $content = gttn_parse_xlsx($location);
             $columns = $content['headers'];
             $len = count($content) - 1;
@@ -189,7 +239,6 @@ function get_species_ids($form_state){
                 array_push($species_ids, $content[$j][$species_id_key]);
             }
         }
-
     }
     
     return $species_ids;

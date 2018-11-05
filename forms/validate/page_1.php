@@ -49,7 +49,9 @@ function page_1_validate(&$form, &$form_state){
                     }
                 }
                 elseif ($file_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
-                    $location = '/var/www/Drupal/sites/default/files/' . file_load($metadata_file)->filename;
+                    $file = file_load($metadata_file);
+                    $file_name = $file->uri;
+                    $location = drupal_realpath($file_name);
 
                     $content = gttn_parse_xlsx($location);
                     $columns = $content['headers'];

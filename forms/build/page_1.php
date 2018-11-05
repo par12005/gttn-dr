@@ -1,14 +1,30 @@
 <?php
 
-function page_1_form(&$form, $form_state){
+/**
+ * Populates the actual form element when the form is on the first page.
+ * 
+ * The form supports up to 5 different species, each with a spreadsheet
+ * containing the Identifier and location of each tree of that species. The form
+ * also includes an optional checkbox to indicate whether the data can be
+ * published to the greater TreeGenes site.
+ * 
+ * @param array $form The unpopulated form element.
+ * @param array $form_state The state of the form element.
+ * @return array The populated form element.
+ */
+function page_1_form($form, &$form_state){
 
+    // If the page was already visited and some of the fields were filled out,
+    // then we need to load the old input to those fields.
     if (isset($form_state['saved_values']['first_page'])){
         $values = $form_state['saved_values']['first_page'];
     }
+    // Otherwise, initialized $values as an empty array.
     else{
         $values = array();
     }
     
+    // The group of species fields.
     $form['species'] = array(
       '#type' => 'fieldset',
       '#tree' => TRUE,
@@ -16,6 +32,7 @@ function page_1_form(&$form, $form_state){
       '#description' => t('Up to 5 species per submission.'),
     );
 
+    // Button to add a new species.
     $form['species']['add'] = array(
       '#type' => 'button',
       '#title' => t('Add Species'),
@@ -23,6 +40,7 @@ function page_1_form(&$form, $form_state){
       '#value' => t('Add Species')
     );
 
+    // Button to remove the last species.
     $form['species']['remove'] = array(
       '#type' => 'button',
       '#title' => t('Remove Species'),
@@ -30,18 +48,22 @@ function page_1_form(&$form, $form_state){
       '#value' => t('Remove Species')
     );
 
+    // Hidden field with the number of species sections that should be shown.
     $form['species']['number'] = array(
       '#type' => 'textfield',
       '#default_value' => isset($values['species']['number']) ? $values['species']['number'] : '1',
     );
 
+    // Build 5 species sections. Not all of these sections will necessarily be shown.
     for($i = 1; $i <= 5; $i++){
 
+        // The group of fields for Species $i.
         $form['species']["$i"] = array(
           '#type' => 'fieldset',
           '#title' => t("Species $i:"),
         );
 
+        // Name of Species $i. 
         $form['species']["$i"]['name'] = array(
           '#type' => 'textfield',
           '#title' => t('Name:'),
@@ -49,11 +71,15 @@ function page_1_form(&$form, $form_state){
           '#default_value' => isset($values['species']["$i"]['name']) ? $values['species']["$i"]['name'] : NULL,
         );
         
+        // Spreadsheet fields for Species $i.
         $form['species']["$i"]['spreadsheet'] = array(
           '#type' => 'fieldset',
           '#title' => t("Species $i spreadsheet:"),
         );
         
+        // Location format for the spreadsheet. If the user selects any of 
+        // options 1-4, the module will try to find coordinates. Otherwise, the
+        // module will look for a country/region combination.
         $form['species']["$i"]['spreadsheet']['location'] = array(
           '#type' => 'select',
           '#title' => t('Location format:'),
@@ -68,6 +94,7 @@ function page_1_form(&$form, $form_state){
           '#default_value' => isset($values['species']["$i"]['spreadsheet']['location']) ? $values['species']["$i"]['spreadsheet']['location'] : 0,
         );
         
+        // The actual spreadsheet upload.
         $form['species']["$i"]['spreadsheet']['file'] = array(
           '#type' => 'managed_file',
           '#title' => t("Species $i file:"),
@@ -80,12 +107,14 @@ function page_1_form(&$form, $form_state){
         );
     }
     
+    // Check if the data should be published to the greater TreeGenes site.
     $form['public'] = array(
       '#type' => 'checkbox',
       '#title' => t('This information may be published to the greater TreeGenes site.'),
       '#default_value' => isset($values['public']) ? $values['public'] : NULL,
     );
 
+    // Next button.
     $form['Next'] = array(
       '#type' => 'submit',
       '#value' => 'Next',
