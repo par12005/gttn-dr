@@ -1,8 +1,11 @@
+# GTTN-DR Demo
+[![Documentation Status](https://readthedocs.org/projects/gttn-dr/badge/?version=latest)](https://gttn-dr.readthedocs.io/en/latest/?badge=latest)
+
 A collaboration between University of Connecticut's Plant Computational Genomics
 lab and the Global Timber Tracking Network. Allows for secure and convenient 
 submission of multiple tree descriptors through a web-based interface.
 
-This module is a modified extension of the Tripal Plant PopGen submit Pipeline (TPPS), which can be found here: http://tripal.info/extensions/modules/tripal-plant-popgen-submission
+This module is a modified extension of the Tripal Plant PopGen submit Pipeline (TPPS), which can be found here: http://tpps.rtfd.io
 
 This module is currently in demo form, meaning that the data is not submitted to the TreeGenes database, and there is an additional "results" page, which displays the data in short text when the user clicks "Submit".
 
