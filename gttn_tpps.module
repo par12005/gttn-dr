@@ -1,6 +1,9 @@
 <?php
 define("GTTN_JS_PATH", '/js/gttn_tpps.js');
 require_once 'includes/parse_xlsx.inc';
+require_once 'includes/content_no_header.inc';
+require_once 'includes/save_file_columns.inc';
+require_once 'includes/validate_columns.inc';
 
 /**
  * Implements hook_init().
@@ -46,11 +49,211 @@ function gttn_tpps_menu(){
 }
 
 /**
+ * Implements hook_element_info_alter().
+ * 
+ * Increases max length on all textfields to 512. Adds 
+ * gttn_tpps_managed_file_process() to the array of process functions of all 
+ * managed_file form elements. This function is adapted from TPPS, which can be 
+ * found at https://tpps.rtfd.io.
+ * 
+ * @param array $type The array of element information for each element type.
+ */
+function gttn_tpps_element_info_alter(&$type){
+    if (isset($type['textfield']['#maxlength'])){
+        // Increase maximum textfield length.
+        $type['textfield']['#maxlength'] = 512;
+    }
+    
+    // Add gttn_tpps_managed_file_process to the end of the '#process' array.
+    $type['managed_file']['#process'][] = 'gttn_tpps_managed_file_process';
+}
+
+/**
+ * Process function for all managed_file elements.
+ * 
+ * This function is adapted from TPPS, which can be found at 
+ * https://tpps.rtfd.io.
+ * 
+ * @param array $element The element being processed.
+ * @param array $form_state The state of the form the element is a part of.
+ * @param array $form The form the element is a part of.
+ * @return array The processed element.
+ * 
+ * @todo Need to add $form_state['accession'] so that the file/project can be
+ * properly linked.
+ */
+function gttn_tpps_managed_file_process($element, &$form_state, $form){
+    
+    // If the element doesn't have a 'columns' child, then it is probably not
+    // meant to have all the data definition information attached.
+    if (isset($element['columns'])){
+        $fid = $element['#value']['fid'];
+        $wrapper = substr($element['#id'], 0, -7) . '-ajax-wrapper';
+
+        $saved_value_parents = $no_header_parents = $element['#parents'];
+        $no_header_parents[] = '#value';
+        $no_header_parents[] = 'no-header';
+        
+        if (isset($form_state['complete_form'])){
+            // See if no-header element is checked in the completed form.
+            $no_header = drupal_array_get_nested_value($form_state['complete form'], $no_header_parents);
+            // See which callback function is being used, if there is one.
+            $callback = isset($form_state['triggering_element']['#ajax']['callback']) ? $form_state['triggering_element']['#ajax']['callback'] : NULL;
+            // If no-header element is not checked in the complete form, check 
+            // if it is checked in the saved values.
+            if (!$no_header and ($callback != 'gttn_tpps_no_header_callback')){
+                $end = array_pop($saved_value_parents);
+                $saved_value_parents[] = $end . "-no-header";
+                $no_header = drupal_array_get_nested_value($form_state['saved_values'][$form_state['stage']], $saved_value_parents);
+            }
+        }
+        else {
+            // If the form hasn't been filled out yet, assume no-header is not checked.
+            $no_header = FALSE;
+        }
+        
+        // Create no-header checkbox field.
+        $element['no-header'] = array(
+          '#type' => 'checkbox',
+          '#title' => 'My file has no header row',
+          '#ajax' => array(
+            'wrapper' => $wrapper,
+            'callback' => 'gttn_tpps_no_header_callback'
+          ),
+          '#states' => isset($element['#states']) ? $element['#states'] : NULL,
+          '#default_value' => $no_header ? $no_header : NULL,
+        );
+        
+        // If you can successfully load the file, construct the "Define Data" section.
+        if (!empty($fid) and ($file = file_load($fid))){
+            
+            $saved_vals = isset($form_state['saved_values'][$form_state['stage']]) ? $form_state['saved_values'][$form_state['stage']] : NULL;
+            // Add types and data to columns element.
+            $element['columns']['#type'] = 'fieldset';
+            $element['columns']['#title'] = t('<div class="fieldset-title">Define Data</div>');
+            $element['columns']['#collapsible'] = TRUE;
+            
+            // Get the path to the file.
+            $file_name = $file->uri;
+            
+            // stop using the file so it can be deleted if the user clicks 'remove'
+            // NEED TO ADD $form_state['accession']
+            file_usage_delete($file, 'gttn_tpps', 'gttn_tpps_project', 0);// substr($form_state['accession'], 4));
+            
+            // Get the full file path.
+            $location = drupal_realpath("$file_name");
+            // Parse the file so it can be displayed with the columns.
+            $content = gttn_tpps_parse_xlsx($location);
+            
+            // If no-header was checked, adjust the content from the file accordingly.
+            if (!empty($no_header)){
+                gttn_tpps_content_no_header($content);
+            }
+            
+            // Get the column options defined earlier.
+            $options = $element['columns-options']['#value'];
+            
+            $first = TRUE;
+            
+            // Actually create each of the column drop-downs.
+            foreach ($content['headers'] as $item){
+                $item_parents = $element['#parents'];
+                array_pop($item_parents);
+                $item_parents[] = end($element['#parents']) . '-columns';
+                $item_parents[] = $item;
+                
+                // If there were saved values, load them into the table.
+                $default = isset($saved_vals) ? drupal_array_get_nested_value($saved_vals, $item_parents) : NULL;
+                
+                // Column drop-down element.
+                $element['columns'][$item] = array(
+                  '#type' => 'select',
+                  '#title' => t($item),
+                  '#options' => $options,
+                  '#default_value' => $default,
+                  '#prefix' => "<td>",
+                  '#suffix' => "</td>",
+                  '#attributes' => array(
+                    'data-toggle' => array('tooltip'),
+                    'data-placement' => array('left'),
+                    'title' => array("Select the type of data the '$item' column holds"),
+                  )
+                );
+
+                // If we're creating the first column element, prefix it with the
+                // table element tags and wrappers.
+                if ($first){
+                    $first = FALSE;
+                    $element['columns'][$item]['#prefix'] = "<div style='overflow-x:auto'><table border='1'><tbody><tr>" . $element['columns'][$item]['#prefix'];
+                }
+
+                // If no-header was checked, the title should be left blank, and
+                // the tooltip should be changed accordingly.
+                if (!empty($no_header)){
+                    $element['columns'][$item]['#title'] = '';
+                    $element['columns'][$item]['#attributes']['title'] = array("Select the type of data column $item holds");
+                }
+            }
+            
+            // Display first 3 rows of file
+            $display = "</tr>";
+            for ($j = 0; $j < 3; $j++){
+                if (isset($content[$j])){
+                    $display .= "<tr>";
+                    foreach ($content['headers'] as $item){
+                        $display .= "<th>{$content[$j][$item]}</th>";
+                    }
+                    $display .= "</tr>";
+                }
+            }
+            // Closing table element and wrapper tags.
+            $display .= "</tbody></table></div>";
+            
+            // Display the sample data right below the last column drop-down.
+            $element['columns'][$item]['#suffix'] .= $display;
+        }
+    }
+    
+    if (isset($element['empty'])){
+        // Add some extra data and types to the 'empty' element.
+        $element['empty']['#type'] = 'textfield';
+        $element['empty']['#title'] = t('File Upload empty field:');
+        $element['empty']['#states'] = isset($element['#states']) ? $element['#states'] : NULL;
+        $element['empty']['#description'] = 'By default, GTTN_TPPS will treat cells with the value "NA" as empty. If you used a different empty value indicator, please provide it here.';
+    }
+    
+    return $element;
+}
+
+/**
+ * Implements hook_form_alter().
+ * 
+ * @param type $form The form being altered.
+ * @param type $form_state The state of the form being altered.
+ * @param type $form_id The id of the form being altered.
+ */
+function gttn_tpps_form_alter(&$form, &$form_state, $form_id){
+    if ($form['#form_id'] == 'gttn_tpps_form'){
+        $stage = $form_state['stage'];
+        
+        if (!isset($form_state['saved_values'][$stage])){
+            // Initialize saved_values array for the current stage.
+            $form_state['saved_values'][$stage] = array();
+        }
+        if (!isset($form_state['values'])){
+            // Initialize values array for the current form.
+            $form_state['values'] = array();
+        }
+    }
+}
+
+/**
  * Provides the form based on which step the user is on.
  * 
  * @return array The main GTTN_TPPS form.
  */
 function gttn_tpps_form ($form, &$form_state){
+    $form['#suffix'] = "";
     
     global $user;
     // check if user is not logged in
@@ -111,9 +314,13 @@ function gttn_tpps_form ($form, &$form_state){
  * @param array $form_state The associated state of the form being validated.
  */
 function gttn_tpps_form_validate ($form, &$form_state){
-    // we don't need to validate the information if the user is going back to
-    // an earlier part of the form.
-    if ($form_state['triggering_element']['#value'] != 'Back'){
+    
+    if ($form_state['triggering_element']['#value'] == 'Back'){
+        gttn_save_file_columns($form, $form_state);
+        // we don't need to validate the information if the user is going back to
+        // an earlier part of the form.
+    }
+    else{
         // include the appropriate file and call the appropriate form validate function
         switch ($form_state['stage']){
             case 'first_page':

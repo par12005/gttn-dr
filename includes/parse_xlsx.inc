@@ -1,6 +1,6 @@
 <?php
 
-function gttn_parse_xlsx($location){
+function gttn_tpps_parse_xlsx($location){
     
     //modified from https://gist.github.com/searbe/3284011
     

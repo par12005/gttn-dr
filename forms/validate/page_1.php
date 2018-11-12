@@ -1,149 +1,89 @@
 <?php
 
+/**
+ * Validation function for the page_1 form.
+ * 
+ * @param type $form The form being validated.
+ * @param boolean $form_state The state of the form being validated.
+ */
 function page_1_validate(&$form, &$form_state){
     
+    // Only validate the page if it was actually submitted.
     if ($form_state['submitted'] == '1'){
         $species = $form_state['values']['species'];
         $species_number = $species['number'];
         
         for ($i = 1; $i <= $species_number; $i++){
             $current_species = $species[$i];
-            $location_format = $current_species['spreadsheet']['location'];
-            $metadata_file = $current_species['spreadsheet']['file'];
             
+            // If the name field was omitted, throw an error.
             if ($current_species['name'] == ''){
                 form_set_error("species][$i][name", "Species $i name: field is required.");
             }
-            
-            if ($location_format === '0'){
-                form_set_error("species][$i][spreadsheet][location", 'Spreadsheet Location Format: field is required.');
-            }
-            elseif ($metadata_file == ''){
-                form_set_error("species][$i][spreadsheet][file", 'Spreadsheet file upload: field is required.');
-            }
-            elseif ($location_format === '5'){
-                $file_type = file_load($metadata_file)->filemime;
-                $file = file(file_load($metadata_file)->uri);
-
-                if ($file_type == 'text/csv' or $file_type == 'text/plain'){
-                    $columns = explode("\r", $file[0]);
-                    $columns = ($file_type == 'text/plain') ? explode("\t", $columns[0]) : explode(",", $columns[0]);
-                    $id_omitted = TRUE;
-                    $location_omitted = TRUE;
-
-                    foreach($columns as $key => $col){
-                        $columns[$key] = trim($col);
-                        if (preg_match('/^(id|ID|Id|Identifier|identifier|IDENTIFIER)$/', $columns[$key]) == 1){
-                            $id_omitted = FALSE;
-                        }
-                        elseif (preg_match('/^(location|Location|LOCATION|country|Country|COUNTRY)$/', $columns[$key]) == 1){
-                            $location_omitted = FALSE;
-                        }
-                    }
-
-                    if ($id_omitted){
-                        form_set_error("species][$i][spreadsheet][file", 'Tree Accession file: We were unable to find your "Identifier" column. Please resubmit your file with a column named "Identifier", with an identifier for each tree.');
-                    }
-                    if ($location_omitted){
-                        form_set_error("species][$i][spreadsheet][file", 'Tree Accession file: We were unable to find your Location column. Please resubmit your file with a column named "Location" or "Country", with the location of each tree.');
-                    }
-                }
-                elseif ($file_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
-                    $file = file_load($metadata_file);
+            // If the spreadsheet field was completed, validate the file and the
+            // column values.
+            if ($current_species['spreadsheet'] != ""){
+                $required_groups = array(
+                  'Tree Id' => array(
+                    'id' => array(1),
+                  ),
+                  'Location (latitude/longitude or country/state)' => array(
+                    'approx' => array(2, 3),
+                    'gps' => array(4, 5),
+                  ),
+                );
+                
+                $file_element = $form['species']["$i"]['spreadsheet'];
+                $groups = gttn_tpps_file_validate_columns($form_state, $required_groups, $file_element);
+                
+                if (!form_get_errors()){
+                    $id_name = $groups['Tree Id']['1'];
+                    $col_names = $form_state['values']['species']["$i"]['spreadsheet-columns'];
+                    $fid = $form_state['values']['species']["$i"]['spreadsheet'];
+                    $file = file_load($fid);
                     $file_name = $file->uri;
                     $location = drupal_realpath($file_name);
-
-                    $content = gttn_parse_xlsx($location);
-                    $columns = $content['headers'];
-                    $id_omitted = TRUE;
-                    $location_omitted = TRUE;
-
-                    foreach($columns as $key => $col){
-                        $columns[$key] = trim($col);
-                        if (preg_match('/^(id|ID|Id|Identifier|identifier|IDENTIFIER)$/', $columns[$key]) == 1){
-                            $id_omitted = FALSE;
-                        }
-                        elseif (preg_match('/^(location|Location|LOCATION|country|Country|COUNTRY)$/', $columns[$key]) == 1){
-                            $location_omitted = FALSE;
-                        }
+                    $content = gttn_tpps_parse_xlsx($location);
+                    
+                    if (!empty($form_state['values']['species']["$i"]['spreadsheet-no-header'])){
+                        gttn_tpps_content_no_header($content);
                     }
-
-                    if ($id_omitted){
-                        form_set_error("species][$i][spreadsheet][file", 'Tree Accession file: We were unable to find your "Identifier" column. Please resubmit your file with a column named "Identifier", with an identifier for each tree.');
-                    }
-                    if ($location_omitted){
-                        form_set_error("species][$i][spreadsheet][file", 'Tree Accession file: We were unable to find your "Location" column. Please resubmit your file with a column named "Location", with the location of each tree.');
+                    
+                    $empty = $form_state['values']['species']["$i"]['spreadsheet-empty'];
+                    foreach ($content as $row => $vals){
+                        if ($row !== 'headers' and isset($vals[$id_name]) and $vals[$id_name] !== ""){
+                            foreach ($col_names as $item => $val){
+                                if ((!isset($vals[$item]) or $vals[$item] === $empty) and $val){
+                                    $field = $file_element['columns'][$item]['#options'][$val];
+                                    form_set_error("species][$i][spreadsheet][columns][{$vals[$id_name]}", "Species Spreadsheet $i: the required field $field is empty for tree \"{$vals[$id_name]}\".");
+                                }
+                            }
+                        }
                     }
                 }
-
+                if (!form_get_errors()){
+                    //preserve file if it is valid
+                    $file = file_load($form_state['values']['species']["$i"]['spreadsheet']);
+                    file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', 0);//substr($form_state['accession'], 4));
+                }
             }
-            else{
-                $file_type = file_load($metadata_file)->filemime;
-                $file = file(file_load($metadata_file)->uri);
-
-                if ($file_type == 'text/csv' or $file_type == 'text/plain'){
-                    $columns = explode("\r", $file[0]);
-                    $columns = ($file_type == 'text/plain') ? explode("\t", $columns[0]) : explode(",", $columns[0]);
-                    $id_omitted = TRUE;
-                    $lat_omitted = TRUE;
-                    $long_omitted = TRUE;
-
-                    foreach($columns as $key => $col){
-                        $columns[$key] = trim($col);
-                        if (preg_match('/^(id|ID|Id|Identifier|identifier|IDENTIFIER)$/', $columns[$key]) == 1){
-                            $id_omitted = FALSE;
-                        }
-                        elseif (preg_match('/^(latitude|Latitude|LATITUDE|lat|Lat|LAT)$/', $columns[$key]) == 1){
-                            $lat_omitted = FALSE;
-                        }
-                        elseif (preg_match('/^(longitude|Longitude|LONGITUDE|long|Long|LONG)$/', $columns[$key]) == 1){
-                            $long_omitted = FALSE;
-                        }
-                    }
-
-                    if ($id_omitted){
-                        form_set_error("species][$i][spreadsheet][file", 'Tree Accession file: We were unable to find your "Identifier" column. Please resubmit your file with a column named "Identifier", with an identifier for each tree.');
-                    }
-                    if ($lat_omitted){
-                        form_set_error("species][$i][spreadsheet][file", 'Tree Accession file: We were unable to find your Latitude column. Please resubmit your file with a column named "Latitude", with the coordinate of each tree.');
-                    }
-                    if ($long_omitted){
-                        form_set_error("species][$i][spreadsheet][file", 'Tree Accession file: We were unable to find your Longitude column. Please resubmit your file with a column named "Longitude", with the coordinate of each tree.');
-                    }
-                }
-                elseif ($file_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
-                    $location = '/var/www/Drupal/sites/default/files/' . file_load($metadata_file)->filename;
-
-                    $content = gttn_parse_xlsx($location);
-                    $columns = $content['headers'];
-                    $id_omitted = TRUE;
-                    $lat_omitted = TRUE;
-                    $long_omitted = TRUE;
-
-                    foreach($columns as $key => $col){
-                        $columns[$key] = trim($col);
-                        if (preg_match('/^(id|ID|Id|Identifier|identifier|IDENTIFIER)$/', $columns[$key]) == 1){
-                            $id_omitted = FALSE;
-                        }
-                        elseif (preg_match('/^(latitude|Latitude|LATITUDE|lat|Lat|LAT)$/', $columns[$key]) == 1){
-                            $lat_omitted = FALSE;
-                        }
-                        elseif (preg_match('/^(longitude|Longitude|LONGITUDE|long|Long|LONG)$/', $columns[$key]) == 1){
-                            $long_omitted = FALSE;
-                        }
-                    }
-
-                    if ($id_omitted){
-                        form_set_error("species][$i][spreadsheet][file", 'Tree Accession file: We were unable to find your "Identifier" column. Please resubmit your file with a column named "Identifier", with an identifier for each tree.');
-                    }
-                    if ($lat_omitted){
-                        form_set_error("species][$i][spreadsheet][file", 'Tree Accession file: We were unable to find your Latitude column. Please resubmit your file with a column named "Latitude", with the coordinate of each tree.');
-                    }
-                    if ($long_omitted){
-                        form_set_error("species][$i][spreadsheet][file", 'Tree Accession file: We were unable to find your Longitude column. Please resubmit your file with a column named "Longitude", with the coordinate of each tree.');
-                    }
-                }
-
+            // If the spreadsheet field was omitted, throw an error.
+            else {
+                form_set_error("species][$i][spreadsheet", "Species Spreadsheet $i: field is required.");
+            }
+        }
+        
+        if (form_get_errors()){
+            // If there were no errors, rebuild the form.
+            $form_state['rebuild'] = TRUE;
+            $new_form = drupal_rebuild_form('gttn_tpps_form', $form_state, $form);
+            for ($i = 1; $i < $species_number; $i++){
+                // Make sure the upload button and "Define Data" section both have
+                // the correct form element and id attribute.
+                $form['species']["$i"]['spreadsheet']['upload'] = $new_form['species']["$i"]['spreadsheet']['upload'];
+                $form['species']["$i"]['spreadsheet']['columns'] = $new_form['species']["$i"]['spreadsheet']['columns'];
+                $form['species']["$i"]['spreadsheet']['upload']['#id'] = "edit-species-$i-spreadsheet-upload";
+                $form['species']["$i"]['spreadsheet']['columns']['#id'] = "edit-species-$i-spreadsheet-columns";
             }
         }
         

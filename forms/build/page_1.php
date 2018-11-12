@@ -26,7 +26,7 @@ function page_1_form(&$form, &$form_state){
     
     // If the species number is already set and the "Add Species" button was
     // pressed, then increase the species number.
-    if (isset($form_state['values']['species']['number']) and $form_state['triggering_element']['#name'] == "Add Species"){
+    if (isset($form_state['values']['species']['number']) and $form_state['triggering_element']['#name'] == "Add Species" and $form_state['values']['species']['number'] < 10){
         $form_state['values']['species']['number']++;
     }
     // If the species number is already set and the "Remove Species" button was
@@ -47,6 +47,17 @@ function page_1_form(&$form, &$form_state){
     if (!isset($species_number)){
         $species_number = 1;
     }
+    
+    // String for description field for species location file uploads.
+    $file_description = "Please upload a spreadsheet file containing tree "
+        . "population data. When your file is uploaded, you will be shown a "
+        . "table with your column header names, several drop-downs, and the "
+        . "first few rows of your file. You will be asked to define the data "
+        . "type for each column, using the drop-downs provided to you. If a "
+        . "column data type does not fit any of the options in the drop-down "
+        . "menu, you may omit that drop-down menu. Your file must contain "
+        . "columns with information about at least the Tree Identifier and the "
+        . "Location of the tree (either gps coordinates or country/state).";
     
     // The group of species fields.
     $form['species'] = array(
@@ -87,13 +98,17 @@ function page_1_form(&$form, &$form_state){
       '#value' => $species_number,
     );
     
-    // Build 5 species sections. Not all of these sections will necessarily be shown.
-    for($i = 1; $i <= $species_number; $i++){
+    // Build 10 species sections. Not all of these sections will necessarily be shown.
+    for($i = 1; $i <= 10; $i++){
 
         // The group of fields for Species $i.
         $form['species']["$i"] = array(
           '#type' => 'fieldset',
           '#title' => t("Species $i:"),
+          '#tree' => TRUE,
+          '#attributes' => array(
+            'name' => array($i),
+          ),
         );
 
         // Name of Species $i. 
@@ -104,40 +119,50 @@ function page_1_form(&$form, &$form_state){
           '#default_value' => isset($values['species']["$i"]['name']) ? $values['species']["$i"]['name'] : NULL,
         );
         
-        // Spreadsheet fields for Species $i.
+        // Spreadsheet upload for Species $i.
         $form['species']["$i"]['spreadsheet'] = array(
-          '#type' => 'fieldset',
-          '#title' => t("Species $i spreadsheet:"),
-        );
-        
-        // Location format for the spreadsheet. If the user selects any of 
-        // options 1-4, the module will try to find coordinates. Otherwise, the
-        // module will look for a country/region combination.
-        $form['species']["$i"]['spreadsheet']['location'] = array(
-          '#type' => 'select',
-          '#title' => t('Location format:'),
-          '#options' => array(
-            0 => '- Select -',
-            1 => 'Exact (WGS 84)',
-            2 => 'Exact (NAD 83)',
-            3 => 'Exact (ETRS 89)',
-            4 => 'Custom Coordinates format',
-            5 => 'Country/Region',
-          ),
-          '#default_value' => isset($values['species']["$i"]['spreadsheet']['location']) ? $values['species']["$i"]['spreadsheet']['location'] : 0,
-        );
-        
-        // The actual spreadsheet upload.
-        $form['species']["$i"]['spreadsheet']['file'] = array(
           '#type' => 'managed_file',
-          '#title' => t("Species $i file:"),
-          '#upload_location' => 'public://',
+          '#title' => t("Species $i Spreadsheet: please provide a spreadsheet with columns for the Tree ID and location of trees used in this study: *"),
+          '#upload_location' => "public://gttn_tpps_accession",
           '#upload_validators' => array(
             'file_validate_extensions' => array('txt csv xlsx'),
           ),
-          '#default_value' => isset($values['species']["$i"]['spreadsheet']['file']) ? $values['species']["$i"]['spreadsheet']['file'] : NULL,
-          '#description' => 'Columns with information describing the Identifier of the tree and the location of the tree are required.'
+          '#description' => $file_description,
+          '#default_value' => isset($values['species']["$i"]['spreadsheet']) ? $values['species']["$i"]['spreadsheet'] : NULL,
         );
+        
+        // Empty field specification.
+        $form['species']["$i"]['spreadsheet']['empty'] = array(
+          '#default_value' => isset($values['species']["$i"]['spreadsheet']['empty']) ? $values['species']["$i"]['spreadsheet']['empty'] : 'NA',
+        );
+        
+        // "Define Data" section.
+        $form['species']["$i"]['spreadsheet']['columns'] = array(
+          '#description' => 'Please define which columns hold the required data: Tree Identifier and Location',
+        );
+        
+        // We want to give users the option to use either lat/long coordinates,
+        // or country/state/county/district locations.
+        $column_options = array(
+          '0' => 'N/A',
+          '1' => 'Tree Identifier',
+          '2' => 'Country',
+          '3' => 'State',
+          '8' => 'County',
+          '9' => 'District',
+          '4' => 'Latitude',
+          '5' => 'Longitude',
+        );
+        
+        // This field gets checked later by gttn_tpps_managed_file_process().
+        $form['species']["$i"]['spreadsheet']['columns-options'] = array(
+          '#type' => 'hidden',
+          '#value' => $column_options,
+        );
+        
+        // Placeholder for no-header option.
+        $form['species']["$i"]['spreadsheet']['no-header'] = array();
+
     }
     
     // Check if the data should be published to the greater TreeGenes site.
