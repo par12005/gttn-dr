@@ -1,6 +1,6 @@
 <?php
 
-function _gttn_species_autocomplete($string){
+function gttn_tpps_species_autocomplete($string){
     $matches = array();
     
     $parts = explode(" ", $string);
@@ -22,4 +22,13 @@ function _gttn_species_autocomplete($string){
     }
     
     drupal_json_output($matches);
+}
+
+function gttn_tpps_no_header_callback($form, &$form_state){
+    
+    $parents = $form_state['triggering_element']['#parents'];
+    array_pop($parents);
+    
+    $element = drupal_array_get_nested_value($form, $parents);
+    return $element;
 }

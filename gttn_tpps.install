@@ -1,0 +1,114 @@
+<?php
+
+function gttn_tpps_install(){
+    
+    if (!module_exists('ultimate_cron')){
+        $result = exec('drush pm-download ultimate_cron');
+        $result .= exec('drush pm-enable --resolve-dependencies ultimate_cron -y');
+        print_r($result);
+    }
+}
+
+function gttn_tpps_uninstall(){
+    
+    //remove all incomplete submissions connected to user profiles
+    $results = db_delete('public.variable')
+        ->condition('name', db_like('gttn_tpps_incomplete_') . '%', 'LIKE')
+        ->execute();
+    
+    //remove all complete submissions connected to user profiles
+    $results = db_delete('public.variable')
+        ->condition('name', db_like('gttn_tpps_complete_') . '%', 'LIKE')
+        ->execute();
+    
+    $gttn_tpps_usage = db_select('public.file_usage', 'f')
+        ->fields('f')
+        ->condition('module', 'gttn_tpps')
+        ->execute();
+    
+    foreach ($gttn_tpps_usage as $row){
+        dpm($row);
+        file_usage_delete(file_load($row->fid), $row->module, $row->type, $row->id, $row->count);
+    }
+    
+}
+
+function gttn_tpps_update_7000(){
+    if (!db_table_exists('chado.stock_phenotype')){
+        //create stock_phenotype table if it does not exist
+        db_query('create table chado.stock_phenotype (stock_id integer, phenotype_id integer);');
+    }
+}
+
+function gttn_tpps_update_7001(){
+    $query = db_select('pg_class', 'p')
+        ->fields('p')
+        ->condition('relname', 'genotype_call_genotype_call_id_seq')
+        ->execute();
+    if (!($result = $query->fetchObject())){
+        $create_seq = db_query('CREATE SEQUENCE genotype_call_genotype_call_id_seq START 1;');
+    }
+}
+
+function gttn_tpps_update_7002(){
+    if (!db_table_exists('chado.genotype_call')){
+        //create genotype_call table if it does not exist
+        db_query('create table chado.genotype_call (genotype_call_id bigint PRIMARY KEY NOT NULL DEFAULT nextval(\'genotype_call_genotype_call_id_seq\'::regclass),
+            variant_id bigint NOT NULL,
+            marker_id bigint NOT NULL,
+            genotype_id bigint NOT NULL,
+            project_id bigint NOT NULL,
+            stock_id bigint NOT NULL,
+            meta_data json,
+            CONSTRAINT "genotype_call_genotype_id_fkey" FOREIGN KEY (genotype_id) REFERENCES chado.genotype(genotype_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+            CONSTRAINT "genotype_call_marker_id_fkey" FOREIGN KEY (marker_id) REFERENCES chado.feature(feature_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+            CONSTRAINT "genotype_call_project_id_fkey" FOREIGN KEY (project_id) REFERENCES chado.project(project_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+            CONSTRAINT "genotype_call_stock_id_fkey" FOREIGN KEY (stock_id) REFERENCES chado.stock(stock_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+            CONSTRAINT "genotype_call_variant_id_fkey" FOREIGN KEY (variant_id) REFERENCES chado.feature(feature_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED);');
+    }
+}
+
+function gttn_tpps_update_7003(){
+    $query = db_select('pg_class', 'p')
+        ->fields('p')
+        ->condition('relname', 'plusgeno_view')
+        ->execute();
+    if (!($result = $query->fetchObject())){
+        //create plusgeno_view if it does not exist
+        $create_view = db_query('create materialized view chado.plusgeno_view as SELECT DISTINCT p.project_id,
+     d.accession,
+     ppub.title,
+     o.species,
+     count(o.stock_id) OVER (PARTITION BY p.project_id) AS tree_count,
+     sum(phen.count) OVER (PARTITION BY p.project_id) AS phen_count,
+     unique_phen.phenotypes_assessed,
+     g.gen_count
+    FROM chado.project_dbxref p
+      JOIN chado.dbxref d ON p.dbxref_id = d.dbxref_id
+      JOIN ( SELECT pp.project_id,
+             pub.title
+            FROM chado.project_pub pp
+              JOIN chado.pub ON pp.pub_id = pub.pub_id) ppub ON p.project_id = ppub.project_id
+      JOIN ( SELECT DISTINCT ps.project_id,
+             (org.genus::text || \' \'::text) || org.species::text AS species,
+             stock.stock_id
+            FROM chado.project_stock ps
+              JOIN chado.stock ON ps.stock_id = stock.stock_id
+              JOIN chado.organism org ON stock.organism_id = org.organism_id) o ON p.project_id = o.project_id
+      LEFT JOIN ( SELECT stock_phenotype.stock_id,
+             count(stock_phenotype.phenotype_id) OVER (PARTITION BY stock_phenotype.stock_id) AS count
+            FROM chado.stock_phenotype) phen ON o.stock_id = phen.stock_id
+      LEFT JOIN ( SELECT DISTINCT pc.project_id,
+             count(pc.name) OVER (PARTITION BY pc.project_id) AS phenotypes_assessed
+            FROM ( SELECT DISTINCT ps.project_id,
+                     ph.name
+                   FROM chado.phenotype ph
+                      JOIN chado.stock_phenotype sp ON ph.phenotype_id = sp.phenotype_id
+                      JOIN chado.stock s ON sp.stock_id = s.stock_id
+                      JOIN chado.project_stock ps ON s.stock_id = ps.stock_id) pc) unique_phen ON p.project_id = unique_phen.project_id
+      LEFT JOIN ( SELECT DISTINCT genotype_call.project_id,
+             count(genotype_call.genotype_call_id) OVER (PARTITION BY genotype_call.project_id) AS gen_count
+            FROM chado.genotype_call) g ON p.project_id = g.project_id
+   WHERE d.db_id = 95;');
+    }
+}
