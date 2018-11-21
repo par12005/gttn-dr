@@ -13,4 +13,5 @@ Welcome to GTTN-DR's documentation!
    :numbered:
 
    intro
-
+   features
+   example
