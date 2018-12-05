@@ -55,7 +55,8 @@ function organism(&$form, $values){
             'data-toggle' => array('tooltip'),
             'data-placement' => array('left'),
             'title' => array('If your species is not in the autocomplete list, don\'t worry about it! We will create a new organism entry in the database for you.')
-          )
+          ),
+          '#description' => 'Please select your species from the autocomplete list. If your species is not in the autocomplete list, then a new species will be added to the database.'
         );
     }
 

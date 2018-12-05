@@ -25,6 +25,19 @@ function page_1_validate_form(&$form, &$form_state){
                 if (!isset($genus) or !isset($species) or preg_match($empty_pattern, $genus) or preg_match($empty_pattern, $species) or !preg_match($correct_pattern, $genus) or !preg_match($correct_pattern, $species)){
                     form_set_error("organism[$i", check_plain("Tree Species $i: please provide both genus and species in the form \"<genus> <species>\"."));
                 }
+                else {
+                    $and = db_and()
+                        ->condition('genus', $genus)
+                        ->condition('species', $species);
+                    
+                    $query = db_select('chado.organism', 'o')
+                        ->fields('o', array('organism_id'))
+                        ->condition($and)
+                        ->execute();
+                    if (empty($query->fetchObject())){
+                        dpm("Species $i: $name will be added as a new organism when the form is submitted.");
+                    }
+                }
             }
         }
         
