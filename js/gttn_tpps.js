@@ -75,37 +75,46 @@ jQuery(document).ready(function ($) {
         }
     }
     
+    var buttons = jQuery('input').filter(function() { return this.id.match(/map_button/); });
+    jQuery.each(buttons, function(){
+        jQuery(this).click(getCoordinates);
+    });
     jQuery("#map_wrapper").hide();
 });
 
-var map;
-var total_lat;
-var total_long;
-var markers = [];
+var maps = {};
 
 function initMap() {
-    map = new google.maps.Map(document.getElementById('map_wrapper'), {
-        center: {lat: 0, lng: 0},
-        zoom: 5
+    var mapElements = jQuery('div').filter(function() { return this.id.match(/map_wrapper/); });
+    jQuery.each(mapElements, function(){
+        var species_name = this.id.match(/(.*)map_wrapper/)[1];
+        maps[species_name] = new google.maps.Map(document.getElementById(species_name + 'map_wrapper'), {
+            center: {lat:0, lng:0},
+            zoom: 5
+        });
+        maps[species_name + 'markers'] = [];
+        maps[species_name + 'total_lat'];
+        maps[species_name + 'total_long'];
     });
+    console.log(maps);
 }
 
-function clearMarkers() {
-    for (var i = 0; i < markers.length; i++) {
-        markers[i].setMap(null);
+function clearMarkers(prefix) {
+    for (var i = 0; i < maps[prefix + 'markers'].length; i++) {
+        maps[prefix + 'markers'][i].setMap(null);
     }
-    markers = [];
+    maps[prefix + 'markers'] = [];
 }
 
-function addMarkerWithTimeout(location, time) {
+function addMarkerWithTimeout(location, time, prefix) {
     window.setTimeout(function() {
-        var index = markers.push(new google.maps.Marker({
+        var index = maps[prefix + 'markers'].push(new google.maps.Marker({
             position: new google.maps.LatLng(location[1], location[2]),
-            map: map,
+            map: maps[prefix],
             animation: google.maps.Animation.DROP,
             title: location[0],
         })) - 1;
-        markers[index].addListener('click', toggleBounce);
+        maps[prefix + 'markers'][index].addListener('click', toggleBounce);
     }, time);
 }
 
@@ -118,18 +127,45 @@ function toggleBounce(){
     }
 }
 
-jQuery.fn.updateMap = function(locations) {
-    jQuery("#map_wrapper").show();
-    clearMarkers();
-    total_lat = 0;
-    total_long = 0;
+function getCoordinates(){
+    var species_name = this.id.match(/(.*)map_button/)[1];
+    var fid = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_fid')); })[0].innerHTML;
+    var no_header = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_no_header')); })[0].innerHTML;
+    var id_col = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_id_col')); })[0].innerHTML;
+    var lat_col = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_lat_col')); })[0].innerHTML;
+    var long_col = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_long_col')); })[0].innerHTML;
+    console.log(fid);
+    console.log(no_header);
+    console.log(id_col);
+    console.log(lat_col);
+    console.log(long_col);
+    
+    var request = jQuery.post('gttn-accession', {
+        fid: fid,
+        no_header: no_header,
+        id_col: id_col,
+        lat_col: lat_col,
+        long_col: long_col
+    });
+    
+    request.done(function (data) {
+        console.log(jQuery.fn.updateMap(data, species_name));
+    });
+}
+
+jQuery.fn.updateMap = function(locations, prefix = "") {
+    jQuery("#" + prefix + "map_wrapper").show();
+    clearMarkers(prefix);
+    maps[prefix + 'total_lat'] = 0;
+    maps[prefix + 'total_long'] = 0;
     timeout = 2000/locations.length;
 
     for (var i = 0; i < locations.length; i++) {
-        total_lat += parseInt(locations[i][1]);
-        total_long += parseInt(locations[i][2]);
-        addMarkerWithTimeout(locations[i], timeout*i);
+        maps[prefix + 'total_lat'] += parseInt(locations[i][1]);
+        maps[prefix + 'total_long'] += parseInt(locations[i][2]);
+        addMarkerWithTimeout(locations[i], timeout*i, prefix);
     }
-    var center = new google.maps.LatLng(total_lat/locations.length, total_long/locations.length);
-    map.panTo(center);
+    var center = new google.maps.LatLng(maps[prefix + 'total_lat']/locations.length, maps[prefix + 'total_long']/locations.length);
+    maps[prefix].panTo(center);
+    console.log(jQuery("#" + prefix + "map_wrapper"));
 };

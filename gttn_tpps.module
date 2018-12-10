@@ -22,6 +22,7 @@ require_once 'includes/submit_email.inc';
 require_once 'includes/status_bar.inc';
 require_once 'includes/save_file_columns.inc';
 require_once 'includes/file_parsing.inc';
+require_once 'includes/accession_coordinates.inc';
 require_once 'ajax/gttn_tpps_ajax.php';
 
 /**
@@ -112,6 +113,16 @@ function gttn_tpps_menu() {
       'access arguments' => array('access content'),
       'type' => MENU_CALLBACK,
       'file' => 'ajax/gttn_tpps_ajax.php'
+    );
+    
+    /*
+     * Ajax Callback for accession coordinates.
+     */
+    $items['gttn-accession'] = array(
+      'title' => 'GTTN-TPPS Accession coodinates',
+      'page callback' => 'gttn_tpps_accession_coordinates',
+      'access arguments' => array('access content'),
+      'type' => MENU_CALLBACK,
     );
     
     return $items;
@@ -947,6 +958,22 @@ function gttn_tpps_block_view_alter(&$data, $block) {
                         // Change the value display to the name of the file with
                         // the full link to its location.
                         $val_str = "<a href='$file_url' target='blank'>$file_name</a>";
+                        if (preg_match('/^(.*)Accession File/', $item, $matches)){
+                            
+                            if ($matches[1] != "Tree "){
+                                $parts = explode(" ", $matches[1]);
+                                $name = implode("_", $parts);
+                                
+                                $val_str .= "<div id=\"{$name}map_wrapper\"></div>"
+                                . "<input id=\"{$name}map_button\" type=\"button\" value=\"Click here to view trees on map!\"></input>"
+                                . "<div id=\"{$name}accession_fid\" style=\"display:none;\">$val</div>";
+                            }
+                            else {
+                                $val_str .= "<div id=\"map_wrapper\" class=\"map_wrapper\"></div>"
+                                . "<input id=\"map_button\" type=\"button\" value=\"Click here to view trees on map!\"></input>"
+                                . "<div id=\"accession_fid\" style=\"display:none;\">$val</div>";
+                            }
+                        }
                     }
                     // If the field is a month, we want to display it along with
                     // the associated year, so skip to the next field.
@@ -1003,8 +1030,21 @@ function gttn_tpps_block_view_alter(&$data, $block) {
                         break;
                     }
                 }
+                elseif (preg_match('/^#(.*)accession_(.*)/', $item, $matches)){
+                    $val_str = filter_xss(check_plain($val));
+                    $parts = explode(" ", substr($matches[0], 1));
+                    $item_id = implode("_", $parts);
+                    $content .= "<div id=\"$item_id\" style=\"display:none;\">$val_str</div>";
+                }
             }
             // Close out the content wrapper.
+            $content .= "<script src=\"https://maps.googleapis.com/maps/api/js?key=AIzaSyDkeQ6KN6HEBxrIoiSCrCHFhIbipycqouY&callback=initMap\"
+    async defer></script>
+    <style>
+      .map_wrapper {
+        height: 100px;
+      }
+    </style>";
             $content .= "</div>";
             // Add the content to the block.
             $data['content'] = t($content);
