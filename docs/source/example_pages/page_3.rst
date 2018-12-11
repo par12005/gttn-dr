@@ -8,6 +8,10 @@ If the user selected phenotype data as one of their data types, then they will b
 
 .. image:: ../../../images/phenotype_data.png
 
+The user can also optionally provide phenotype data manually.
+
+.. image:: ../../../images/manual_phenotype.png
+
 If the user selected genotype data as one of their data types, then they will be required to specify the type of genotype marker and type of genotype file(s), and upload their genotype file(s).
 
 .. image:: ../../../images/genotype_data.png
