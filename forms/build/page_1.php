@@ -34,12 +34,18 @@ function page_1_create_form(&$form, $form_state){
         'Genotype x Phenotype' => 'Genotype x Phenotype',
       ),
     );
+	
+    // Create the back button.
+    $form['Back'] = array(
+      '#type' => 'submit',
+      '#value' => t('Back'),
+      '#prefix' => '<div class="input-description">* : Required Field</div>',
+    );
     
     // Create the save information button.
     $form['Save'] = array(
       '#type' => 'submit',
       '#value' => t('Save'),
-      '#prefix' => '<div class="input-description">* : Required Field</div>',
     );
     
     // Create the next button.

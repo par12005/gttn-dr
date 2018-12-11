@@ -1,6 +1,7 @@
 <?php
 // Define path to JavaScript file and page names. 
 define("GTTN_TPPS_JS_PATH", '/js/gttn_tpps.js');
+define("GTTN_TYPE_PAGE", 'submissionType');
 define("GTTN_PAGE_1", 'Hellopage');
 define("GTTN_PAGE_3", 'thirdPage');
 define("GTTN_PAGE_4", 'fourthPage');
@@ -646,6 +647,11 @@ function gttn_tpps_main($form, &$form_state){
     
     // Create the appropriate page based on the form stage.
     switch ($form_state['stage']){
+        case GTTN_TYPE_PAGE:
+            require_once 'forms/build/submission_type.php';
+            submission_type_create_form($form, $form_state);
+            break;
+
         case GTTN_PAGE_1:
             require_once('forms/build/page_1.php');
             page_1_create_form($form, $form_state);
@@ -796,11 +802,20 @@ function gttn_tpps_main_submit($form, &$form_state){
     switch ($form_state['stage']){
         case 'frontpage':
             $persist = FALSE;
-            $form_state['stage'] = GTTN_PAGE_1;
+            $form_state['stage'] = GTTN_TYPE_PAGE;
             break;
         
+        case GTTN_TYPE_PAGE:
+            $form_state['stage'] = GTTN_PAGE_1;
+            break;
+
         case GTTN_PAGE_1:
-            $form_state['stage'] = GTTN_PAGE_3;
+            if ($form_state['triggering_element']['#value'] == 'Back'){
+                $form_state['stage'] = GTTN_TYPE_PAGE;
+            }
+            else{
+                $form_state['stage'] = GTTN_PAGE_3;
+            }
             break;
             
         case GTTN_PAGE_3:

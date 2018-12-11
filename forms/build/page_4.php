@@ -83,6 +83,16 @@ function page_4_create_form(&$form, &$form_state){
                 );
             }
             
+            $form["organism-$i"]['phenotype']['type'] = array(
+              '#type' => 'select',
+              '#title' => t('Phenotype type: Please select the correct type of phenotype data you are submitting: *'),
+              '#options' => array(
+                0 => '- Select -',
+                1 => 'Mass Pyrolysis',
+                2 => 'Isotope'
+              )
+            );
+            
             // Create the phenotype file upload field.
             $form["organism-$i"]['phenotype']['file'] = array(
               '#type' => 'managed_file',
