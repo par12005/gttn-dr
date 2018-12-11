@@ -7,6 +7,7 @@ Example GTTN-TPPS Submission
    :glob:
    
    Landing Page <example_pages/start>
+   Submission Type Selection <example_pages/submission_type>
    Species Information <example_pages/page_1>
    Tree Accession <example_pages/page_2>
    Submit Data <example_pages/page_3>
