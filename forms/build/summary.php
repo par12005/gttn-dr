@@ -2,8 +2,6 @@
 
 function gttn_tpps_summary_create_form(&$form, $form_state){
     
-    dpm($form_state);
-    
     $form['Back'] = array(
       '#type' => 'submit',
       '#value' => t('Back'),
