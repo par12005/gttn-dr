@@ -55,7 +55,7 @@ function gttn_tpps_flatten($state){
     elseif (isset($page_3['file']) and $page_3['file']){
         $data['Tree Accession File'] = $page_3['file'];
         if (!empty($page_3['file-groups']['Location (latitude/longitude or country/state)']['#type']) and $page_3['file-groups']['Location (latitude/longitude or country/state)']['#type'] == "gps"){
-            $data["#accession_no_header"] = $page_3['file-no-header'];
+            $data["#accession_no_header"] = isset($page_3['file-no-header']) ? $page_3['file-no-header'] : '0';
             $data["#accession_id_col"] = $page_3['file-groups']['Tree Id'][1];
             $data["#accession_lat_col"] = $page_3['file-groups']['Location (latitude/longitude or country/state)'][4];
             $data["#accession_long_col"] = $page_3['file-groups']['Location (latitude/longitude or country/state)'][5];

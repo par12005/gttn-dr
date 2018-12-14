@@ -1,6 +1,4 @@
 <?php
-// Load page 3 ajax functions.
-require_once 'page_3_ajax.php';
 
 /**
  * Populates the form element for the third page of the form.
@@ -24,6 +22,18 @@ function page_3_create_form(&$form, &$form_state){
       '#tree' => TRUE,
     );
     
+    // Get the species number from the previous page of the form.
+    $species_number = $form_state['saved_values'][GTTN_PAGE_1]['organism']['number'];
+    // If the user has more than one species, allow them to choose between uploading
+    // one file with every species, or a separate file for each species. 
+    if ($species_number > 1){
+        // Create the single/multiple file checkbox.
+        $form['tree-accession']['check'] = array(
+          '#type' => 'checkbox',
+          '#title' => t('I would like to upload a separate tree accession file for each species.'),
+        );
+    }
+    
     // Field description for tree accesison file upload fields.
     $file_description = "Please upload a spreadsheet file containing tree popula"
         . "tion data. When your file is uploaded, you will be shown a table with"
@@ -34,8 +44,6 @@ function page_3_create_form(&$form, &$form_state){
         . "drop-down menu. Your file must contain columns with information about"
         . " at least the Tree Identifier and the Location of the tree (either gp"
         . "s coordinates or country/state).";
-    // Get the species number from the previous page of the form.
-    $species_number = $form_state['saved_values'][GTTN_PAGE_1]['organism']['number'];
     // Get the upload location from the GTTN-TPPS settings. If the settings, are
     // not available, then default to "public://gttn_tpps_accession".
     $file_upload_location = 'public://' . variable_get('gttn_tpps_accession_files_dir', 'gttn_tpps_accession');
@@ -115,27 +123,13 @@ function page_3_create_form(&$form, &$form_state){
         'My file does not use coordinates for tree locations'
       ),
       '#states' => $form['tree-accession']['file']['#states'],
-    );
-    
-    // Create the button to load the map thumbnail once the file has been loaded.
-    $form['tree-accession']['map-button'] = array(
-      '#type' => 'button',
-      '#title' => 'Click here to update map',
-      '#value' => 'Click here to update map',
-      '#button_type' => 'button',
-      // Prevent form from submitting when the map button is clicked.
-      '#executes_submit_callback' => FALSE,
-      // Display the map below the map button.
-      '#ajax' => array(
-        'callback' => 'page_3_multi_map',
-        'wrapper' => 'multi_map',
-      ),
-      '#prefix' => '<div id="multi_map">',
-      '#suffix' => '<div id="map_wrapper"></div></div>',
+      // Add map button after coordinate format option.
+      '#suffix' => "<div id=\"map_wrapper\"></div>"
+        . "<input id=\"map_button\" type=\"button\" value=\"Click here to view trees on map!\"></input>"
     );
     
     // Add the google maps api call after the map button.
-    $form['tree-accession']['map-button']['#suffix'] .= '
+    $form['tree-accession']['coord-format']['#suffix'] .= '
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkeQ6KN6HEBxrIoiSCrCHFhIbipycqouY&callback=initMap"
     async defer></script>
     <style>
@@ -144,14 +138,7 @@ function page_3_create_form(&$form, &$form_state){
       }
     </style>';
     
-    // If the user has more than one species, allow them to choose between uploading
-    // one file with every species, or a separate file for each species. 
     if ($species_number > 1){
-        // Create the single/multiple file checkbox.
-        $form['tree-accession']['check'] = array(
-          '#type' => 'checkbox',
-          '#title' => t('I would like to upload a separate tree accession file for each species.'),
-        );
 
         // Create the additional file upload fields.
         for ($i = 1; $i <= $species_number; $i++){
@@ -215,6 +202,12 @@ function page_3_create_form(&$form, &$form_state){
             
             // Add a placeholder for the no-header field.
             $form['tree-accession']["species-$i"]['file']['no-header'] = array();
+            
+            $parts = explode(" ", $name);
+            $id_name = implode("_", $parts);
+            $form['tree-accession']["species-$i"]['#suffix'] = "<div id=\"{$id_name}_map_wrapper\"></div>"
+                . "<input id=\"{$id_name}_map_button\" type=\"button\" value=\"Click here to view $name trees on map!\"></input>"
+                . "<div id=\"{$id_name}_species_number\" style=\"display:none;\">$i</div>";
         }
     }
     

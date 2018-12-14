@@ -119,7 +119,7 @@ function gttn_tpps_menu() {
      * Ajax Callback for accession coordinates.
      */
     $items['gttn-accession'] = array(
-      'title' => 'GTTN-TPPS Accession coodinates',
+      'title' => 'GTTN-TPPS Accession coordinates',
       'page callback' => 'gttn_tpps_accession_coordinates',
       'access arguments' => array('access content'),
       'type' => MENU_CALLBACK,
@@ -969,7 +969,7 @@ function gttn_tpps_block_view_alter(&$data, $block) {
                                 . "<div id=\"{$name}accession_fid\" style=\"display:none;\">$val</div>";
                             }
                             else {
-                                $val_str .= "<div id=\"map_wrapper\" class=\"map_wrapper\"></div>"
+                                $val_str .= "<div id=\"map_wrapper\"></div>"
                                 . "<input id=\"map_button\" type=\"button\" value=\"Click here to view trees on map!\"></input>"
                                 . "<div id=\"accession_fid\" style=\"display:none;\">$val</div>";
                             }
@@ -1038,13 +1038,10 @@ function gttn_tpps_block_view_alter(&$data, $block) {
                 }
             }
             // Close out the content wrapper.
-            $content .= "<script src=\"https://maps.googleapis.com/maps/api/js?key=AIzaSyDkeQ6KN6HEBxrIoiSCrCHFhIbipycqouY&callback=initMap\"
-    async defer></script>
-    <style>
-      .map_wrapper {
-        height: 100px;
-      }
-    </style>";
+            if ($flat['#page_3_cleared']){
+                $content .= "<script src=\"https://maps.googleapis.com/maps/api/js?key=AIzaSyDkeQ6KN6HEBxrIoiSCrCHFhIbipycqouY&callback=initMap\"
+                async defer></script>";
+            }
             $content .= "</div>";
             // Add the content to the block.
             $data['content'] = t($content);

@@ -67,6 +67,11 @@ jQuery(document).ready(function ($) {
             Organism();
         }
         
+        if (jQuery("#edit-step")[0].value === 'thirdPage'){
+            accessionButtons();
+            jQuery("#edit-tree-accession-check").on('click', accessionButtons);
+        }
+        
         if (jQuery("#edit-step")[0].value === 'summarypage'){
             jQuery("#gttn_tpps-status").insertAfter(".tgdr_form_status");
             jQuery("#edit-next").on('click', function(){
@@ -75,14 +80,32 @@ jQuery(document).ready(function ($) {
         }
     }
     
-    var buttons = jQuery('input').filter(function() { return this.id.match(/map_button/); });
+    var buttons = jQuery('input').filter(function() { return (this.id.match(/map_button/) || this.id.match(/map-button/)); });
     jQuery.each(buttons, function(){
+        jQuery(this).attr('type', 'button')
         jQuery(this).click(getCoordinates);
     });
     jQuery("#map_wrapper").hide();
 });
 
 var maps = {};
+
+function accessionButtons(){
+    var acc_check = jQuery("#edit-tree-accession-check");
+    jQuery('div').filter(function() { return this.id.match(/map_wrapper/); }).hide();
+    if (acc_check[0].checked){
+        jQuery("#map_button").hide();
+        jQuery.each(jQuery('input').filter(function() { return (this.id.match(/_map_button/)); }), function() {
+            jQuery(this).show();
+        });
+    }
+    else {
+        jQuery("#map_button").show();
+        jQuery.each(jQuery('input').filter(function() { return (this.id.match(/_map_button/)); }), function() {
+            jQuery(this).hide();
+        });
+    }
+}
 
 function initMap() {
     var mapElements = jQuery('div').filter(function() { return this.id.match(/map_wrapper/); });
@@ -96,7 +119,6 @@ function initMap() {
         maps[species_name + 'total_lat'];
         maps[species_name + 'total_long'];
     });
-    console.log(maps);
 }
 
 function clearMarkers(prefix) {
@@ -128,17 +150,58 @@ function toggleBounce(){
 }
 
 function getCoordinates(){
-    var species_name = this.id.match(/(.*)map_button/)[1];
-    var fid = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_fid')); })[0].innerHTML;
-    var no_header = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_no_header')); })[0].innerHTML;
-    var id_col = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_id_col')); })[0].innerHTML;
-    var lat_col = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_lat_col')); })[0].innerHTML;
-    var long_col = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_long_col')); })[0].innerHTML;
-    console.log(fid);
-    console.log(no_header);
-    console.log(id_col);
-    console.log(lat_col);
-    console.log(long_col);
+    var species_name;
+    if (this.id.match(/(.*)map_button/) !== null){
+        species_name = this.id.match(/(.*)map_button/)[1];
+    }
+    else {
+        species_name = "";
+    }
+    
+    var fid, no_header, id_col, lat_col, long_col;
+    try{
+        if (jQuery("#edit-step")[0].value === 'thirdPage'){
+            var species_number;
+            if (species_name !== ""){
+                species_number = 'species-' + jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'species_number')); })[0].innerHTML;
+            }
+            else {
+                species_number = "";
+            }
+            fid = jQuery('input').filter(function() { return this.name.match(new RegExp('tree-accession\\[?' + species_number + '\\]?\\[file\\]\\[fid\\]')); })[0].value;
+            no_header = jQuery('input').filter(function() { return this.name.match(new RegExp('tree-accession\\[?' + species_number + '\\]?\\[file\\]\\[no-header\\]')); })[0].checked;
+            var cols = jQuery('select').filter(function() { return this.id.match(new RegExp('edit-tree-accession-?' + species_number + '-file-columns-')); });
+            jQuery.each(cols, function(){
+                var col_name = this.name.match(new RegExp('tree-accession\\[?' + species_number + '\\]?\\[file\\]\\[columns\\]\\[(.*)\\]'))[1];
+                if (jQuery(this)[0].value === "1"){
+                    id_col = col_name;
+                }
+                if (jQuery(this)[0].value === "4"){
+                    lat_col = col_name;
+                }
+                if (jQuery(this)[0].value === "5"){
+                    long_col = col_name;
+                }
+            });
+        }
+        else {
+            fid = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_fid')); })[0].innerHTML;
+            no_header = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_no_header')); })[0].innerHTML;
+            id_col = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_id_col')); })[0].innerHTML;
+            lat_col = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_lat_col')); })[0].innerHTML;
+            long_col = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_long_col')); })[0].innerHTML;
+        }
+        
+    }
+    catch(err){
+        console.log(err);
+        return;
+    }
+    
+    if (typeof id_col === 'undefined' || typeof lat_col === 'undefined' || typeof long_col === 'undefined'){
+        jQuery("#" + species_name + "map_wrapper").hide();
+        return;
+    }
     
     var request = jQuery.post('gttn-accession', {
         fid: fid,
@@ -149,12 +212,20 @@ function getCoordinates(){
     });
     
     request.done(function (data) {
-        console.log(jQuery.fn.updateMap(data, species_name));
+        jQuery.fn.updateMap(data, species_name);
     });
 }
 
 jQuery.fn.updateMap = function(locations, prefix = "") {
     jQuery("#" + prefix + "map_wrapper").show();
+    if (jQuery("#edit-step")[0].value === 'thirdPage'){
+        jQuery("#" + prefix + "map_wrapper").css({"height": "450px"});
+        jQuery("#" + prefix + "map_wrapper").css({"max-width": "800px"});
+    }
+    else {
+        jQuery("#" + prefix + "map_wrapper").css({"height": "100px"});
+    }
+    
     clearMarkers(prefix);
     maps[prefix + 'total_lat'] = 0;
     maps[prefix + 'total_long'] = 0;
@@ -167,5 +238,4 @@ jQuery.fn.updateMap = function(locations, prefix = "") {
     }
     var center = new google.maps.LatLng(maps[prefix + 'total_lat']/locations.length, maps[prefix + 'total_long']/locations.length);
     maps[prefix].panTo(center);
-    console.log(jQuery("#" + prefix + "map_wrapper"));
 };
