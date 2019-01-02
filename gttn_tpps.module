@@ -24,6 +24,7 @@ require_once 'includes/status_bar.inc';
 require_once 'includes/save_file_columns.inc';
 require_once 'includes/file_parsing.inc';
 require_once 'includes/accession_coordinates.inc';
+require_once 'includes/get_access.inc';
 require_once 'ajax/gttn_tpps_ajax.php';
 
 /**
@@ -578,59 +579,73 @@ function gttn_tpps_main($form, &$form_state){
         // Require the user to login, once they do, bring them back to GTTN-TPPS.
         drupal_goto('user/login', array('query' => $destination));
     }
-    // If the user is logged in and has a specific accession number in their link,
-    // then load the incomplete form associated with their username and the
-    // provided accesison number.
-    elseif (isset($params['accession']) and !isset($form_state['stage'])) {
-        // Get form state based on username and provided accession number.
-        $old_form_state = variable_get('gttn_tpps_incomplete_' . $user->mail . $params['accession']);
-        // Load saved values, step, accession, and dbxref_id from old form state
-        // into new form state.
-        $form_state['saved_values'] = $old_form_state['saved_values'];
-        $form_state['stage'] = $old_form_state['stage'];
-        $form_state['accession'] = $old_form_state['accession'];
-        $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
-    }
-    // If the user is logged in with a plain link, then we need to check if they
-    // are trying to load the front page or a different page.
+    // User must now be logged in.
     else {
-        // If the user is trying to load the front page, then set the step to 
-        // front page and create the front page.
-        if (!isset($form_state['stage'])){
-            
-            $form_state['stage'] = 'frontpage';
-            
-            // Create the front page.
-            gttn_tpps_front_create_form($form, $form_state);
-            
-            // Add JavaScript.
-            drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
-
-            return $form;
-        }
-        // If the user is trying to load a different page, then the accession 
-        // must have been set in the front page step. Load the form associated 
-        // with that accession number and the user's username, then create the 
-        // appropriate page.
-        else {
-            // If there is no form associated with both the username and the 
-            // accession number, then initialize a new project and create the 
-            // new persistant variable in the database so that it can be loaded.
-            if (!isset($form_state['saved_values']['frontpage']['accession']) or (isset($form_state['saved_values']['frontpage']['accession']) and $form_state['saved_values']['frontpage']['accession'] === 'new')){
-                // Initialize project.
-                gttn_tpps_init_project($form, $form_state);
-                // Create new persistant variable in the database to load later.
-                variable_set('gttn_tpps_incomplete_' . $user->mail . $form_state['saved_values']['frontpage']['accession'], $form_state);
+        // Check that the user has the correct permissions to access the form.
+        $access = gttn_tpps_get_access($user);
+        
+        // User must have the gttn role to view the gttn form.
+        if (!empty($access['gttn'])){
+            // If the user is logged in and has a specific accession number in their link,
+            // then load the incomplete form associated with their username and the
+            // provided accesison number.
+            if (isset($params['accession']) and !isset($form_state['stage'])) {
+                // Get form state based on username and provided accession number.
+                $old_form_state = variable_get('gttn_tpps_incomplete_' . $user->mail . $params['accession']);
+                // Load saved values, step, accession, and dbxref_id from old form state
+                // into new form state.
+                $form_state['saved_values'] = $old_form_state['saved_values'];
+                $form_state['stage'] = $old_form_state['stage'];
+                $form_state['accession'] = $old_form_state['accession'];
+                $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
             }
-            // Load the persistant variable from the database based on the username
-            // and accession number from the front page.
-            $old_form_state = variable_get('gttn_tpps_incomplete_' . $user->mail . $form_state['saved_values']['frontpage']['accession']);
-            // Load saved values, step, accession, and dbxref_id from old form 
-            // state into new form state.
-            $form_state['saved_values'] = $old_form_state['saved_values'];
-            $form_state['stage'] = $old_form_state['stage'];
-            $form_state['accession'] = $old_form_state['accession'];
-            $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
+            // If the user is logged in with a plain link, then we need to check if they
+            // are trying to load the front page or a different page.
+            else {
+                // If the user is trying to load the front page, then set the step to 
+                // front page and create the front page.
+                if (!isset($form_state['stage'])){
+
+                    $form_state['stage'] = 'frontpage';
+
+                    // Create the front page.
+                    gttn_tpps_front_create_form($form, $form_state);
+
+                    // Add JavaScript.
+                    drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
+
+                    return $form;
+                }
+                // If the user is trying to load a different page, then the accession 
+                // must have been set in the front page step. Load the form associated 
+                // with that accession number and the user's username, then create the 
+                // appropriate page.
+                else {
+                    // If there is no form associated with both the username and the 
+                    // accession number, then initialize a new project and create the 
+                    // new persistant variable in the database so that it can be loaded.
+                    if (!isset($form_state['saved_values']['frontpage']['accession']) or (isset($form_state['saved_values']['frontpage']['accession']) and $form_state['saved_values']['frontpage']['accession'] === 'new')){
+                        // Initialize project.
+                        gttn_tpps_init_project($form, $form_state);
+                        // Create new persistant variable in the database to load later.
+                        variable_set('gttn_tpps_incomplete_' . $user->mail . $form_state['saved_values']['frontpage']['accession'], $form_state);
+                    }
+                    // Load the persistant variable from the database based on the username
+                    // and accession number from the front page.
+                    $old_form_state = variable_get('gttn_tpps_incomplete_' . $user->mail . $form_state['saved_values']['frontpage']['accession']);
+                    // Load saved values, step, accession, and dbxref_id from old form 
+                    // state into new form state.
+                    $form_state['saved_values'] = $old_form_state['saved_values'];
+                    $form_state['stage'] = $old_form_state['stage'];
+                    $form_state['accession'] = $old_form_state['accession'];
+                    $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
+                }
+            }
+        }
+        else {
+            dpm("You do not have access to the gttn form. Please contact a site administrator.");
+            $form_state['stage'] = "Not Authorized";
+            return $form;
         }
     }
     
