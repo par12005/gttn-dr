@@ -1,10 +1,10 @@
 <?php
 // Define path to JavaScript file and page names. 
 define("GTTN_TPPS_JS_PATH", '/js/gttn_tpps.js');
-define("GTTN_TYPE_PAGE", 'submissionType');
-define("GTTN_PAGE_1", 'Hellopage');
-define("GTTN_PAGE_3", 'thirdPage');
-define("GTTN_PAGE_4", 'fourthPage');
+define("GTTN_TYPE_PAGE", 1);
+define("GTTN_PAGE_1", 2);
+define("GTTN_PAGE_3", 3);
+define("GTTN_PAGE_4", 4);
 // Require additional files with helper functions.
 require_once 'includes/create_record.inc';
 require_once 'includes/flatten.inc';
@@ -520,7 +520,7 @@ function gttn_tpps_page_build(&$page){
     $step = $page['content']['system_main']['step']['#default_value'];
     // Do not add the side bar if we are on the front page, the first page, or 
     // the summary page.
-    if ($step != 'frontpage' and $step != GTTN_PAGE_1 and $step != 'summarypage'){
+    if ($step != 'frontpage' and $step != GTTN_TYPE_PAGE and $step != 'summarypage'){
         // Load the existing block.
         $blockObject = block_load('views', 'gttn_tpps_status');
         // Add a title.
@@ -734,6 +734,12 @@ function gttn_tpps_main_validate(&$form, &$form_state){
     
     // Call the appropriate validation function based on the form stage. 
     switch ($form_state['stage']){
+        case GTTN_TYPE_PAGE:
+            require_once('forms/validate/submission_type.php');
+            submission_type_validate_form($form, $form_state);
+            drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
+            break;
+        
         case GTTN_PAGE_1:
             require_once('forms/validate/page_1.php');
             page_1_validate_form($form, $form_state);
@@ -815,28 +821,6 @@ function gttn_tpps_main_submit($form, &$form_state){
             $persist = FALSE;
             $form_state['stage'] = GTTN_TYPE_PAGE;
             break;
-        
-        case GTTN_TYPE_PAGE:
-            $form_state['stage'] = GTTN_PAGE_1;
-            break;
-
-        case GTTN_PAGE_1:
-            if ($form_state['triggering_element']['#value'] == 'Back'){
-                $form_state['stage'] = GTTN_TYPE_PAGE;
-            }
-            else{
-                $form_state['stage'] = GTTN_PAGE_3;
-            }
-            break;
-            
-        case GTTN_PAGE_3:
-            if ($form_state['triggering_element']['#value'] == 'Back'){
-                $form_state['stage'] = GTTN_PAGE_1;
-            }
-            else{
-                $form_state['stage'] = GTTN_PAGE_4;
-            }
-            break;
             
         case GTTN_PAGE_4:
             if ($form_state['triggering_element']['#value'] == 'Back'){
@@ -871,7 +855,17 @@ function gttn_tpps_main_submit($form, &$form_state){
             break;
         
         default:
-            print_r('Invalid form stage');
+            if (gettype($form_state['stage']) == 'integer'){
+                if ($form_state['triggering_element']['#value'] == 'Back'){
+                    $form_state['stage']--;
+                }
+                else{
+                    $form_state['stage']++;
+                }
+            }
+            else {
+                dpm("Invalid form stage");
+            }
             break;
     }
     
@@ -1027,8 +1021,8 @@ function gttn_tpps_block_view_alter(&$data, $block) {
                     // between the page sections.
                     if ($val){
                         $step_arr = array(
-                          1 => 'Author and Species Information',
-                          2 => 'Experimental Conditions',
+                          1 => 'Submission Type',
+                          2 => 'Author and Species Information',
                           3 => 'Tree Accession',
                           4 => 'Submit Data'
                         );

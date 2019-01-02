@@ -10,14 +10,26 @@ function gttn_tpps_flatten($state){
     unset($data['summarypage']);
     unset($data['form_build_id']);
     
-    $page_1 = &$data[GTTN_PAGE_1];
-    $org = &$page_1['organism'];
-    
-    if (isset($page_1['#cleared']) and $page_1['#cleared']){
+    $type_page = &$data[GTTN_TYPE_PAGE];
+    if (!empty($type_page['#cleared'])){
         $data['#page_1_cleared'] = TRUE;
     }
     else {
         $data['#page_1_cleared'] = FALSE;
+    }
+    if (!empty($type_page['type'])){
+        $data["Submission Type"] = $type_page['type'];
+    }
+    unset($data[GTTN_TYPE_PAGE]);
+    
+    $page_1 = &$data[GTTN_PAGE_1];
+    $org = &$page_1['organism'];
+    
+    if (isset($page_1['#cleared']) and $page_1['#cleared']){
+        $data['#page_2_cleared'] = TRUE;
+    }
+    else {
+        $data['#page_2_cleared'] = FALSE;
     }
     if (isset($org['number'])){
         $data['#number_organisms'] = $org['number'];

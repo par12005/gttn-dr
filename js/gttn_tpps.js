@@ -63,11 +63,11 @@ jQuery(document).ready(function ($) {
         jQuery("#progress").css('font-size', '1.5rem');
         jQuery("#progress").css('margin-bottom', '30px');
         
-        if (jQuery("#edit-step")[0].value === 'Hellopage'){
+        if (jQuery("#edit-step")[0].value == 2){
             Organism();
         }
         
-        if (jQuery("#edit-step")[0].value === 'thirdPage'){
+        if (jQuery("#edit-step")[0].value == 3){
             accessionButtons();
             jQuery("#edit-tree-accession-check").on('click', accessionButtons);
         }
@@ -93,7 +93,7 @@ var maps = {};
 function accessionButtons(){
     var acc_check = jQuery("#edit-tree-accession-check");
     jQuery('div').filter(function() { return this.id.match(/map_wrapper/); }).hide();
-    if (acc_check[0].checked){
+    if (typeof acc_check[0] !== 'undefined' && acc_check[0].checked){
         jQuery("#map_button").hide();
         jQuery.each(jQuery('input').filter(function() { return (this.id.match(/_map_button/)); }), function() {
             jQuery(this).show();
@@ -160,7 +160,7 @@ function getCoordinates(){
     
     var fid, no_header, id_col, lat_col, long_col;
     try{
-        if (jQuery("#edit-step")[0].value === 'thirdPage'){
+        if (jQuery("#edit-step")[0].value == 3){
             var species_number;
             if (species_name !== ""){
                 species_number = 'species-' + jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'species_number')); })[0].innerHTML;
@@ -218,7 +218,7 @@ function getCoordinates(){
 
 jQuery.fn.updateMap = function(locations, prefix = "") {
     jQuery("#" + prefix + "map_wrapper").show();
-    if (jQuery("#edit-step")[0].value === 'thirdPage'){
+    if (jQuery("#edit-step")[0].value == 3){
         jQuery("#" + prefix + "map_wrapper").css({"height": "450px"});
         jQuery("#" + prefix + "map_wrapper").css({"max-width": "800px"});
     }

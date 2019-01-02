@@ -7,9 +7,9 @@ function submission_type_create_form(&$form, &$form_state){
       '#title' => t('Please select the submission type: *'),
       '#options' => array(
         0 => '- Select -',
-        1 => 'New Trees',
-        2 => 'Old Trees',
-        3 => 'Mixed new/old Trees'
+        'New Trees' => 'New Trees',
+        'Old Trees' => 'Old Trees',
+        'Mixed new/old Trees' => 'Mixed new/old Trees'
       )
     );
     
