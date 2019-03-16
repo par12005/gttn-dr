@@ -82,12 +82,12 @@ function gttn_tpps_front_create_form(&$form, $form_state){
     
     // Front page introductory text.
     $prefix_text = "<div>Welcome to GTTN-TPPS!<br><br>To get started, you will n"
-        . "eed to have a few things handy:<br><ul><li>An enabled and approved Tr"
-        . "eeGenes account - you can create one <a href='$base_url/user/register"
-        . "'>here</a>. There may be a waiting period to have your account approv"
-        . "ed by a TreeGenes administrator.</li></ul>If you would like to submit"
-        . " your data, you can click the button 'Continue to GTTN-TPPS' below!<b"
-        . "r><br></div>";
+        . "eed to have a few things handy:<br><ul><li>An enabled and approved GT"
+        . "TN account - you can create one <a href='$base_url/user/register'>her"
+        . "e</a>. There may be a waiting period to have your account approved by"
+        . " a GTTN administrator.</li></ul>If you would like to submit your data"
+        . ", you can click the button 'Continue to GTTN-TPPS' below!<br><br></di"
+        . "v>";
     
     // Add the introductory text to the first form element.
     if (isset($form['accession'])){

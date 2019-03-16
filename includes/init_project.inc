@@ -5,7 +5,7 @@ function gttn_tpps_init_project($form, &$form_state){
     //Get next dbxref_id and accession # for project
     $and = db_and()
         ->condition('d.accession', db_like('GTTN-TGDR') . '%', 'LIKE')
-        ->condition('d.db_id', '95');
+        ->condition('d.db_id', '31');
     
     $accession_results = db_select('chado.dbxref', 'd')
         ->fields('d', array('accession'))
@@ -35,7 +35,7 @@ function gttn_tpps_init_project($form, &$form_state){
     
     //make new record in temp table
     $values = array(
-      'db_id' => '95',
+      'db_id' => '31',
       'accession' => $accession
     );
     
