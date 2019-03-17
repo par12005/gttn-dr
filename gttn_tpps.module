@@ -208,9 +208,9 @@ function gttn_tpps_mail($key, &$message, $params){
             // provide them with the reason the admin included as to why their 
             // submission was rejected.
             $message['body'][] = "To whom it may concern:<br><br>Unfortunately, "
-            . "your submission to TPPS has been rejected. If you would like, you"
+            . "your submission to GTTN-TPPS has been rejected. If you would like, you"
             . " can log into the TreeGenes website and edit your submission <a h"
-            . "ref='{$params['base_url']}/user/{$params['uid']}/TPPS'>here</a><b"
+            . "ref='{$params['base_url']}/user/{$params['uid']}/gttn'>here</a><b"
             . "r><br>The administrator who rejected your submission provided the"
             . " following reason:<br><blockquote>{$params['reject-reason']}</blo"
             . "ckquote>";

@@ -175,7 +175,7 @@ function gttn_tpps_admin_panel_submit($form, &$form_state){
 	// Get the full name of the submission.
     $var_name = $form_state['values']['form_table'];
     // Save the email and accession number of the form in case it needs to be rejected.
-	$suffix = substr($var_name, 14);
+	$suffix = substr($var_name, 19);
     // Get the user email to be notified.
 	$to = substr($var_name, 19, -12);
 	// Get the state of the submission based on the full name.
