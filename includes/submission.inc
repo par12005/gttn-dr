@@ -61,6 +61,7 @@ class Submission {
     }
     
     public function save(){
+        $this->last_access = time();
         $record = new stdClass();
         $record->submission_id = $this->id;
         $record->uid = $this->author;
