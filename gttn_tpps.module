@@ -24,6 +24,7 @@ require_once 'includes/status_bar.inc';
 require_once 'includes/save_file_columns.inc';
 require_once 'includes/file_parsing.inc';
 require_once 'includes/accession_coordinates.inc';
+require_once 'includes/submission.inc';
 require_once 'ajax/gttn_tpps_ajax.php';
 
 /**
@@ -578,9 +579,13 @@ function gttn_tpps_main($form, &$form_state){
         // Require the user to login, once they do, bring them back to GTTN-TPPS.
         drupal_goto('user/login', array('query' => $destination));
     }
-    // If the user is logged in and has a specific accession number in their link,
+    elseif (isset($params['submission_id']) and !isset($form_state['stage'])) {
+        $form_state['submission'] = gttn_tpps_load_submission($params['submission_id']);
+        $form_state['stage'] = $form_state['submission']->get_stage();
+    }
+    /*// If the user is logged in and has a specific accession number in their link,
     // then load the incomplete form associated with their username and the
-    // provided accesison number.
+    // provided accession number.
     elseif (isset($params['accession']) and !isset($form_state['stage'])) {
         // Get form state based on username and provided accession number.
         $old_form_state = variable_get('gttn_tpps_incomplete_' . $user->mail . $params['accession']);
@@ -590,8 +595,29 @@ function gttn_tpps_main($form, &$form_state){
         $form_state['stage'] = $old_form_state['stage'];
         $form_state['accession'] = $old_form_state['accession'];
         $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
+    }*/
+    else{
+        if (!isset($form_state['stage'])){
+            $form_state['stage'] = 0;
+            
+            gttn_tpps_front_create_form($form, $form_state);
+            
+            drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
+            
+            return $form;
+        }
+        else {
+            if (!isset($form_state['saved_values']['frontpage']['accession']) or (isset($form_state['saved_values']['frontpage']['accession']) and $form_state['saved_values']['frontpage']['accession'] === 'new')){
+                // Initialize project.
+                $form_state['submission'] = new Submission();
+                $form_state['submission']->init();
+                $form_state['saved_values']['frontpage']['accession'] = $form_state['submission']->get_id();
+            }
+            $form_state['submission'] = gttn_tpps_load_submission($form_state['saved_values']['frontpage']['accession']);
+            $form_state['stage'] = $form_state['submission']->get_stage();
+        }
     }
-    // If the user is logged in with a plain link, then we need to check if they
+    /*// If the user is logged in with a plain link, then we need to check if they
     // are trying to load the front page or a different page.
     else {
         // If the user is trying to load the front page, then set the step to 
@@ -632,7 +658,7 @@ function gttn_tpps_main($form, &$form_state){
             $form_state['accession'] = $old_form_state['accession'];
             $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
         }
-    }
+    }*/
     
     // Hidden form step (AKA stage) element.
     $form['step'] = array(
@@ -641,7 +667,17 @@ function gttn_tpps_main($form, &$form_state){
       '#default_value' => $form_state['stage'],
     );
     
-    // Hidden form accession element.
+    if (!isset($form_state['submission'])){
+        $form_state['submission'] = new Submission();
+        $form_state['submission']->init();
+    }
+    
+    $form['submission_id'] = array(
+      '#type' => 'hidden',
+      '#value' => $form_state['submission']->get_id(),
+    );
+    
+    /*// Hidden form accession element.
     $form['accession'] = array(
       '#type' => 'hidden',
       '#value' => $form_state['accession'],
@@ -651,7 +687,7 @@ function gttn_tpps_main($form, &$form_state){
     // set, then initialize the project.
     if (!isset($form_state['dbxref_id']) or !isset($form_state['accession'])){
         gttn_tpps_init_project($form, $form_state);
-    }
+    }*/
     
     // Add the overhead status bar to the form.
     gttn_tpps_status_bar($form, $form_state);

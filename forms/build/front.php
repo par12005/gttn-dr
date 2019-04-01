@@ -23,6 +23,14 @@ function gttn_tpps_front_create_form(&$form, $form_state){
         // Initialize options array.
         $options_arr = array('new' => 'Create new GTTN-TPPS Submission');
         
+        $results = db_select('gttn_tpps_submissions', 's')
+            ->fields('s', array('submission_id', 'submission'))
+            ->condition('uid', $user->uid)
+            ->execute();
+        foreach($results as $result){
+            $options_arr[$result->submission_id] = unserialize($result->submission)->title;
+        }
+        /*
         // Load all of the incomplete submission variables associated with the 
         // user's username.
         $results = db_select("public.variable", "variable")
@@ -56,7 +64,7 @@ function gttn_tpps_front_create_form(&$form, $form_state){
                     ->condition($and)
                     ->execute();
             }
-        }
+        }*/
         
         // If the options array has more than one option, then that means that 
         // the user has incomplete submissions that they can choose from, so we

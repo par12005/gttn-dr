@@ -12,7 +12,31 @@ function gttn_tpps_install(){
         $result .= exec('drush pm-enable --resolve-dependencies ultimate_cron -y');
         print_r($result);
     }
+    
+    $query = db_select('pg_class', 'p')
+        ->fields('p')
+        ->condition('relname', 'gttn_tpps_submission_submission_id_seq')
+        ->execute();
+    
+    if (!($result = $query->fetchObject())){
+        // Create sequence gttn_tpps_submission_submission_id_seq if it 
+        // does not exist. This sequence will keep track of the submission_id.
+        db_query('CREATE SEQUENCE gttn_tpps_submission_submission_id_seq START 1;');
+    }
+    
+    if (!db_table_exists('gttn_tpps_submissions')){
+        db_query('CREATE TABLE gttn_tpps_submissions ('
+            . 'submission_id bigint NOT NULL PRIMARY KEY DEFAULT '
+                . 'nextval(\'gttn_tpps_submission_submission_id_seq\'::regclass),'
+            . 'submission bytea NOT NULL,'
+            . 'uid bigint NOT NULL,'
+            . 'CONSTRAINT gttn_tpps_submissions_uid_fkey FOREIGN KEY (uid) REFERENCES users(uid) ON DELETE CASCADE'
+            . ');');
+    }
+    
+    gttn_tpps_cvterm_variables();
 }
+
 /**
  * Implements hook_uninstall().
  *
@@ -38,9 +62,15 @@ function gttn_tpps_uninstall(){
    
 	// Remove all gttn-tpps file usage from the database. 
     foreach ($gttn_tpps_usage as $row){
-        dpm($row);
         file_usage_delete(file_load($row->fid), $row->module, $row->type, $row->id, $row->count);
     }
+    
+    if (db_table_exists('gttn_tpps_submissions')){
+        db_query('DROP TABLE gttn_tpps_submissions;');
+    }
+}
+
+function gttn_tpps_cvterm_variables(){
     
 }
 
