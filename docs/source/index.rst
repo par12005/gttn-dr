@@ -13,5 +13,6 @@ Welcome to GTTN-DR's documentation!
    :numbered:
 
    intro
+   overview
    features
    example
