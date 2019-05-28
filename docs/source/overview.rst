@@ -10,7 +10,7 @@ Genotype and Phenotype Data
 The core of the data that GTTN-TPPS will collect is the Genotype and Phenotype data. The genotype data might include data in the form of SNPs, genotyping assays, SSRs, etc. The phenotype data might include data in the form of DART data, wood anatomy, etc. DART data could include a series of files with peak data for various isotopes found in a DART scan. Wood anatomy data could include images of microscope slides, along with the specific anatomical features found within the slide in question. Several organizations have expressed interest in providing reference data to GTTN, including:
 
  * `Royal Botanic Gardens, KEW`_ (Wood Anatomy)
- * `Ghent University, Belgium`_ (DART Isotope)
+ * `Ghent University/Roayl Museum for Central Africa, Belgium`_ (DART Isotope)
  * `Agroisolab UK`_ (Stable Isotope)
  * `Thünen Institute of Forest Genetics`_ (Genetic Markers)
 
