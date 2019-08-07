@@ -62,12 +62,24 @@ function gttn_tpps_submit_page_3(&$form_state, $project_id, &$file_rank, $organi
     $organism_number = $firstpage['organism']['number'];
     
     $stock_ids = array();
+    $org_term_id = chado_get_cvterm(array(
+      'name' => 'organism',
+      'cv_id' => array(
+        'name' => 'obi',
+      ),
+    ))->cvterm_id;
+    $url_id = chado_get_cvterm(array(
+      'name' => 'url',
+      'cv_id' => array(
+        'name' => 'schema',
+      ),
+    ))->cvterm_id;
     
     if ($organism_number == '1' or $thirdpage['tree-accession']['check'] == 0){
         //single file
         gttn_tpps_create_record('projectprop', array(
           'project_id' => $project_id,
-          'type_id' => '2836',
+          'type_id' => $url_id,
           'value' => file_create_url(file_load($thirdpage['tree-accession']['file'])->uri),
           'rank' => $file_rank
         ));
@@ -95,7 +107,7 @@ function gttn_tpps_submit_page_3(&$form_state, $project_id, &$file_rank, $organi
                 $tree_id = $content[$i][$id_col_accession_name];
                 $stock_ids[$tree_id] = gttn_tpps_create_record('stock', array(
                   'uniquename' => t($tree_id),
-                  'type_id' => '2824',
+                  'type_id' => $org_term_id,
                   'organism_id' => $organism_ids[1],
                 ));
             }
@@ -134,7 +146,7 @@ function gttn_tpps_submit_page_3(&$form_state, $project_id, &$file_rank, $organi
                 //create record with the new id
                 $stock_ids[$tree_id] = gttn_tpps_create_record('stock', array(
                   'uniquename' => t($tree_id),
-                  'type_id' => '2824',
+                  'type_id' => $org_term_id,
                   'organism_id' => $id,
                 ));
             }
@@ -208,7 +220,7 @@ function gttn_tpps_submit_page_3(&$form_state, $project_id, &$file_rank, $organi
         for($i = 1; $i <= $organism_number; $i++){
             gttn_tpps_create_record('projectprop', array(
               'project_id' => $project_id,
-              'type_id' => '2836',
+              'type_id' => $url_term_id,
               'value' => drupal_realpath(file_load($thirdpage['tree-accession']["species-$i"]['file'])->uri),
               'rank' => $file_rank
             ));
@@ -234,7 +246,7 @@ function gttn_tpps_submit_page_3(&$form_state, $project_id, &$file_rank, $organi
                 $tree_id = $content[$j][$id_col_accession_name];
                 $stock_ids[$tree_id] = gttn_tpps_create_record('stock', array(
                   'uniquename' => t($tree_id),
-                  'type_id' => '2824',
+                  'type_id' => $org_term_id,
                   'organism_id' => $organism_ids[$i],
                 ));
                 
