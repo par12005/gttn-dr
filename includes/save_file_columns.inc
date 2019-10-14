@@ -1,78 +1,85 @@
 <?php
 
-function gttn_tpps_save_file_columns(&$form, &$form_state){
+/**
+ * @file
+ */
 
-    if ($form_state['stage'] == GTTN_PAGE_3){
-        if ($form_state['saved_values'][GTTN_PAGE_1]['organism']['number'] == '1' or $form_state['values']['tree-accession']['check'] == '0'){
-            if (($file = file_load($form_state['values']['tree-accession']['file'])) and $form_state['values']['tree-accession']['file'] != 0){
-                file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
-            }
+/**
+ *
+ */
+function gttn_tpps_save_file_columns(&$form, &$form_state) {
 
-            $form_state['values']['tree-accession']['file-columns'] = array();
+  if ($form_state['stage'] == GTTN_PAGE_3) {
+    if ($form_state['saved_values'][GTTN_PAGE_1]['organism']['number'] == '1' or $form_state['values']['tree-accession']['check'] == '0') {
+      if (($file = file_load($form_state['values']['tree-accession']['file'])) and $form_state['values']['tree-accession']['file'] != 0) {
+        file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
+      }
 
-            foreach ($form['tree-accession']['file']['columns'] as $col => $val){
-                if (isset($form['tree-accession']['file']['columns'][$col]['#value']) and $col[0] != '#'){
-                    $form_state['values']['tree-accession']['file-columns'][$col] = $form['tree-accession']['file']['columns'][$col]['#value'];
-                }
-            }
+      $form_state['values']['tree-accession']['file-columns'] = array();
+
+      foreach ($form['tree-accession']['file']['columns'] as $col => $val) {
+        if (isset($form['tree-accession']['file']['columns'][$col]['#value']) and $col[0] != '#') {
+          $form_state['values']['tree-accession']['file-columns'][$col] = $form['tree-accession']['file']['columns'][$col]['#value'];
         }
-        else {
-            for ($i = 1; $i <= $form_state['saved_values'][GTTN_PAGE_1]['organism']['number']; $i++){
-                if (($file = file_load($form_state['values']['tree-accession']["species-$i"]['file'])) and $form_state['values']['tree-accession']["species-$i"]['file'] != 0){
-                    file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
-                }
-
-                $form_state['values']['tree-accession']["species-$i"]['file-columns'] = array();
-
-                if (isset($form['tree-accession']["species-$i"]['file']['#value']['columns'])){
-                    foreach ($form['tree-accession']["species-$i"]['file']['#value']['columns'] as $col => $val){
-                        if ($col[0] != '#'){
-                            $form_state['values']['tree-accession']["species-$i"]['file-columns'][$col] = $form['tree-accession']["species-$i"]['file']['#value']['columns'][$col];
-                        }
-                    }
-                }
-            }
-        }
+      }
     }
-    elseif ($form_state['stage'] == GTTN_PAGE_4){
-        if (isset($form['organism-1']['genotype'])){
-            for ($i = 1; $i <= $form_state['saved_values'][GTTN_PAGE_1]['organism']['number']; $i++){
-
-                if ($form_state['values']["organism-$i"]['genotype']['marker-type']['Other'] != '0' or $form_state['values']["organism-$i"]['genotype']['marker-type']['SSRs/cpSSRs'] != '0'){
-                    if (($file = file_load($form_state['values']["organism-$i"]['genotype']['file'])) and $form_state['values']["organism-$i"]['genotype']['file'] != 0){
-                        file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
-                    }
-
-                    $form_state['values']["organism-$i"]['genotype']['file-columns'] = array();
-
-                    if (isset($form["organism-$i"]['genotype']['file']['#value']['columns'])){
-                        foreach ($form["organism-$i"]['genotype']['file']['#value']['columns'] as $col => $val){
-                            if ($col[0] != '#'){
-                                $form_state['values']["organism-$i"]['genotype']['file-columns'][$col] = $form["organism-$i"]['genotype']['file']['#value']['columns'][$col];
-                            }
-                        }
-                    }
-                }
-            }
+    else {
+      for ($i = 1; $i <= $form_state['saved_values'][GTTN_PAGE_1]['organism']['number']; $i++) {
+        if (($file = file_load($form_state['values']['tree-accession']["species-$i"]['file'])) and $form_state['values']['tree-accession']["species-$i"]['file'] != 0) {
+          file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
         }
 
-        if (isset($form['organism-1']['phenotype'])){
-            for ($i = 1; $i <= $form_state['saved_values'][GTTN_PAGE_1]['organism']['number']; $i++){
-                if (($file = file_load($form_state['values']["organism-$i"]['phenotype']['file'])) and $form_state['values']["organism-$i"]['phenotype']['file'] != 0){
-                    file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
-                }
+        $form_state['values']['tree-accession']["species-$i"]['file-columns'] = array();
 
-                $form_state['values']["organism-$i"]['phenotype']['file-columns'] = array();
-
-                if (isset($form["organism-$i"]['phenotype']['file']['#value']['columns'])){
-                    foreach ($form["organism-$i"]['phenotype']['file']['#value']['columns'] as $col => $val){
-                        if ($col[0] != '#'){
-                            $form_state['values']["organism-$i"]['phenotype']['file-columns'][$col] = $form["organism-$i"]['phenotype']['file']['#value']['columns'][$col];
-                        }
-                    }
-                }
+        if (isset($form['tree-accession']["species-$i"]['file']['#value']['columns'])) {
+          foreach ($form['tree-accession']["species-$i"]['file']['#value']['columns'] as $col => $val) {
+            if ($col[0] != '#') {
+              $form_state['values']['tree-accession']["species-$i"]['file-columns'][$col] = $form['tree-accession']["species-$i"]['file']['#value']['columns'][$col];
             }
+          }
         }
+      }
     }
-    return;
+  }
+  elseif ($form_state['stage'] == GTTN_PAGE_4) {
+    if (isset($form['organism-1']['genotype'])) {
+      for ($i = 1; $i <= $form_state['saved_values'][GTTN_PAGE_1]['organism']['number']; $i++) {
+
+        if ($form_state['values']["organism-$i"]['genotype']['marker-type']['Other'] != '0' or $form_state['values']["organism-$i"]['genotype']['marker-type']['SSRs/cpSSRs'] != '0') {
+          if (($file = file_load($form_state['values']["organism-$i"]['genotype']['file'])) and $form_state['values']["organism-$i"]['genotype']['file'] != 0) {
+            file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
+          }
+
+          $form_state['values']["organism-$i"]['genotype']['file-columns'] = array();
+
+          if (isset($form["organism-$i"]['genotype']['file']['#value']['columns'])) {
+            foreach ($form["organism-$i"]['genotype']['file']['#value']['columns'] as $col => $val) {
+              if ($col[0] != '#') {
+                $form_state['values']["organism-$i"]['genotype']['file-columns'][$col] = $form["organism-$i"]['genotype']['file']['#value']['columns'][$col];
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (isset($form['organism-1']['phenotype'])) {
+      for ($i = 1; $i <= $form_state['saved_values'][GTTN_PAGE_1]['organism']['number']; $i++) {
+        if (($file = file_load($form_state['values']["organism-$i"]['phenotype']['file'])) and $form_state['values']["organism-$i"]['phenotype']['file'] != 0) {
+          file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
+        }
+
+        $form_state['values']["organism-$i"]['phenotype']['file-columns'] = array();
+
+        if (isset($form["organism-$i"]['phenotype']['file']['#value']['columns'])) {
+          foreach ($form["organism-$i"]['phenotype']['file']['#value']['columns'] as $col => $val) {
+            if ($col[0] != '#') {
+              $form_state['values']["organism-$i"]['phenotype']['file-columns'][$col] = $form["organism-$i"]['phenotype']['file']['#value']['columns'][$col];
+            }
+          }
+        }
+      }
+    }
+  }
+  return;
 }

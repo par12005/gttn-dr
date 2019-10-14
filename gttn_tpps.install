@@ -1,47 +1,52 @@
 <?php
 
 /**
+ * @file
+ */
+
+/**
  * Implements hook_install().
- * 
+ *
  * This function checks if Ultimate Cron is installed, and installs it if necessary.
  */
-function gttn_tpps_install(){
-    
-    if (!module_exists('ultimate_cron')){
-        $result = exec('drush pm-download ultimate_cron');
-        $result .= exec('drush pm-enable --resolve-dependencies ultimate_cron -y');
-        print_r($result);
-    }
+function gttn_tpps_install() {
+
+  if (!module_exists('ultimate_cron')) {
+    $result = exec('drush pm-download ultimate_cron');
+    $result .= exec('drush pm-enable --resolve-dependencies ultimate_cron -y');
+    print_r($result);
+  }
 }
+
 /**
  * Implements hook_uninstall().
  *
  * This function removes all complete and incomplete submissions from the public.variable table in the drupal database. It also removes all gttn-tpps file usage from the database so that the Drupal garbage cleaner can remove unused files.
  */
-function gttn_tpps_uninstall(){
-    
-    // Remove all incomplete submissions connected to user profiles.
-    $results = db_delete('public.variable')
-        ->condition('name', db_like('gttn_tpps_incomplete_') . '%', 'LIKE')
-        ->execute();
-    
-    // Remove all complete submissions connected to user profiles.
-    $results = db_delete('public.variable')
-        ->condition('name', db_like('gttn_tpps_complete_') . '%', 'LIKE')
-        ->execute();
-   
-	// Get all gttn-tpps file usage from the database. 
-    $gttn_tpps_usage = db_select('public.file_usage', 'f')
-        ->fields('f')
-        ->condition('module', 'gttn_tpps')
-        ->execute();
-   
-	// Remove all gttn-tpps file usage from the database. 
-    foreach ($gttn_tpps_usage as $row){
-        dpm($row);
-        file_usage_delete(file_load($row->fid), $row->module, $row->type, $row->id, $row->count);
-    }
-    
+function gttn_tpps_uninstall() {
+
+  // Remove all incomplete submissions connected to user profiles.
+  $results = db_delete('public.variable')
+    ->condition('name', db_like('gttn_tpps_incomplete_') . '%', 'LIKE')
+    ->execute();
+
+  // Remove all complete submissions connected to user profiles.
+  $results = db_delete('public.variable')
+    ->condition('name', db_like('gttn_tpps_complete_') . '%', 'LIKE')
+    ->execute();
+
+  // Get all gttn-tpps file usage from the database.
+  $gttn_tpps_usage = db_select('public.file_usage', 'f')
+    ->fields('f')
+    ->condition('module', 'gttn_tpps')
+    ->execute();
+
+  // Remove all gttn-tpps file usage from the database.
+  foreach ($gttn_tpps_usage as $row) {
+    dpm($row);
+    file_usage_delete(file_load($row->fid), $row->module, $row->type, $row->id, $row->count);
+  }
+
 }
 
 /**
@@ -50,11 +55,11 @@ function gttn_tpps_uninstall(){
  * This function checks to make sure the chado.stock_phenotype table exists and creates it if necessary.
  * The chado.stock_phenotype table is a linking table that connects individual trees to their associated phenotypes in the database.
  */
-function gttn_tpps_update_7000(){
-    if (!db_table_exists('chado.stock_phenotype')){
-        //create stock_phenotype table if it does not exist
-        db_query('create table chado.stock_phenotype (stock_id integer, phenotype_id integer);');
-    }
+function gttn_tpps_update_7000() {
+  if (!db_table_exists('chado.stock_phenotype')) {
+    // Create stock_phenotype table if it does not exist.
+    db_query('create table chado.stock_phenotype (stock_id integer, phenotype_id integer);');
+  }
 }
 
 /**
@@ -63,26 +68,26 @@ function gttn_tpps_update_7000(){
  * This function checks to make sure the genotype_call_genotype_call_id_seq sequence exists and creates it if necessary.
  * The genotype_call_genotype_call_id_seq sequence is the sequence that keeps track of the genotype_call_id for the chado.genotype_call table.
  */
-function gttn_tpps_update_7001(){
-    $query = db_select('pg_class', 'p')
-        ->fields('p')
-        ->condition('relname', 'genotype_call_genotype_call_id_seq')
-        ->execute();
-    if (!($result = $query->fetchObject())){
-        $create_seq = db_query('CREATE SEQUENCE genotype_call_genotype_call_id_seq START 1;');
-    }
+function gttn_tpps_update_7001() {
+  $query = db_select('pg_class', 'p')
+    ->fields('p')
+    ->condition('relname', 'genotype_call_genotype_call_id_seq')
+    ->execute();
+  if (!($result = $query->fetchObject())) {
+    $create_seq = db_query('CREATE SEQUENCE genotype_call_genotype_call_id_seq START 1;');
+  }
 }
 
 /**
  * Implements hook_update_N().
- * 
+ *
  * This function checks to make sure the chado.genotype_call table exists and creates it if necessary.
  * The chado.genotype_call table is a more compact way to store genotype calls than the standard chado system, and it is used by gttn-tpps.
  */
-function gttn_tpps_update_7002(){
-    if (!db_table_exists('chado.genotype_call')){
-        //create genotype_call table if it does not exist
-        db_query('create table chado.genotype_call (genotype_call_id bigint PRIMARY KEY NOT NULL DEFAULT nextval(\'genotype_call_genotype_call_id_seq\'::regclass),
+function gttn_tpps_update_7002() {
+  if (!db_table_exists('chado.genotype_call')) {
+    // Create genotype_call table if it does not exist.
+    db_query('create table chado.genotype_call (genotype_call_id bigint PRIMARY KEY NOT NULL DEFAULT nextval(\'genotype_call_genotype_call_id_seq\'::regclass),
             variant_id bigint NOT NULL,
             marker_id bigint NOT NULL,
             genotype_id bigint NOT NULL,
@@ -94,7 +99,7 @@ function gttn_tpps_update_7002(){
             CONSTRAINT "genotype_call_project_id_fkey" FOREIGN KEY (project_id) REFERENCES chado.project(project_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
             CONSTRAINT "genotype_call_stock_id_fkey" FOREIGN KEY (stock_id) REFERENCES chado.stock(stock_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
             CONSTRAINT "genotype_call_variant_id_fkey" FOREIGN KEY (variant_id) REFERENCES chado.feature(feature_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED);');
-    }
+  }
 }
 
 /**
@@ -103,14 +108,14 @@ function gttn_tpps_update_7002(){
  * This function checks to make sure the plusgeno_view view exists and creates it if necessary.
  * The plusgeno_view view is used in the tpps_details module to show completed and approved tgdr and tpps submissions all on one page.
  */
-function gttn_tpps_update_7003(){
-    $query = db_select('pg_class', 'p')
-        ->fields('p')
-        ->condition('relname', 'plusgeno_view')
-        ->execute();
-    if (!($result = $query->fetchObject())){
-        //create plusgeno_view if it does not exist
-        $create_view = db_query('create materialized view chado.plusgeno_view as SELECT DISTINCT p.project_id,
+function gttn_tpps_update_7003() {
+  $query = db_select('pg_class', 'p')
+    ->fields('p')
+    ->condition('relname', 'plusgeno_view')
+    ->execute();
+  if (!($result = $query->fetchObject())) {
+    // Create plusgeno_view if it does not exist.
+    $create_view = db_query('create materialized view chado.plusgeno_view as SELECT DISTINCT p.project_id,
      d.accession,
      ppub.title,
      o.species,
@@ -145,5 +150,5 @@ function gttn_tpps_update_7003(){
              count(genotype_call.genotype_call_id) OVER (PARTITION BY genotype_call.project_id) AS gen_count
             FROM chado.genotype_call) g ON p.project_id = g.project_id
    WHERE d.db_id = 95;');
-    }
+  }
 }
