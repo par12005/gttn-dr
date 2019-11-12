@@ -16,9 +16,22 @@
  */
 function gttn_tpps_admin_settings($form, &$form_state) {
   // Get existing variable values.
+  $authors = variable_get('gttn_tpps_author_files_dir', 'gttn_tpps_authors');
   $accession = variable_get('gttn_tpps_accession_files_dir', 'gttn_tpps_accession');
   $genotype = variable_get('gttn_tpps_genotype_files_dir', 'gttn_tpps_genotype');
   $phenotype = variable_get('gttn_tpps_phenotype_files_dir', 'gttn_tpps_phenotype');
+
+  $form['gttn_tpps_maps_api_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('GTTN-TPPS Google Maps API Key'),
+    '#default_value' => variable_get('gttn_tpps_maps_api_key', NULL),
+  );
+
+  $form['gttn_tpps_ncbi_api_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('GTTN-TPPS NCBI EUtils API Key'),
+    '#default_value' => variable_get('gttn_tpps_ncbi_api_key', NULL),
+  );
 
   // Create the admin email field.
   $form['gttn_tpps_admin_email'] = array(
@@ -27,12 +40,12 @@ function gttn_tpps_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('gttn_tpps_admin_email', 'treegenesdb@gmail.com'),
   );
 
-  // Create the max genotype group field.
-  $form['gttn_tpps_genotype_group'] = array(
+  // Create the max record group field.
+  $form['gttn_tpps_record_group'] = array(
     '#type' => 'textfield',
-    '#title' => t('TPPS Genotype max group'),
-    '#default_value' => variable_get('gttn_tpps_genotype_group', 10000),
-    '#description' => 'Some genotype files are very large. GTNN-TPPS tries to submit as many genotype entries together as possible, in order to speed up the process of writing genotype data to the database. However, very large size entries can cause errors within the Tripal Job daemon. This number is the maximum number of genotype entries that may be submitted at once. Larger numbers will make the process faster, but are more likely to cause errors. Defaults to 10,000.',
+    '#title' => t('GTTN-TPPS Record max group'),
+    '#default_value' => variable_get('gttn_tpps_record_group', 10000),
+    '#description' => 'Some files are very large. GTTN-TPPS tries to submit as many entries together as possible, in order to speed up the process of writing data to the database. However, very large size entries can cause errors within the Tripal Job daemon. This number is the maximum number of entries that may be submitted at once. Larger numbers will make the process faster, but are more likely to cause errors. Defaults to 10,000.',
   );
 
   // Create the Genome file directory field.
@@ -43,12 +56,20 @@ function gttn_tpps_admin_settings($form, &$form_state) {
     '#description' => 'The directory of local genome files on your web server. If left blank, gttn_tpps will skip the searching for local genomes step in the gttn_tpps genotype section. Local genome files should be organized according to the following structure: <br>[file directory]/[species code]/[version number]/[genome data] where: <br>&emsp;&emsp;[file directory] is the full path to the genome files provided above <br>&emsp;&emsp;[species code] is the 4-letter standard species code - this must match the species code entry in the "chado.organismprop" table<br>&emsp;&emsp;[version number] is the reference genome version, of the format "v#.#"<br>&emsp;&emsp;[genome data] is the actual reference genome files - these can be any format or structure<br>More information is available <a href="https://gttn-tpps.rtfd.io/en/latest/config.html" target="blank">here</a>.',
   );
 
+  $form['gttn_tpps_author_files_dir'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Author files:'),
+    '#default_value' => $authors,
+    '#description' => t("Currently points to @path.", array('@path' => drupal_realpath("public://$authors"))),
+    '#prefix' => t('<h1>File Upload locations</h1>All file locations are relative to the "public://" file stream. Your current "public://" file stream points to "@path".<br><br>', array('@path' => drupal_realpath('public://'))),
+  );
+
   // Create the Accession file directory field.
   $form['gttn_tpps_accession_files_dir'] = array(
     '#type' => 'textfield',
     '#title' => t('Tree Accession files:'),
     '#default_value' => $accession,
-    '#description' => t("Currently points to " . drupal_realpath("public://$accession") . '.'),
+    '#description' => t("Currently points to @path.", array('@path' => drupal_realpath("public://$accession"))),
   );
 
   // Create the genotype file directory field.
@@ -56,7 +77,7 @@ function gttn_tpps_admin_settings($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Genotype files:'),
     '#default_value' => $genotype,
-    '#description' => t("Currently points to " . drupal_realpath("public://$genotype") . '.'),
+    '#description' => t("Currently points to @path.", array('@path' => drupal_realpath("public://$genotype"))),
   );
 
   // Create the phenotype file directory field.
@@ -64,7 +85,7 @@ function gttn_tpps_admin_settings($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Phenotype files:'),
     '#default_value' => $phenotype,
-    '#description' => t("Currently points to " . drupal_realpath("public://$phenotype") . '.'),
+    '#description' => t("Currently points to @path.", array('@path' => drupal_realpath("public://$phenotype"))),
   );
 
   // Return the form as a system_settings form.

@@ -1,0 +1,88 @@
+.form-type-radios figure {
+  display: inline-block;
+  margin-top: 20px;
+  width: 50%;
+  padding-left: 10%;
+  padding-right: 10%;
+}
+figcaption {
+  text-align: center;
+}
+label figure {
+  display: inline-block;
+  width: 50%;
+  padding-left: 10%;
+  padding-right: 10%;
+  margin-top: 20px;
+  text-align: center;
+}
+#edit-tree-accession figure {
+  width: 100%;
+}
+div#autocomplete {
+  width: max-content !important;
+}
+table {
+  border: 1px solid #b5e0ba;
+  background: #ffffff;
+  width: 100%;
+}
+thead th {
+  background: #ffffff;
+  border-top: 0px solid #000000 !important;
+  padding: 10px;
+}
+thead {
+  display: table-header-group;
+  vertical-align: middle;
+  border-color: inherit;
+}
+tbody tr td {
+  padding: 3px;
+  border-top: 1px solid #dedede;
+}
+th > div.form-type-select > .ajax-progress {
+  display: none;
+}
+.form-item > label {
+  display: inline-block;
+}
+.form-type-textfield,
+.form-type-select,
+.form-managed-file,
+.form-type-checkbox,
+.form-type-radios {
+  text-align: right;
+}
+.form-item {
+  margin-bottom: 5px;
+}
+.form-type-managed-file,
+.form-type-radios {
+  border-top: 1px solid #b5e0ba;
+  border-bottom: 1px solid #b5e0ba;
+}
+.form-type-managed-file {
+  padding: 10px 20px 0px;
+}
+.form-managed-file {
+  text-align: right;
+}
+.form-managed-file > fieldset {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+.hide-me {
+  display: none !important;
+}
+#gttn_tpps_table_display,
+.gttn_tpps_table {
+  background: #ffffff;
+  border: 1px solid #b5e0ba;
+  border-radius: 4px;
+  padding: 0px 10px;
+  margin-bottom: 20px;
+}
+#gttn_tpps_table_display td {
+  padding: 10px;
+}

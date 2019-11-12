@@ -10,12 +10,205 @@
  * This function checks if Ultimate Cron is installed, and installs it if necessary.
  */
 function gttn_tpps_install() {
+  gttn_tpps_alter_gttn_tpps_submission();
 
-  if (!module_exists('ultimate_cron')) {
-    $result = exec('drush pm-download ultimate_cron');
-    $result .= exec('drush pm-enable --resolve-dependencies ultimate_cron -y');
-    print_r($result);
-  }
+  chado_create_custom_table('genotype_call', array(
+    'description' => '',
+    'fields' => array(
+      'genotype_call_id' => array(
+        'description' => '',
+        'type' => 'serial',
+        'size' => 'normal',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'variant_id' => array(
+        'description' => '',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'marker_id' => array(
+        'description' => '',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'genotype_id' => array(
+        'description' => '',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'project_id' => array(
+        'description' => '',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'stock_id' => array(
+        'description' => '',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'meta_data' => array(
+        'description' => '',
+        'type' => 'json',
+      ),
+    ),
+    'foreign keys' => array(
+      'genotype' => array(
+        'table' => 'genotype',
+        'columns' => array(
+          'genotype_id' => 'genotype_id',
+        ),
+      ),
+      'variant' => array(
+        'table' => 'feature',
+        'columns' => array(
+          'variant_id' => 'feature_id',
+        ),
+      ),
+      'marker' => array(
+        'table' => 'feature',
+        'columns' => array(
+          'marker_id' => 'feature_id',
+        ),
+      ),
+      'project' => array(
+        'table' => 'project',
+        'columns' => array(
+          'project_id' => 'project_id',
+        ),
+      ),
+      'stock' => array(
+        'table' => 'stock',
+        'columns' => array(
+          'stock_id' => 'stock_id',
+        ),
+      ),
+    ),
+    'primary key' => array(
+      'genotype_call_id',
+    ),
+    'referring_tables' => array(
+      'genotype',
+      'feature',
+      'project',
+      'stock',
+    ),
+  ), TRUE, NULL, FALSE);
+
+  gttn_tpps_alter_genotype_call();
+
+  chado_create_custom_table('stock_phenotype', array(
+    'description' => '',
+    'fields' => array(
+      'phenotype_id' => array(
+        'description' => '',
+        'type' => 'int',
+        'size' => 'normal',
+        'not null' => TRUE,
+      ),
+      'stock_id' => array(
+        'description' => '',
+        'type' => 'int',
+        'size' => 'normal',
+        'not null' => TRUE,
+      ),
+    ),
+    'unique keys' => array(
+      'stock_phenotype_c1' => array(
+        'stock_id',
+        'phenotype_id',
+      ),
+    ),
+    'foreign keys' => array(
+      'phenotype' => array(
+        'table' => 'phenotype',
+        'columns' => array(
+          'phenotype_id' => 'phenotype_id',
+        ),
+      ),
+      'stock' => array(
+        'table' => 'stock',
+        'columns' => array(
+          'stock_id' => 'stock_id',
+        ),
+      ),
+    ),
+    'primary key' => array(
+      'phenotype_id',
+      'stock_id',
+    ),
+    'referring_tables' => array(
+      'phenotype',
+      'stock',
+    ),
+    'indexes' => array(
+      'stock_phenotype_idx1' => array(
+        'phenotype_id',
+      ),
+      'stock_phenotype_idx2' => array(
+        'stock_id',
+      ),
+    ),
+  ), TRUE, NULL, FALSE);
+
+  chado_create_custom_table('project_organism', array(
+    'description' => '',
+    'fields' => array(
+      'project_organism_id' => array(
+        'description' => '',
+        'type' => 'serial',
+        'size' => 'normal',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'organism_id' => array(
+        'description' => '',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'project_id' => array(
+        'description' => '',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+    ),
+    'foreign keys' => array(
+      'organism' => array(
+        'table' => 'organism',
+        'columns' => array(
+          'organism_id' => 'organism_id',
+        ),
+      ),
+      'project' => array(
+        'table' => 'project',
+        'columns' => array(
+          'project_id' => 'project_id',
+        ),
+      ),
+    ),
+    'unique keys' => array(
+      'project_organism_c1' => array(
+        'project_id',
+        'organism_id',
+      ),
+    ),
+    'primary key' => array(
+      'project_organism_id'
+    ),
+  ), TRUE, NULL, FALSE);
+
+  gttn_tpps_install_cvterms();
+
+  gttn_tpps_default_permissions();
+
+  gttn_tpps_create_plusgeno_view();
 }
 
 /**
@@ -24,17 +217,6 @@ function gttn_tpps_install() {
  * This function removes all complete and incomplete submissions from the public.variable table in the drupal database. It also removes all gttn-tpps file usage from the database so that the Drupal garbage cleaner can remove unused files.
  */
 function gttn_tpps_uninstall() {
-
-  // Remove all incomplete submissions connected to user profiles.
-  $results = db_delete('public.variable')
-    ->condition('name', db_like('gttn_tpps_incomplete_') . '%', 'LIKE')
-    ->execute();
-
-  // Remove all complete submissions connected to user profiles.
-  $results = db_delete('public.variable')
-    ->condition('name', db_like('gttn_tpps_complete_') . '%', 'LIKE')
-    ->execute();
-
   // Get all gttn-tpps file usage from the database.
   $gttn_tpps_usage = db_select('public.file_usage', 'f')
     ->fields('f')
@@ -43,112 +225,404 @@ function gttn_tpps_uninstall() {
 
   // Remove all gttn-tpps file usage from the database.
   foreach ($gttn_tpps_usage as $row) {
-    dpm($row);
     file_usage_delete(file_load($row->fid), $row->module, $row->type, $row->id, $row->count);
   }
-
 }
 
 /**
- * Implements hook_update_N().
- *
- * This function checks to make sure the chado.stock_phenotype table exists and creates it if necessary.
- * The chado.stock_phenotype table is a linking table that connects individual trees to their associated phenotypes in the database.
+ * Implements hook_schema().
  */
-function gttn_tpps_update_7000() {
-  if (!db_table_exists('chado.stock_phenotype')) {
-    // Create stock_phenotype table if it does not exist.
-    db_query('create table chado.stock_phenotype (stock_id integer, phenotype_id integer);');
-  }
-}
+function gttn_tpps_schema() {
+  $schema = array();
 
-/**
- * Implements hook_update_N().
- *
- * This function checks to make sure the genotype_call_genotype_call_id_seq sequence exists and creates it if necessary.
- * The genotype_call_genotype_call_id_seq sequence is the sequence that keeps track of the genotype_call_id for the chado.genotype_call table.
- */
-function gttn_tpps_update_7001() {
-  $query = db_select('pg_class', 'p')
-    ->fields('p')
-    ->condition('relname', 'genotype_call_genotype_call_id_seq')
-    ->execute();
-  if (!($result = $query->fetchObject())) {
-    $create_seq = db_query('CREATE SEQUENCE genotype_call_genotype_call_id_seq START 1;');
-  }
-}
+  $schema['gttn_tpps_submission'] = array(
+    'description' => '',
+    'fields' => array(
+      'gttn_tpps_submission_id' => array(
+        'description' => 'The id of the GTTN-TPPS submission.',
+        'type' => 'serial',
+        'size' => 'normal',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'user id of the user who created the submission.',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'status' => array(
+        'description' => 'Status of the submission - Incomplete, Pending Approval, Submission Job Running or Approved.',
+        'type' => 'varchar',
+        'size' => 'normal',
+        'not null' => TRUE,
+      ),
+      'accession' => array(
+        'description' => 'The GTTN-TGDR### accession number of the submission',
+        'type' => 'varchar',
+        'size' => 'normal',
+        'not null' => TRUE,
+      ),
+      'dbxref_id' => array(
+        'description' => 'The dbxref_id from chado.dbxref.',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'submission_state' => array(
+        'description' => 'The form_state of the submission.',
+        'type' => 'blob',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+    ),
+    'foreign keys' => array(
+      'uid' => array(
+        'table' => 'users',
+        'columns' => array(
+          'uid' => 'uid',
+        ),
+      ),
+      'dbxref_id' => array(
+        'table' => 'chado.dbxref',
+        'columns' => array(
+          'dbxref_id' => 'dbxref_id',
+        ),
+      ),
+    ),
+    'primary key' => array(
+      'gttn_tpps_submission_id',
+    ),
+  );
 
-/**
- * Implements hook_update_N().
- *
- * This function checks to make sure the chado.genotype_call table exists and creates it if necessary.
- * The chado.genotype_call table is a more compact way to store genotype calls than the standard chado system, and it is used by gttn-tpps.
- */
-function gttn_tpps_update_7002() {
   if (!db_table_exists('chado.genotype_call')) {
-    // Create genotype_call table if it does not exist.
-    db_query('create table chado.genotype_call (genotype_call_id bigint PRIMARY KEY NOT NULL DEFAULT nextval(\'genotype_call_genotype_call_id_seq\'::regclass),
-            variant_id bigint NOT NULL,
-            marker_id bigint NOT NULL,
-            genotype_id bigint NOT NULL,
-            project_id bigint NOT NULL,
-            stock_id bigint NOT NULL,
-            meta_data json,
-            CONSTRAINT "genotype_call_genotype_id_fkey" FOREIGN KEY (genotype_id) REFERENCES chado.genotype(genotype_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
-            CONSTRAINT "genotype_call_marker_id_fkey" FOREIGN KEY (marker_id) REFERENCES chado.feature(feature_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
-            CONSTRAINT "genotype_call_project_id_fkey" FOREIGN KEY (project_id) REFERENCES chado.project(project_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
-            CONSTRAINT "genotype_call_stock_id_fkey" FOREIGN KEY (stock_id) REFERENCES chado.stock(stock_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
-            CONSTRAINT "genotype_call_variant_id_fkey" FOREIGN KEY (variant_id) REFERENCES chado.feature(feature_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED);');
+    $schema['chado.genotype_call'] = array(
+      'description' => '',
+      'fields' => array(
+        'genotype_call_id' => array(
+          'description' => '',
+          'type' => 'serial',
+          'size' => 'normal',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'variant_id' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'marker_id' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'genotype_id' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'project_id' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'stock_id' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'meta_data' => array(
+          'description' => '',
+          // Drupal does not support the json data type by default, we will use
+          // a placeholder for meta_data for now, and upon install we will
+          // change the type to json.
+          'type' => 'text',
+        ),
+      ),
+      'foreign keys' => array(
+        'genotype_id' => array(
+          'table' => 'chado.genotype',
+          'columns' => array(
+            'genotype_id' => 'genotype_id',
+          ),
+        ),
+        'variant_id' => array(
+          'table' => 'chado.feature',
+          'columns' => array(
+            'variant_id' => 'feature_id',
+          ),
+        ),
+        'marker_id' => array(
+          'table' => 'chado.feature',
+          'columns' => array(
+            'marker_id' => 'feature_id',
+          ),
+        ),
+        'project_id' => array(
+          'table' => 'chado.project',
+          'columns' => array(
+            'project_id' => 'project_id',
+          ),
+        ),
+        'stock_id' => array(
+          'table' => 'chado.stock',
+          'columns' => array(
+            'stock_id' => 'stock_id',
+          ),
+        ),
+      ),
+      'primary key' => array(
+        'genotype_call_id',
+      ),
+    );
+  }
+
+
+  return $schema;
+}
+
+/**
+ * 
+ */
+function gttn_tpps_alter_gttn_tpps_submission() {
+  $results = db_query("SELECT contype "
+    . "FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
+    . "WHERE rel.relname = 'gttn_tpps_submission' AND contype like 'f';");
+  if (!$results->rowCount()) {
+    // Create foreign key for gttn_tpps_submission to reference users table.
+    db_query('ALTER TABLE gttn_tpps_submission ADD CONSTRAINT gttn_tpps_submission_uid_fkey FOREIGN KEY (uid) REFERENCES users(uid) ON DELETE CASCADE;');
+    db_query('ALTER TABLE gttn_tpps_submission ADD CONSTRAINT gttn_tpps_submission_dbxref_id_fkey FOREIGN KEY (dbxref_id) REFERENCES chado.dbxref(dbxref_id) ON DELETE CASCADE;');
   }
 }
 
 /**
- * Implements hook_update_N().
- *
- * This function checks to make sure the plusgeno_view view exists and creates it if necessary.
- * The plusgeno_view view is used in the tpps_details module to show completed and approved tgdr and tpps submissions all on one page.
+ * 
  */
-function gttn_tpps_update_7003() {
+function gttn_tpps_alter_genotype_call() {
+  $results = db_query("SELECT contype "
+    . "FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
+    . "WHERE rel.relname = 'genotype_call' AND contype like 'f';");
+  if (!$results->rowCount()) {
+    db_query('ALTER TABLE chado.genotype_call ADD CONSTRAINT genotype_call_genotype_id_fkey FOREIGN KEY (genotype_id) REFERENCES chado.genotype(genotype_id) ON DELETE CASCADE;');
+    db_query('ALTER TABLE chado.genotype_call ADD CONSTRAINT genotype_call_marker_id_fkey FOREIGN KEY (marker_id) REFERENCES chado.feature(feature_id) ON DELETE CASCADE;');
+    db_query('ALTER TABLE chado.genotype_call ADD CONSTRAINT genotype_call_variant_id_fkey FOREIGN KEY (variant_id) REFERENCES chado.feature(feature_id) ON DELETE CASCADE;');
+    db_query('ALTER TABLE chado.genotype_call ADD CONSTRAINT genotype_call_project_id_fkey FOREIGN KEY (project_id) REFERENCES chado.project(project_id) ON DELETE CASCADE;');
+    db_query('ALTER TABLE chado.genotype_call ADD CONSTRAINT genotype_call_stock_id_fkey FOREIGN KEY (stock_id) REFERENCES chado.stock(stock_id) ON DELETE CASCADE;');
+  }
+
+  $and = db_and()
+    ->condition('column_name', 'meta_data')
+    ->condition('table_name', 'genotype_call');
+  $meta_type = db_select('information_schema.columns', 'c')
+    ->fields('c', array('data_type'))
+    ->condition($and)
+    ->execute()->fetchObject()->data_type;
+
+  if ($meta_type != 'json') {
+    db_query('ALTER TABLE chado.genotype_call ALTER COLUMN meta_data TYPE json USING meta_data::json;');
+  }
+}
+
+/**
+ * 
+ */
+function gttn_tpps_get_cvterms() {
+  return array(
+    'ncit' => array(
+      'Minimum',
+      'Maximum',
+      'Accuracy',
+    ),
+    'sio' => array(
+      'latitude',
+      'longitude',
+      'coordinate system',
+      'altitude',
+      'country',
+      'province',
+      'city',
+    ),
+    'analysis_property' => array(
+      'Analysis Type',
+    ),
+    'tripal_analysis' => array(
+      'analysis_date',
+    ),
+    'local' => array(
+      'project name' => 'The name of the project.',
+      'project permissions' => 'Who is allowed to access the project.',
+      'data collection purpose' => 'The reason the data was collected.',
+    ),
+  );
+}
+
+/**
+ * 
+ */
+function gttn_tpps_install_cvterms() {
+  $local_cv = chado_get_cv(array('name' => 'local'));
+  $local_db = chado_get_db(array('name' => 'local'));
+  $cvterms = gttn_tpps_get_cvterms();
+  foreach ($cvterms as $ontology => $terms) {
+    foreach ($terms as $key => $term) {
+      $query = array(
+        'name' => ($ontology == 'local') ? $key : $term,
+        'cv_id' => array(
+          'name' => $ontology,
+        ),
+      );
+      if (!chado_get_cvterm($query)) {
+        drupal_set_message("Adding term {$query['name']} from ontology $ontology", 'status');
+        $cvterm = array(
+          'id' => "$local_db->name:$key",
+          'name' => $key,
+          'definition' => $term,
+          'cv_name' => $local_cv->name,
+        );
+        if ($ontology != 'local') {
+          $response = gttn_tpps_ols_search($term, $ontology)->response;
+          if ($response->numFound != 1) {
+            drupal_set_message("conflict found for term $term from ontology $ontology: $response->numFound terms found", 'error');
+            continue;
+          }
+          $ols_term = $response->docs[0];
+          $cvterm = array(
+            'id' => $ols_term->obo_id,
+            'name' => $ols_term->label,
+            'definition' => $ols_term->description[0],
+            'cv_name' => $ols_term->ontology_name,
+          );
+        }
+        chado_insert_cvterm($cvterm);
+      }
+    }
+  }
+}
+
+/**
+ * 
+ */
+function gttn_tpps_default_permissions() {
+  $admin_query = db_select('role', 'r')
+    ->fields('r', array('rid'))
+    ->condition('name', 'administrator')
+    ->execute();
+
+  $auth_query = db_select('role', 'r')
+    ->fields('r', array('rid'))
+    ->condition('name', 'authenticated user')
+    ->execute();
+
+  if (($admin = $admin_query->fetchObject()) and ($auth = $auth_query->fetchObject())) {
+    $perms = gttn_tpps_permission();
+    foreach ($perms as $name => $info) {
+      db_insert('role_permission')
+        ->fields(array(
+          'rid' => $admin->rid,
+          'permission' => $name,
+          'module' => 'gttn_tpps',
+        ))
+        ->execute();
+    }
+
+    db_insert('role_permission')
+      ->fields(array(
+        'rid' => $auth->rid,
+        'permission' => 'access gttn-tpps form',
+        'module' => 'gttn_tpps',
+      ))
+      ->execute();
+
+    db_insert('role_permission')
+      ->fields(array(
+        'rid' => $auth->rid,
+        'permission' => 'user gttn-tpps submissions',
+        'module' => 'gttn_tpps',
+      ))
+      ->execute();
+
+    db_insert('role_permission')
+      ->fields(array(
+        'rid' => $auth->rid,
+        'permission' => 'gttn-tpps delete submission',
+        'module' => 'gttn_tpps',
+      ))
+      ->execute();
+
+    db_insert('role_permission')
+      ->fields(array(
+        'rid' => $auth->rid,
+        'permission' => 'view own gttn-tpps submission',
+        'module' => 'gttn_tpps',
+      ))
+      ->execute();
+
+    drupal_set_message(t('Attention: @t default permissions have been set. Go to @p to manage and customize @t permissions.', array('@t' => 'GTTN-TPPS', '@p' => 'admin/people/permissions')), 'status');
+  }
+}
+
+/**
+ * 
+ */
+function gttn_tpps_create_plusgeno_view() {
+  $local_db = chado_get_db(array('name' => 'local'));
+
   $query = db_select('pg_class', 'p')
     ->fields('p')
     ->condition('relname', 'plusgeno_view')
     ->execute();
   if (!($result = $query->fetchObject())) {
     // Create plusgeno_view if it does not exist.
-    $create_view = db_query('create materialized view chado.plusgeno_view as SELECT DISTINCT p.project_id,
-     d.accession,
-     ppub.title,
-     o.species,
-     count(o.stock_id) OVER (PARTITION BY p.project_id) AS tree_count,
-     sum(phen.count) OVER (PARTITION BY p.project_id) AS phen_count,
-     unique_phen.phenotypes_assessed,
-     g.gen_count
-    FROM chado.project_dbxref p
-      JOIN chado.dbxref d ON p.dbxref_id = d.dbxref_id
-      JOIN ( SELECT pp.project_id,
-             pub.title
-            FROM chado.project_pub pp
-              JOIN chado.pub ON pp.pub_id = pub.pub_id) ppub ON p.project_id = ppub.project_id
-      JOIN ( SELECT DISTINCT ps.project_id,
-             (org.genus::text || \' \'::text) || org.species::text AS species,
-             stock.stock_id
-            FROM chado.project_stock ps
-              JOIN chado.stock ON ps.stock_id = stock.stock_id
-              JOIN chado.organism org ON stock.organism_id = org.organism_id) o ON p.project_id = o.project_id
-      LEFT JOIN ( SELECT stock_phenotype.stock_id,
-             count(stock_phenotype.phenotype_id) OVER (PARTITION BY stock_phenotype.stock_id) AS count
-            FROM chado.stock_phenotype) phen ON o.stock_id = phen.stock_id
-      LEFT JOIN ( SELECT DISTINCT pc.project_id,
-             count(pc.name) OVER (PARTITION BY pc.project_id) AS phenotypes_assessed
-            FROM ( SELECT DISTINCT ps.project_id,
-                     ph.name
-                   FROM chado.phenotype ph
-                      JOIN chado.stock_phenotype sp ON ph.phenotype_id = sp.phenotype_id
-                      JOIN chado.stock s ON sp.stock_id = s.stock_id
-                      JOIN chado.project_stock ps ON s.stock_id = ps.stock_id) pc) unique_phen ON p.project_id = unique_phen.project_id
-      LEFT JOIN ( SELECT DISTINCT genotype_call.project_id,
-             count(genotype_call.genotype_call_id) OVER (PARTITION BY genotype_call.project_id) AS gen_count
-            FROM chado.genotype_call) g ON p.project_id = g.project_id
-   WHERE d.db_id = 95;');
+    db_query('create materialized view chado.plusgeno_view as SELECT DISTINCT p.project_id,
+      d.accession,
+      ppub.title,
+      o.species,
+      count(o.stock_id) OVER (PARTITION BY p.project_id) AS tree_count,
+      sum(phen.count) OVER (PARTITION BY p.project_id) AS phen_count,
+      unique_phen.phenotypes_assessed,
+      g.gen_count
+      FROM chado.project_dbxref p
+        JOIN chado.dbxref d ON p.dbxref_id = d.dbxref_id
+        JOIN ( SELECT pp.project_id,
+          pub.title
+          FROM chado.project_pub pp
+            JOIN chado.pub ON pp.pub_id = pub.pub_id) ppub ON p.project_id = ppub.project_id
+        JOIN ( SELECT DISTINCT ps.project_id,
+          (org.genus::text || \' \'::text) || org.species::text AS species,
+          stock.stock_id
+          FROM chado.project_stock ps
+            JOIN chado.stock ON ps.stock_id = stock.stock_id
+            JOIN chado.organism org ON stock.organism_id = org.organism_id) o ON p.project_id = o.project_id
+        LEFT JOIN ( SELECT stock_phenotype.stock_id,
+          count(stock_phenotype.phenotype_id) OVER (PARTITION BY stock_phenotype.stock_id) AS count
+          FROM chado.stock_phenotype) phen ON o.stock_id = phen.stock_id
+        LEFT JOIN ( SELECT DISTINCT pc.project_id,
+          count(pc.name) OVER (PARTITION BY pc.project_id) AS phenotypes_assessed
+          FROM ( SELECT DISTINCT ps.project_id,
+              ph.name
+              FROM chado.phenotype ph
+                JOIN chado.stock_phenotype sp ON ph.phenotype_id = sp.phenotype_id
+                JOIN chado.stock s ON sp.stock_id = s.stock_id
+                JOIN chado.project_stock ps ON s.stock_id = ps.stock_id) pc) unique_phen ON p.project_id = unique_phen.project_id
+        LEFT JOIN ( SELECT DISTINCT genotype_call.project_id,
+          count(genotype_call.genotype_call_id) OVER (PARTITION BY genotype_call.project_id) AS gen_count
+          FROM chado.genotype_call) g ON p.project_id = g.project_id
+      WHERE d.db_id = ' . $local_db->db_id . ';');
+    variable_set('gttn_tpps_local_db', $local_db);
+  }
+  else {
+    $matches = array();
+    $definition = db_select('pg_matviews', 'p')
+      ->fields('p', array('definition'))
+      ->condition('matviewname', 'plusgeno_view')
+      ->execute()
+      ->fetchObject()->definition;
+    preg_match('/d\.db_id ?= ?(\d+)\);/', $definition, $matches);
+    variable_set('gttn_tpps_local_db', chado_get_db(array('db_id' => (int) $matches[1])));
   }
 }

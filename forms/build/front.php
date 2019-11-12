@@ -36,32 +36,20 @@ function gttn_tpps_front_create_form(&$form, $form_state) {
       ->fields('variable', array('name'))
       ->condition('name', db_like('gttn_tpps_incomplete_' . $user->mail) . '%', 'LIKE')
       ->execute();
+    $states = gttn_tpps_load_submission_multiple(array('status' => 'Incomplete', 'uid' => $user->uid));
 
     // Iterate through each of the incomplete submission variables.
-    foreach ($results as $item) {
-      // Get the full variable name.
-      $name = $item->name;
-      // Load the state associated with that variable name.
-      $state = variable_get($name, NULL);
-
+    foreach ($states as $state) {
       // If the state loads correctly and actually has data associated
       // with it, then add that state to the list of options to choose from.
-      if (!empty($state) and isset($state['saved_values'][GTTN_PAGE_1]['organism']["1"])) {
+      if (!empty($state) and isset($state['saved_values'][GTTN_PAGE_1]['organism'][1])) {
         $options_arr["{$state['accession']}"] = "{$state['accession']}";
       }
       // Otherwise, if the state loads correctly and does not have data
       // associated with it, then remove the empty state variable from the
       // database.
       elseif (isset($state) and !isset($state['saved_values'][GTTN_PAGE_1])) {
-        // Delete the state variable.
-        variable_del($name);
-        $and = db_and()
-          ->condition('accession', $state['accession'])
-          ->condition('db_id', 95);
-        // Delete the associated dbxref_id from chado.
-        $results = db_delete('chado.dbxref')
-          ->condition($and)
-          ->execute();
+        gttn_tpps_delete_submission($state['accession'], FALSE);
       }
     }
 
@@ -88,13 +76,7 @@ function gttn_tpps_front_create_form(&$form, $form_state) {
   );
 
   // Front page introductory text.
-  $prefix_text = "<div>Welcome to GTTN-TPPS!<br><br>To get started, you will n"
-        . "eed to have a few things handy:<br><ul><li>An enabled and approved GT"
-        . "TN account - you can create one <a href='$base_url/user/register'>her"
-        . "e</a>. There may be a waiting period to have your account approved by"
-        . " a GTTN administrator.</li></ul>If you would like to submit your data"
-        . ", you can click the button 'Continue to GTTN-TPPS' below!<br><br></di"
-        . "v>";
+  $prefix_text = "<div>Welcome to GTTN-TPPS!<br><br>To get started, you will need to have a few things handy:<br><ul><li>An enabled and approved GTTN account - you can create one <a href='$base_url/user/register'>here</a>. There may be a waiting period to have your account approved by a GTTN administrator.</li></ul>If you would like to submit your data, you can click the button 'Continue to GTTN-TPPS' below!<br><br></div>";
 
   // Add the introductory text to the first form element.
   if (isset($form['accession'])) {

@@ -224,3 +224,162 @@ function gttn_tpps_flatten($state) {
 
   return $data;
 }
+
+/**
+ *
+ */
+function gttn_tpps_table_display($state) {
+
+  $accession = $state['saved_values'][GTTN_PAGE_4]['accession'];
+  $display = "<div class='gttn_tpps_complete_submission'><table id='gttn_tpps_$accession' style='width:-webkit-fill-available' border='1'><thead>";
+  $display .= "</thead><tbody>";
+
+  $flat = gttn_tpps_flatten($state);
+
+  foreach ($flat as $key => $val) {
+    if ($key[0] !== '#') {
+      $key_str = filter_xss(check_plain($key));
+      $val_str = filter_xss(check_plain($val));
+
+      if (preg_match('/File/', $key) and ($file_name = file_load($val)->filename)) {
+        // Create links to files.
+        $file_url = check_plain(file_create_url(file_load($val)->uri));
+        $val_str = "<a href='$file_url' target='blank'>$file_name</a>";
+      }
+
+      $display .= "<tr><td>$key_str</td><td>$val_str</td></tr>";
+    }
+  }
+
+  $display .= "</tbody></table></div><br>";
+
+  return $display;
+}
+
+/**
+ *
+ */
+function gttn_tpps_completed_display($form, $form_state) {
+
+  global $user;
+  global $base_url;
+  $params = drupal_get_query_parameters();
+  $accession = $params['id'];
+  $link = "$base_url/gttn_tpps_details/accession/$accession";
+
+  $old_form_state = variable_get('gttn_tpps_complete_' . $user->mail . $accession);
+  dpm($old_form_state);
+  $values = $old_form_state['saved_values'];
+
+  $css = "
+    .tgdr_complete_submission {
+        background: #ffffff;
+        border: 1px solid #cccccc;
+        border-radius: 4px;
+        padding: 0px 10px;
+    }		
+    ";
+  drupal_add_css($css, 'inline');
+
+  $display = gttn_tpps_table_display($old_form_state);
+
+  $form['a'] = array(
+    '#type' => 'hidden',
+    '#suffix' => $display,
+  );
+
+  return $form;
+}
+
+/**
+ * 
+ */
+function gttn_tpps_tab_create($user) {
+
+  global $base_url;
+
+  $params = drupal_get_query_parameters();
+
+  if (isset($params['accession']) and isset($params['action']) and $params['action'] === 'DELETE') {
+    gttn_tpps_delete_submission($params['accession']);
+  }
+
+  $states = gttn_tpps_load_submission_multiple(array('status' => 'Incomplete', 'uid' => $user->uid));
+  $rows = array();
+  foreach ($states as $state) {
+    $type_page = &$state['saved_values'][GTTN_TYPE_PAGE];
+    $page_1 = &$state['saved_values'][GTTN_PAGE_1];
+    $acc = $del_cell = NULL;
+
+    if (isset($state['accession'])) {
+      $acc = "<a href='$base_url/gttn-tpps/{$state['accession']}' style='text-decoration: underline;'>{$state['accession']}</a>";
+      $del_cell = "<input type='submit' id='delete-{$state['accession']}' onclick='";
+      $del_cell .= "if (confirm(\"Attention! \\n\\nAre you sure you want to delete your submission {$state['accession']}?\\nThis action cannot be undone, and all of your data will be lost!\")){window.location.href = \"$base_url/gttn-tpps-submission/{$state['accession']}/delete\"}";
+      $del_cell .= "' name='op' class='form-button' value='Delete'></td>";
+    }
+
+    $rows[] = array(
+      isset($acc) ? $acc : "",
+      isset($type_page['name']) ? $type_page['name'] : "",
+      isset($page_1['organism']['number']) ? $page_1['organism']['number'] : "",
+      isset($del_cell) ? $del_cell : "",
+    );
+  }
+
+  $headers = array(
+    'Accession Number',
+    'Submission Name',
+    'Number of Species',
+  );
+
+  $vars = array(
+    'header' => $headers,
+    'rows' => $rows,
+    'attributes' => array('class' => array('view'), 'id' => 'gttn_tpps_incomplete_table'),
+    'caption' => '',
+    'colgroups' => NULL,
+    'sticky' => FALSE,
+    'empty' => '',
+  );
+
+  $final = isset($state) ? "<div class='gttn_tpps_table'><label for='gttn_tpps_incomplete_table'>Incomplete Submissions</label>" . theme_table($vars) . '</div>' : "";
+  $state = NULL;
+
+  $states = gttn_tpps_load_submission_multiple(array(
+    'status' => array('Pending Approval', 'Approved'),
+    'uid' => $user->uid,
+  ));
+
+  $rows = array();
+  foreach ($states as $state) {
+    $type_page = &$state['saved_values'][GTTN_TYPE_PAGE];
+    $page_1 = &$state['saved_values'][GTTN_PAGE_1];
+    $acc = NULL;
+
+    if (isset($state['accession'])) {
+      $acc = "<a href='$base_url/gttn-tpps/{$state['accession']}' style='text-decoration: underline;'>{$state['accession']}</a>";
+    }
+
+    $rows[] = array(
+      isset($acc) ? $acc : "",
+      isset($type_page['name']) ? $type_page['name'] : "",
+      isset($page_1['organism']['number']) ? $page_1['organism']['number'] : "",
+      isset($state['status']) ? $state['status'] : "",
+    );
+  }
+
+  $headers[] = 'Status';
+  $vars['header'] = $headers;
+  $vars['rows'] = $rows;
+  $vars['attributes']['id'] = 'gttn_tpps_complete_table';
+
+  $final .= isset($state) ? "<div class='gttn_tpps_table'><label for='gttn_tpps_complete_table'>Complete Submissions</label>" . theme_table($vars) . '</div>' : "";
+
+  if (empty($final)) {
+    $final .= "<h2>Could not find any Submissions</h2>";
+    $final .= "<p>We could not find any complete or incomplete GTTN-TPPS Submissions. If you would like to start a new GTTN-TPPS Submission, you can start <a href=$base_url/gttn-tpps>here.</a></p>";
+  }
+
+  drupal_add_css(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_CSS_PATH);
+  return $final;
+}

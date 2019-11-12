@@ -7,15 +7,55 @@
 /**
  *
  */
-function submission_type_create_form(&$form, &$form_state) {
+function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
 
   global $user;
 
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Submission Name: *'),
+  );
+
+  $form['purpose'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Data Collection Purpose: *'),
+    '#description' => t('Please provide a brief description of why this data was collected.')
+  );
+
+  $form['date'] = array(
+    '#type' => 'date',
+    '#title' => t('Analysis Date: *'),
+  );
+
+  $form['pub_doi'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Publication DOI:'),
+    '#gttn_tpps_val' => array(),
+  );
+
+  $form['data_doi'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Data DOI:'),
+    '#gttn_tpps_val' => array(),
+  );
+
+  $form['db_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Original Database URL:'),
+    '#gttn_tpps_val' => array(),
+  );
+
+  $form['project_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Project Name (Funding Agency/Grant Number):'),
+    '#gttn_tpps_val' => array(),
+  );
+
   $form['type'] = array(
     '#type' => 'select',
-    '#title' => t('Please select the submission type: *'),
+    '#title' => t('Submission Type: *'),
     '#options' => array(
-      0 => '- Select -',
+      '- Select -',
       'New Trees' => 'New Trees',
       'Old Trees' => 'Old Trees',
       'Mixed new/old Trees' => 'Mixed new/old Trees',
@@ -46,6 +86,13 @@ function submission_type_create_form(&$form, &$form_state) {
       $form['permissions'][$org->organization_id]['#default_value'] = $org->organization_id;
     }
   }
+
+  $form['disclaimer'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('I have read and agree to the following disclaimer:'),
+    '#description' => t('This is the placeholder disclaimer'),
+    '#required' => TRUE,
+  );
 
   // Create the next button.
   $form['Next'] = array(

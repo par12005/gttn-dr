@@ -7,6 +7,7 @@
 /**
  *
  */
+/*
 function gttn_tpps_create_record($table, array $values) {
   if (isset($values[0]) and gettype($values[0]) === "array") {
     $is_multi = TRUE;
@@ -94,7 +95,7 @@ function gttn_tpps_create_record($table, array $values) {
 
     return $insert;
   }
-}
+}*/
 
 /**
  *

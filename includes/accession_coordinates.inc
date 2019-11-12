@@ -16,11 +16,7 @@ function gttn_tpps_accession_coordinates() {
       $lat_col = $params['lat_col'];
       $long_col = $params['long_col'];
       $location = drupal_realpath($file_name);
-      $content = gttn_tpps_parse_xlsx($location);
-
-      if ($params['no-header']) {
-        gttn_tpps_content_no_header($content);
-      }
+      $content = gttn_tpps_parse_file($location, 0, !empty($params['no-header']));
 
       $coordinates = array();
       for ($i = 0; $i < count($content) - 1; $i++) {

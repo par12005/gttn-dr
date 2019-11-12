@@ -6,38 +6,25 @@
  */
 
 define("GTTN_TPPS_JS_PATH", '/js/gttn_tpps.js');
+define("GTTN_TPPS_CSS_PATH", '/css/gttn_tpps.css');
 define("GTTN_TYPE_PAGE", 1);
 define("GTTN_PAGE_1", 2);
 define("GTTN_PAGE_3", 3);
 define("GTTN_PAGE_4", 4);
-// Require additional files with helper functions.
-require_once 'includes/create_record.inc';
-require_once 'includes/flatten.inc';
+define("GTTN_TPPS_OLS_BASE", "http://www.ebi.ac.uk/ols/api/");
+define("GTTN_TPPS_TEMP_XLSX", "temporary://gttn_tpps_xlsx");
+require_once 'includes/file_utils.inc';
 require_once 'includes/init_project.inc';
-require_once 'includes/tab_create.inc';
-require_once 'includes/completed_display.inc';
-require_once 'includes/table_display.inc';
-require_once 'includes/compare_files.inc';
+require_once 'includes/display.inc';
 require_once 'includes/standard_coord.inc';
-require_once 'includes/validate_columns.inc';
-require_once 'includes/refresh_landing_page.inc';
-require_once 'includes/parse_xlsx.inc';
 require_once 'includes/content_no_header.inc';
-require_once 'includes/custom_cvterm.inc';
 require_once 'includes/submit_email.inc';
 require_once 'includes/status_bar.inc';
-require_once 'includes/save_file_columns.inc';
-require_once 'includes/file_parsing.inc';
 require_once 'includes/accession_coordinates.inc';
-require_once 'ajax/gttn_tpps_ajax.php';
-
-/**
- * Implements hook_init().
- */
-function gttn_tpps_init() {
-
-  // drupal_set_message("Hello");.
-}
+require_once 'includes/submissions.inc';
+require_once 'includes/form_utils.inc';
+require_once 'includes/ols_utils.inc';
+require_once 'includes/chado_utils.inc';
 
 /**
  * Implements hook_menu().
@@ -51,25 +38,46 @@ function gttn_tpps_menu() {
   /*
    * Main Submission form.
    */
-  $items['gttn'] = array(
+  $items['gttn-tpps'] = array(
     'title' => 'GTTN-TPPS',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('gttn_tpps_main'),
-    'access callback' => 'user_access',
-    'access arguments' => array('access content'),
+    'access callback' => 'gttn_tpps_access',
+    'access arguments' => array('access gttn-tpps form'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['gttn-tpps/%'] = array(
+    'title' => 'GTTN-TPPS',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('gttn_tpps_main', 1),
+    'access callback' => 'gttn_tpps_access',
+    'access arguments' => array('access gttn-tpps form'),
     'type' => MENU_NORMAL_ITEM,
   );
 
   /*
    * GTTN Tab on user profile.
    */
-  $items['user/%user/gttn'] = array(
+  $items['user/%user/gttn-tpps'] = array(
     'title' => 'GTTN-TPPS Submissions',
     'page callback' => 'gttn_tpps_tab_create',
-    'page arguments' => array('user', 1),
-    'access callback' => 'user_access',
-    'access arguments' => array('access content'),
+    'page arguments' => array(1),
+    'access callback' => 'gttn_tpps_access',
+    'access arguments' => array('user gttn-tpps submissions', array(1)),
     'type' => MENU_LOCAL_TASK,
+  );
+
+  /*
+   * Delete submission callback
+   */
+  $items['gttn-tpps-submission/%/delete'] = array(
+    'title' => 'GTTN-TPPS Delete Submission',
+    'page callback' => 'gttn_tpps_delete_submission',
+    'page arguments' => array(1),
+    'access callback' => 'gttn_tpps_access',
+    'access arguments' => array('gttn-tpps delete submission', array(1)),
+    'type' => MENU_CALLBACK,
   );
 
   /*
@@ -79,8 +87,8 @@ function gttn_tpps_menu() {
     'title' => 'GTTN-TPPS Completed Submission',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('gttn_tpps_completed_display'),
-    'access callback' => 'user_access',
-    'access arguments' => array('access content'),
+    'access callback' => 'gttn_tpps_access',
+    'access arguments' => array('view own gttn-tpps submission'),
     'type' => MENU_NORMAL_ITEM,
   );
 
@@ -91,21 +99,28 @@ function gttn_tpps_menu() {
     'title' => 'GTTN-TPPS Admin Panel',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('gttn_tpps_admin_panel'),
-    'access callback' => 'user_access',
-    'access arguments' => array('access administration pages'),
+    'access callback' => 'gttn_tpps_access',
+    'access arguments' => array('approve gttn-tpps submissions'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'admin/panel.php',
   );
 
   /*
+   * Admin panel with accession provided.
+   */
+  $items['gttn-admin-panel/%'] = $items['gttn-admin-panel'];
+  $items['gttn-admin-panel/%']['page arguments'] = array('gttn_tpps_admin_panel', 1);
+
+  /*
    * GTTN-TPPS settings
    */
-  $items['admin/config/content/gttn'] = array(
+  $items['admin/config/content/gttn-tpps'] = array(
     'title' => 'GTTN-TPPS Settings',
     'description' => 'Configuration for TPPS module',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('gttn_tpps_admin_settings'),
-    'access arguments' => array('access administration pages'),
+    'access callback' => 'gttn_tpps_access',
+    'access arguments' => array('administer gttn-tpps module'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'admin/config.php',
   );
@@ -127,11 +142,157 @@ function gttn_tpps_menu() {
   $items['gttn-accession'] = array(
     'title' => 'GTTN-TPPS Accession coordinates',
     'page callback' => 'gttn_tpps_accession_coordinates',
+    'access callback' => 'gttn_tpps_access',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['gttn-preview-file'] = array(
+    'title' => 'GTTN-TPPS Preview File',
+    'page callback' => 'gttn_tpps_preview_file',
+    'access callback' => 'gttn_tpps_access',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
 
   return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function gttn_tpps_permission() {
+  $perms = array();
+
+  $perms['access gttn-tpps form'] = array(
+    'title' => t('Access GTTN-TPPS Form'),
+    'description' => t('Access GTTN-TPPS Submission form and create submissions.'),
+  );
+
+  $perms['administer gttn-tpps module'] = array(
+    'title' => t('Administer GTTN-TPPS module'),
+    'description' => t('Make changes to GTTN-TPPS configuration.'),
+  );
+
+  $perms['user gttn-tpps submissions'] = array(
+    'title' => t('User GTTN-TPPS Submissions'),
+    'description' => t('View all GTTN-TPPS Submissions for a particular user.'),
+  );
+
+  $perms['approve gttn-tpps submissions'] = array(
+    'title' => t('Approve/Reject GTTN-TPPS submissions'),
+    'description' => t('Approve or reject pending GTTN-TPPS submissions.'),
+  );
+
+  $perms['gttn-tpps delete submission'] = array(
+    'title' => t('Delete GTTN-TPPS submissions'),
+    'description' => t('Delete incomplete GTTN-TPPS submissions.'),
+  );
+
+  $perms['view own gttn-tpps submission'] = array(
+    'title' => t('View own GTTN-TPPS submissions'),
+    'description' => t('View GTTN-TPPS submissions as a particular user.'),
+  );
+
+  return $perms;
+}
+
+/**
+ * 
+ */
+function gttn_tpps_access($permission, array $args = array()) {
+
+  global $user;
+
+  if ($user->uid == 1) {
+    return TRUE;
+  }
+  $params = drupal_get_query_parameters(NULL, array());
+  if (preg_match('/gttn-tpps\/(GTTN-TGDR.*)/', $params['q'], $matches)) {
+    $accession = $matches[1];
+  }
+  elseif ($params['q'] == 'gttn-tpps' and !empty($params['accession'])) {
+    $accession = $params['accession'];
+  }
+  elseif (preg_match('/completed-submission\/(GTTN-TGDR.*)/', $params['q'], $matches)) {
+    $accession = $matches[1];
+  }
+
+  if ($params['q'] == 'gttn-tpps' and empty($accession)) {
+    return TRUE;
+  }
+
+  if (!$user->uid) {
+    if ($params['q'] == 'gttn-admin-panel') {
+      drupal_goto('user/login', array('query' => drupal_get_destination()));
+    }
+    elseif ($params['q'] == 'gttn-tpps' and !empty($accession)) {
+      drupal_goto('user/login', array('query' => drupal_get_destination()));
+    }
+  }
+
+  if (user_access($permission)) {
+    switch ($permission) {
+      case 'access gttn-tpps form':
+        if (gttn_tpps_access('administer gttn-tpps module')) {
+          return TRUE;
+        }
+
+        if ($accession == 'new') {
+          return TRUE;
+        }
+
+        if (($state = gttn_tpps_load_submission($accession, FALSE))) {
+          if ($state->status == "Incomplete" and $state->uid == $user->uid) {
+            return TRUE;
+          }
+        }
+        return FALSE;
+
+      case 'user gttn-tpps submissions':
+        if (gttn_tpps_access('administer gttn-tpps module')) {
+          return TRUE;
+        }
+
+        if (!empty($args[0]) and $args[0] == $user->uid) {
+          return TRUE;
+        }
+
+        return FALSE;
+
+      case 'view own gttn-tpps submission':
+        if (gttn_tpps_access('administer gttn-tpps module')) {
+          return TRUE;
+        }
+
+        if (($state = gttn_tpps_load_submission($accession, FALSE))) {
+          if ($state->uid == $user->uid) {
+            return TRUE;
+          }
+        }
+        return FALSE;
+
+      case 'gttn-tpps delete submission':
+        if (gttn_tpps_access('administer gttn-tpps module')) {
+          return TRUE;
+        }
+
+        if (preg_match('/gttn-tpps-submission\/(.*)\/delete/', $params['q'], $matches)) {
+          if (($state = gttn_tpps_load_submission($matches[1], FALSE))) {
+            if ($state->status == 'Pending Approval' and $user->uid == $state->uid) {
+              return TRUE;
+            }
+          }
+        }
+        return FALSE;
+
+      default:
+        return TRUE;
+    }
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**
@@ -205,7 +366,7 @@ function gttn_tpps_mail($key, &$message, $params) {
       $message['body'][] = "Attention:<br><br>User {$params['user_mail']} "
             . "has completed a GTTN-TPPS Submission, with accession number "
             . "{$params['accession']}.<br>Click <a href='{$params['base_url']}/g"
-            . "ttn-tpps-admin-panel?accession={$params['accession']}' style='tex"
+            . "ttn-admin-panel?accession={$params['accession']}' style='tex"
             . "t-decoration: underline;'>here</a> to manage or approve this subm"
             . "ission.";
       break;
@@ -218,7 +379,7 @@ function gttn_tpps_mail($key, &$message, $params) {
       $message['body'][] = "To whom it may concern:<br><br>Unfortunately, "
             . "your submission to GTTN-TPPS has been rejected. If you would like, you"
             . " can log into the TreeGenes website and edit your submission <a h"
-            . "ref='{$params['base_url']}/user/{$params['uid']}/gttn'>here</a><b"
+            . "ref='{$params['base_url']}/user/{$params['uid']}/gttn-tpps'>here</a><b"
             . "r><br>The administrator who rejected your submission provided the"
             . " following reason:<br><blockquote>{$params['reject-reason']}</blo"
             . "ckquote>";
@@ -227,7 +388,7 @@ function gttn_tpps_mail($key, &$message, $params) {
     case 'user_approved':
       // When the user's submission is approved, notify them and provide
       // them with the link to view the completed submission.
-      $message['body'][] = "Congratulations! Your submission to TPPS has b"
+      $message['body'][] = "Congratulations! Your submission to GTTN-TPPS has b"
             . "een approved!<br><br>You may now refer to your submitted data wit"
             . "h accession number {$params['accession']}.<br><br>You can still v"
             . "iew your submission from your <a href=\"{$params['base_url']}/gtt"
@@ -287,6 +448,7 @@ function gttn_tpps_managed_file_process($element, &$form_state, $form) {
   // If the element doesn't have a 'columns' child, then it is probably not
   // meant to have all the data definition information attached.
   if (isset($element['columns'])) {
+    require_once 'ajax/gttn_tpps_ajax.php';
     $fid = $element['#value']['fid'];
     $wrapper = substr($element['#id'], 0, -7) . '-ajax-wrapper';
 
@@ -297,7 +459,7 @@ function gttn_tpps_managed_file_process($element, &$form_state, $form) {
     // See if no-header element is checked in the completed form.
     $no_header = drupal_array_get_nested_value($form_state['complete form'], $no_header_parents);
     // See which callback function is being used, if there is one.
-    $callback = isset($form_state['triggering_element']['#ajax']['callback']) ? $form_state['triggering_element']['#ajax']['callback'] : NULL;
+    $callback = $form_state['triggering_element']['#ajax']['callback'] ?? NULL;
     // If no-header element is not checked in the complete form, check
     // if it is checked in the saved values.
     if (!$no_header and ($callback != 'gttn_tpps_no_header_callback')) {
@@ -314,7 +476,7 @@ function gttn_tpps_managed_file_process($element, &$form_state, $form) {
         'wrapper' => $wrapper,
         'callback' => 'gttn_tpps_no_header_callback',
       ),
-      '#states' => isset($element['#states']) ? $element['#states'] : NULL,
+      '#states' => $element['#states'] ?? NULL,
       '#default_value' => $no_header ? $no_header : NULL,
     );
 
@@ -327,21 +489,10 @@ function gttn_tpps_managed_file_process($element, &$form_state, $form) {
       $element['columns']['#title'] = t('<div class="fieldset-title">Define Data</div>');
       $element['columns']['#collapsible'] = TRUE;
 
-      // Get the path to the file.
-      $file_name = $file->uri;
-
       // Stop using the file so it can be deleted if the user clicks 'remove'.
       file_usage_delete($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
-
-      // Get the full file path.
-      $location = drupal_realpath("$file_name");
       // Parse the file so it can be displayed with the columns.
-      $content = gttn_tpps_parse_xlsx($location);
-
-      // If no-header was checked, adjust the content from the file accordingly.
-      if (!empty($no_header)) {
-        gttn_tpps_content_no_header($content);
-      }
+      $content = gttn_tpps_parse_file($fid, 3, !empty($no_header));
 
       // Get the column options defined earlier.
       $options = $element['columns-options']['#value'];
@@ -349,23 +500,23 @@ function gttn_tpps_managed_file_process($element, &$form_state, $form) {
       $first = TRUE;
 
       // Actually create each of the column drop-downs.
-      foreach ($content['headers'] as $item) {
+      foreach ($content['headers'] as $key => $item) {
         $item_parents = $element['#parents'];
         array_pop($item_parents);
         $item_parents[] = end($element['#parents']) . '-columns';
-        $item_parents[] = $item;
+        $item_parents[] = $key;
 
         // If there were saved values, load them into the table.
         $default = drupal_array_get_nested_value($saved_vals, $item_parents);
 
         // Column drop-down element.
-        $element['columns'][$item] = array(
+        $element['columns'][$key] = array(
           '#type' => 'select',
           '#title' => t($item),
           '#options' => $options,
           '#default_value' => $default,
-          '#prefix' => "<td>",
-          '#suffix' => "</td>",
+          '#prefix' => "<th>",
+          '#suffix' => "</th>",
           '#attributes' => array(
             'data-toggle' => array('tooltip'),
             'data-placement' => array('left'),
@@ -377,33 +528,56 @@ function gttn_tpps_managed_file_process($element, &$form_state, $form) {
         // table element tags and wrappers.
         if ($first) {
           $first = FALSE;
-          $element['columns'][$item]['#prefix'] = "<div style='overflow-x:auto'><table border='1'><tbody><tr>" . $element['columns'][$item]['#prefix'];
+          $first_col = $key;
         }
 
         // If no-header was checked, the title should be left blank, and
         // the tooltip should be changed accordingly.
         if (!empty($no_header)) {
-          $element['columns'][$item]['#title'] = '';
-          $element['columns'][$item]['#attributes']['title'] = array("Select the type of data column $item holds");
+          $element['columns'][$key]['#title'] = '';
+          $element['columns'][$key]['#attributes']['title'] = array("Select the type of data column $item holds");
         }
-      }
 
-      // Display first 3 rows of the table.
-      $display = "</tr>";
-      for ($j = 0; $j < 3; $j++) {
-        if (isset($content[$j])) {
-          $display .= "<tr>";
-          foreach ($content['headers'] as $item) {
-            $display .= "<th>{$content[$j][$item]}</th>";
+        if ($form_state['stage'] == GTTN_PAGE_3) {
+          if ($element['#parents'][0] == 'tree-accession') {
+            $species_num = $element['#parents'];
+            array_pop($species_num);
+            $species_num = "-" . end($species_num);
+  
+            $element['columns'][$key]['#ajax'] = array(
+              'callback' => 'gttn_tpps_accession_pop_group',
+              'wrapper' => "population-mapping$species_num",
+            );
           }
-          $display .= "</tr>";
+          if ($element['#parents'][0] == 'samples') {
+            $element['columns'][$key]['#ajax'] = array(
+              'callback' => 'gttn_tpps_samples_callback',
+              'wrapper' => 'gttn_tpps_samples'
+            );
+          }
         }
       }
-      // Closing table element and wrapper tags.
-      $display .= "</tbody></table></div>";
 
-      // Display the sample data right below the last column drop-down.
-      $element['columns'][$item]['#suffix'] .= $display;
+      $rows = $content;
+      unset($rows['headers']);
+      $headers = array();
+      foreach ($content['headers'] as $col_name) {
+        $headers[] = $col_name;
+      }
+      $vars = array(
+        'header' => $headers,
+        'rows' => $rows,
+        'attributes' => array('class' => array('view')),
+        'caption' => '',
+        'colgroups' => NULL,
+        'sticky' => FALSE,
+        'empty' => '',
+      );
+      $table = theme_table($vars);
+      preg_match('/(*UTF8)\A(.*<thead[A-Z|a-z|"|\'|-|_|0-9]*>).*(<\/thead>.*<\/table>)/us', $table, $matches);
+
+      $element['columns'][$first_col]['#prefix'] = "<div style=\"overflow-x:auto\">" . $matches[1] . "<tr>" . $element['columns'][$first_col]['#prefix'];
+      $element['columns'][$key]['#suffix'] = "</tr>" . $matches[2] . "</div>";
     }
   }
 
@@ -573,96 +747,55 @@ function gttn_tpps_page_build(&$page) {
  *
  * @return array The completed form.
  */
-function gttn_tpps_main($form, &$form_state) {
+function gttn_tpps_main($form, &$form_state, $accession = NULL) {
   // Require the front page file if it hasn't already been loaded.
   require_once 'forms/build/front.php';
 
   // Get the user object.
   global $user;
-  // Get the query parameters from the url.
-  $params = drupal_get_query_parameters();
 
-  // If the user is not logged in and the form step has not yet been set, then
-  // set the step to frontpage.
-  if (!isset($user->mail) and !isset($form_state['stage'])) {
-    $form_state['stage'] = 'frontpage';
-
-    // Create front page.
-    gttn_tpps_front_create_form($form, $form_state);
-
-    // Add JavaScript.
-    drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
-
-    return $form;
-  }
-  // If the user is still not logged in and is trying to access GTTN-TPPS beyond
-  // the front page, then require them to login first.
-  elseif (!isset($user->mail)) {
-    $destination = drupal_get_destination();
-    // Require the user to login, once they do, bring them back to GTTN-TPPS.
-    drupal_goto('user/login', array('query' => $destination));
-  }
-  // If the user is logged in and has a specific accession number in their link,
-  // then load the incomplete form associated with their username and the
-  // provided accesison number.
-  elseif (isset($params['accession']) and !isset($form_state['stage'])) {
-    // Get form state based on username and provided accession number.
-    $old_form_state = variable_get('gttn_tpps_incomplete_' . $user->mail . $params['accession']);
-    // Load saved values, step, accession, and dbxref_id from old form state
-    // into new form state.
-    $form_state['saved_values'] = $old_form_state['saved_values'];
-    $form_state['stage'] = $old_form_state['stage'];
-    $form_state['accession'] = $old_form_state['accession'];
-    $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
-  }
-  // If the user is logged in with a plain link, then we need to check if they
-  // are trying to load the front page or a different page.
-  else {
-    // If the user is trying to load the front page, then set the step to
-    // front page and create the front page.
-    if (!isset($form_state['stage'])) {
-
+  if (!isset($form_state['stage'])) {
+    if (!isset($accession)) {
       $form_state['stage'] = 'frontpage';
 
-      // Create the front page.
       gttn_tpps_front_create_form($form, $form_state);
 
-      // Add JavaScript.
       drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
 
       return $form;
+
     }
-    // If the user is trying to load a different page, then the accession
-    // must have been set in the front page step. Load the form associated
-    // with that accession number and the user's username, then create the
-    // appropriate page.
     else {
-      // If there is no form associated with both the username and the
-      // accession number, then initialize a new project and create the
-      // new persistant variable in the database so that it can be loaded.
-      if (!isset($form_state['saved_values']['frontpage']['accession']) or (isset($form_state['saved_values']['frontpage']['accession']) and $form_state['saved_values']['frontpage']['accession'] === 'new')) {
-        // Initialize project.
-        gttn_tpps_init_project($form, $form_state);
-        // Create new persistant variable in the database to load later.
-        variable_set('gttn_tpps_incomplete_' . $user->mail . $form_state['saved_values']['frontpage']['accession'], $form_state);
+      // First access, and with accession in link.
+      $old_form_state = gttn_tpps_load_submission($accession);
+      if (empty($old_form_state)) {
+        drupal_goto('gttn-tpps');
       }
-      // Load the persistant variable from the database based on the username
-      // and accession number from the front page.
-      $old_form_state = variable_get('gttn_tpps_incomplete_' . $user->mail . $form_state['saved_values']['frontpage']['accession']);
-      // Load saved values, step, accession, and dbxref_id from old form
-      // state into new form state.
       $form_state['saved_values'] = $old_form_state['saved_values'];
       $form_state['stage'] = $old_form_state['stage'];
       $form_state['accession'] = $old_form_state['accession'];
       $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
+      $form_state['stats'] = $old_form_state['stats'] ?? NULL;
     }
+  }
+  else {
+    if (!isset($form_state['saved_values']['frontpage']['accession']) or (isset($form_state['saved_values']['frontpage']['accession']) and $form_state['saved_values']['frontpage']['accession'] === 'new')) {
+      // No submissions, or selected to create new submission.
+      gttn_tpps_init_project($form_state);
+      gttn_tpps_create_submission($form_state, $user->uid);
+    }
+    $old_form_state = gttn_tpps_load_submission($form_state['saved_values']['frontpage']['accession']);
+    $form_state['saved_values'] = $old_form_state['saved_values'];
+    $form_state['stage'] = $old_form_state['stage'];
+    $form_state['accession'] = $old_form_state['accession'];
+    $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
+    $form_state['stats'] = $old_form_state['stats'] ?? NULL;
   }
 
   // Hidden form step (AKA stage) element.
   $form['step'] = array(
-    '#type' => 'textfield',
-    '#disabled' => TRUE,
-    '#default_value' => $form_state['stage'],
+    '#type' => 'hidden',
+    '#value' => $form_state['stage'],
   );
 
   // Hidden form accession element.
@@ -684,12 +817,12 @@ function gttn_tpps_main($form, &$form_state) {
   switch ($form_state['stage']) {
     case GTTN_TYPE_PAGE:
       require_once 'forms/build/submission_type.php';
-      submission_type_create_form($form, $form_state);
+      gttn_tpps_submission_type_create_form($form, $form_state);
       break;
 
     case GTTN_PAGE_1:
       require_once 'forms/build/page_1.php';
-      page_1_create_form($form, $form_state);
+      gttn_tpps_page_1_create_form($form, $form_state);
       break;
 
     case GTTN_PAGE_3:
@@ -714,11 +847,11 @@ function gttn_tpps_main($form, &$form_state) {
 
   // Bootstrap tooltip functionality.
   $suffix = '
-        <script>
-        jQuery(document).ready(function(){
-            jQuery(\'[data-toggle="tooltip"]\').tooltip();   
-        });
-        </script>';
+    <script>
+    jQuery(document).ready(function(){
+        jQuery(\'[data-toggle="tooltip"]\').tooltip();   
+    });
+    </script>';
 
   // Add tooltip functionality to the end of suffix.
   if (isset($form['#suffix'])) {
@@ -732,6 +865,7 @@ function gttn_tpps_main($form, &$form_state) {
 
   // Add JavaScript.
   drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
+  drupal_add_css(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_CSS_PATH);
 
   return $form;
 }
@@ -758,34 +892,12 @@ function gttn_tpps_main_validate(&$form, &$form_state) {
     return;
   }
 
-  // Call the appropriate validation function based on the form stage.
-  switch ($form_state['stage']) {
-    case GTTN_TYPE_PAGE:
-      require_once 'forms/validate/submission_type.php';
-      submission_type_validate_form($form, $form_state);
-      drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
-      break;
-
-    case GTTN_PAGE_1:
-      require_once 'forms/validate/page_1.php';
-      page_1_validate_form($form, $form_state);
-      drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
-      break;
-
-    case GTTN_PAGE_3:
-      require_once 'forms/validate/page_3.php';
-      page_3_validate_form($form, $form_state);
-      drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
-      break;
-
-    case GTTN_PAGE_4:
-      require_once 'forms/validate/page_4.php';
-      page_4_validate_form($form, $form_state);
-      drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
-      break;
-
-    default:
-      break;
+  if ($form_state['submitted']) {
+    require_once('forms/validate/validate.php');
+    gttn_tpps_validate($form, $form_state);
+    if (!form_get_errors()) {
+      gttn_tpps_update_stats($form, $form_state);
+    }
   }
 
   // If there were no errors in validating the input, then let the form status
@@ -828,7 +940,7 @@ function gttn_tpps_main_submit($form, &$form_state) {
   // the form, and set the persistant variable in the database, then return.
   if ($form_state['triggering_element']['#value'] == 'Save') {
     // Notify the user that their save succeeded.
-    dpm('Your information has been saved!');
+    drupal_set_message(t('Your information has been saved!'), 'status');
 
     // Sync form build ids between the values and saved values arrays.
     if (isset($form_state['saved_values']['form_build_id'])) {
@@ -838,8 +950,7 @@ function gttn_tpps_main_submit($form, &$form_state) {
     // Rebuild the form.
     $form_state['rebuild'] = TRUE;
 
-    // Set the persistant variable in the database.
-    variable_set('gttn_tpps_incomplete_' . $user->mail . $form_state['accession'], $form_state);
+    gttn_tpps_update_submission($form_state);
     return;
   }
 
@@ -865,20 +976,14 @@ function gttn_tpps_main_submit($form, &$form_state) {
         $form_state['stage'] = GTTN_PAGE_4;
       }
       else {
-        // If the summarypage is being submitted and is not going backwards,
-        // then remove the gttn_tpps_incomplete_ variable from the database
-        // and add it as a gttn_tpps_complete_ variable.
-        variable_del('gttn_tpps_incomplete_' . $user->mail . $form_state['accession']);
-        // Set the form status to Pending Approval so that the admin panel
-        // can decide whether to create an approval/rejection form for it
-        // later.
         $form_state['status'] = 'Pending Approval';
-        variable_set('gttn_tpps_complete_' . $user->mail . $form_state['accession'], $form_state);
+        gttn_tpps_update_submission($form_state, array('status' => 'Pending Approval'));
         // Notify the user that their submission was received.
         gttn_tpps_submit_email($form, $form_state);
         // We don't need to sync the form build ids, rebuild the form,
         // or set the incomplete variable once the summarypage has been
         // submitted.
+        drupal_goto("gttn-completed-submission/{$form_state['accession']}");
         return;
       }
       break;
@@ -891,10 +996,9 @@ function gttn_tpps_main_submit($form, &$form_state) {
         else {
           $form_state['stage']++;
         }
+        break;
       }
-      else {
-        dpm("Invalid form stage");
-      }
+      drupal_set_message(t('Invalid form stage.'), 'error');
       break;
   }
 
@@ -909,7 +1013,7 @@ function gttn_tpps_main_submit($form, &$form_state) {
   // If we are submitting any page except the front page, then save the new
   // gttn_tpps_incomplete_ variable in the database.
   if ($persist) {
-    variable_set('gttn_tpps_incomplete_' . $user->mail . $form_state['accession'], $form_state);
+    gttn_tpps_update_submission($form_state);
   }
 }
 
@@ -948,12 +1052,12 @@ function gttn_tpps_block_view_alter(&$data, $block) {
 
       // CSS for some extra spacing around images within the status block.
       $css = "
-            .tgdr_status_block img {
-                    vertical-align: middle;
-                    margin-bottom: 4px;
-                    margin-right: 2px;
-            }		
-            ";
+        .tgdr_status_block img {
+          vertical-align: middle;
+          margin-bottom: 4px;
+          margin-right: 2px;
+        }
+        ";
       // Add image spacing CSS.
       drupal_add_css($css, 'inline');
 
@@ -963,18 +1067,19 @@ function gttn_tpps_block_view_alter(&$data, $block) {
       $content = "<div class='tgdr_status_block'>";
       // Get the user object.
       global $user;
+      $params = drupal_get_query_parameters(NULL, array());
       // Try to retrieve the accession number from the http request. If you
       // can, then load the form state based on the username and accession.
       if (isset($_REQUEST['accession'])) {
         $accession = $_REQUEST['accession'];
         // Load the form state.
-        $form_state = variable_get('gttn_tpps_incomplete_' . $user->mail . $accession);
+        $form_state = gttn_tpps_load_submission($accession);
       }
       else {
         // If the accession could be loaded, then close the content that
         // will be added to the block and stop here.
         $content .= '</div>';
-        $data['content'] = t($content);
+        $data['content'] = filter_xss($content);
         break;
       }
       // Checkmark icon.
@@ -982,6 +1087,7 @@ function gttn_tpps_block_view_alter(&$data, $block) {
       // Get the standardized data array from the form state.
       $flat = gttn_tpps_flatten($form_state);
 
+      $map_api_key = variable_get('gttn_tpps_maps_api_key', NULL);
       // Iterate through the field => value pairs in the standardized data array.
       foreach ($flat as $item => $val) {
         // Fields starting with '#' are metadata that shouldn't actually
@@ -990,6 +1096,10 @@ function gttn_tpps_block_view_alter(&$data, $block) {
           // Filter the field and value strings into html-friendly strings.
           $item_str = filter_xss(check_plain($item));
           $val_str = filter_xss(check_plain($val));
+
+          if (preg_match('/(Abstract|Organization)/', $item)) {
+            continue;
+          }
           // If the field is a file, then load the file and create a
           // link to it.
           if (preg_match('/File/', $item) and ($file_name = file_load($val)->filename)) {
@@ -999,20 +1109,16 @@ function gttn_tpps_block_view_alter(&$data, $block) {
             // the full link to its location.
             $val_str = "<a href='$file_url' target='blank'>$file_name</a>";
             if (preg_match('/^(.*)Accession File/', $item, $matches)) {
-
+              $name = "";
               if ($matches[1] != "Tree ") {
                 $parts = explode(" ", $matches[1]);
                 $name = implode("_", $parts);
+              }
 
-                $val_str .= "<div id=\"{$name}map_wrapper\"></div>"
-                                . "<input id=\"{$name}map_button\" type=\"button\" value=\"Click here to view trees on map!\"></input>"
-                                . "<div id=\"{$name}accession_fid\" style=\"display:none;\">$val</div>";
-              }
-              else {
-                $val_str .= "<div id=\"map_wrapper\"></div>"
-                                . "<input id=\"map_button\" type=\"button\" value=\"Click here to view trees on map!\"></input>"
-                                . "<div id=\"accession_fid\" style=\"display:none;\">$val</div>";
-              }
+              $val_str .= "<div id=\"{$name}map_wrapper\"></div>"
+                . "<input id=\"{$name}map_button\" type=\"button\" value=\"Click here to view trees on map!\"></input>"
+                . "<div id=\"{$name}accession_fid\" style=\"display:none;\">$val</div>"
+                . "<script>jQuery('#{$name}map_button').click(getCoordinates);</script>";
             }
           }
           // If the field is a month, we want to display it along with
@@ -1043,7 +1149,7 @@ function gttn_tpps_block_view_alter(&$data, $block) {
           }
           // Add the checkmark, the html-friendly field string, and the
           // html-friendly value string to the content string.
-          $content .= "$ok $item_str: $val_str <br />";
+          $content .= "$ok $item_str: $val_str <br>";
         }
         // If the field starts with '#' and is a page cleared tag, then
         // we might want to create a new section for the next page.
@@ -1079,8 +1185,9 @@ function gttn_tpps_block_view_alter(&$data, $block) {
       }
       // Close out the content wrapper.
       if ($flat['#page_3_cleared']) {
-        $content .= "<script src=\"https://maps.googleapis.com/maps/api/js?key=AIzaSyDkeQ6KN6HEBxrIoiSCrCHFhIbipycqouY&callback=initMap\"
-                async defer></script>";
+        $content .= "<script src=\"https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js\"></script>"
+          . "<script src=\"https://maps.googleapis.com/maps/api/js?key=$map_api_key&callback=initMap\""
+          . "async defer></script>";
       }
       $content .= "</div>";
       // Add the content to the block.

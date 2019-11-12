@@ -5,7 +5,7 @@
  * Load page 1 helper functions.
  */
 
-require_once 'page_1_helper.php';
+require_once 'page_1_ajax.php';
 
 /**
  * Populates the form element for the first page of the form. This page and any
@@ -18,7 +18,7 @@ require_once 'page_1_helper.php';
  *
  * @return array The populated form element.
  */
-function page_1_create_form(&$form, $form_state) {
+function gttn_tpps_page_1_create_form(&$form, $form_state) {
 
   // Load saved values for the first page if they are available.
   if (isset($form_state['saved_values'][GTTN_PAGE_1])) {
@@ -28,18 +28,40 @@ function page_1_create_form(&$form, $form_state) {
     $values = array();
   }
 
-  // Create the organism field with the organism helper function.
-  organism($form, $values);
+  $field = array(
+    '#type' => 'textfield',
+    '#title' => "Species !num",
+    '#autocomplete_path' => 'gttn-species/autocomplete',
+    '#attributes' => array(
+      'data-toggle' => array('tooltip'),
+      'data-placement' => array('left'),
+      'title' => array('If your species is not in the autocomplete list, don\'t worry about it! We will create a new organism entry in the database for you.'),
+    ),
+    '#description' => 'Please select your species from the autocomplete list. If your species is not in the autocomplete list, then a new species will be added to the database.',
+    '#gttn_tpps_val' => array(
+      'function' => 'gttn_tpps_validate_organism',
+      'standard' => TRUE,
+    ),
+  );
+
+  gttn_tpps_dynamic_list($form, $form_state, 'organism', $field, array(
+    'label' => 'Organism',
+    'default' => 1,
+    'substitute_fields' => array(
+      '#title',
+    ),
+  ));
 
   // Create the data type drop-down menu.
-  $form['dataType'] = array(
-    '#type' => 'select',
+  $form['data_type'] = array(
+    '#type' => 'checkboxes',
     '#title' => t('Data Type: *'),
     '#options' => array(
-      0 => '- Select -',
-      'Genotype' => 'Genotype',
-      'Phenotype' => 'Phenotype',
-      'Genotype x Phenotype' => 'Genotype x Phenotype',
+      'Sample Data' => 'Sample Data',
+      'DART Reference Data' => 'DART Reference Data',
+      'Isotope Reference Data' => 'Isotope Reference Data',
+      'Genetic Reference Data' => 'Genetic Reference Data',
+      'Anatomical Reference Data' => 'Anatomical Reference Data',
     ),
   );
 

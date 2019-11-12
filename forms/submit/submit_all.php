@@ -7,23 +7,28 @@
 /**
  *
  */
-function gttn_tpps_submit_all(&$form_state) {
+function gttn_tpps_submit_all($accession) {
+  $form_state = gttn_tpps_load_submission($accession);
+  $form_state['status'] = 'Submission Job Running';
+  gttn_tpps_update_submission($form_state, array('status' => 'Submission Job Running'));
+  $project_id = $form_state['ids']['project_id'] ?? NULL;
+  $transaction = db_transaction();
 
-  $values = $form_state['saved_values'];
-  $firstpage = $values[GTTN_PAGE_1];
-  $file_rank = 0;
+  try {
+    $form_state = gttn_tpps_load_submission($accession);
+    $values = $form_state['saved_values'];
+    $form_state['file_rank'] = 0;
+    $form_state['ids'] = array();
 
-  $project_id = gttn_tpps_create_record('project', array(
-    'name' => $form_state['accession'],
-  ));
-
-  $organism_ids = gttn_tpps_submit_page_1($form_state, $project_id, $file_rank);
-
-  gttn_tpps_submit_page_3($form_state, $project_id, $file_rank, $organism_ids);
-
-  gttn_tpps_submit_page_4($form_state, $project_id, $file_rank, $organism_ids);
-
-  // For simplicity and efficiency, all fourth page submissions take place in the TPPS File Parsing Tripal Job.
+    // TODO.
+  }
+  catch (\Exception $e) {
+    $transaction->rollback();
+    $form_state = gttn_tpps_load_submission($accession);
+    $form_state['status'] = 'Pending Approval';
+    gttn_tpps_update_submission($form_state, array('status' => 'Pending Approval'));
+    watchdog_exception('gttn_tpps', $e);
+  }
 }
 
 /**
