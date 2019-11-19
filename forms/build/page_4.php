@@ -92,10 +92,89 @@ function page_4_create_form(&$form, &$form_state) {
   }
 
   if (!empty($types['Isotope Reference Data'])) {
+    $isotope_file_upload_location = 'public://' . variable_get('gttn_tpps_iso_files_dir', 'gttn_tpps_isotope');
+
     $form['isotope'] = array(
       '#type' => 'fieldset',
       '#title' => t('Isotope Reference Data information'),
-      // TODO
+      '#prefix' => '<div id="gttn_tpps_isotope">',
+      '#suffix' => '</div>',
+    );
+
+    $form['isotope']['used_core'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Increment core was used for sampling'),
+      '#ajax' => array(
+        'callback' => 'gttn_tpps_isotope_callback',
+        'wrapper' => 'gttn_tpps_isotope'
+      ),
+    );
+
+    $core_used = gttn_tpps_get_ajax_value($form_state, array('isotope', 'used_core'));
+    if ($core_used) {
+      $form['isotope']['core_len'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Length of Increment core'),
+      );
+    }
+
+    $isotopes = array(
+      '13C' => '13C',
+      '18O' => '18O',
+      '15N' => '15N',
+      '34S' => '34S',
+      '87Sr' => '87Sr',
+      'DH' => 'DH',
+    );
+
+    $form['isotope']['used'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Isotope(s) used'),
+      '#options' => $isotopes,
+      '#ajax' => array(
+        'callback' => 'gttn_tpps_isotope_callback',
+        'wrapper' => 'gttn_tpps_isotope'
+      ),
+    );
+
+    foreach ($isotopes as $iso) {
+      $iso_used = gttn_tpps_get_ajax_value($form_state, array(
+        'isotope',
+        'used',
+        $iso,
+      ));
+      
+      if (!empty($iso_used)) {
+        $form['isotope'][$iso] = array(
+          '#type' => 'fieldset',
+          'standard' => array(
+            '#type' => 'textfield',
+            '#title' => t('@iso Isotope standard', array('@iso' => $iso)),
+          ),
+          'type' => array(
+            '#type' => 'select',
+            '#title' => t('@iso Isotope type', array('@iso' => $iso)),
+            '#options' => array(
+              1 => 'Whole Wood',
+              2 => 'Cellulose',
+            ),
+          ),
+        );
+      }
+    }
+
+    $form['isotope']['file'] = array(
+      '#type' => 'managed_file',
+      '#title' => t('Isotope Reference Data File: *'),
+      '#upload_location' => $isotope_file_upload_location,
+      '#upload_validators' => array(
+        'file_validate_extensions' => array('txt csv xlsx'),
+      ),
+      '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: txt csv xlsx</span>',
+      '#standard_name' => 'Isotope',
+      'empty' => array(
+        '#default_value' => $values['dart']['file']['empty'] ?? 'NA',
+      ),
     );
   }
 
