@@ -28,6 +28,93 @@ function page_4_create_form(&$form, &$form_state) {
     $values = array();
   }
 
+  $types = $form_state['saved_values'][GTTN_PAGE_1]['data_type'];
+
+  if (!empty($types['DART Reference Data'])) {
+    $dart_file_upload_location = 'public://' . variable_get('gttn_tpps_dart_files_dir', 'gttn_tpps_dart');
+    $column_options = array(
+      0 => 'N/A',
+      1 => 'Analysis lab Name',
+      2 => 'Analysis lab Spectra ID',
+      3 => 'Internal Sample ID',
+      4 => 'Xylarium ID',
+      5 => 'Spectra Gatherer',
+      6 => 'Type of DART TOFMS',
+      7 => 'Parameter Settings',
+      8 => 'Calibration Type',
+    );
+
+    $required_groups = array(
+      'Lab Name' => array(
+        'name' => array(1),
+      ),
+      'Spectra Id' => array(
+        'id' => array(2),
+      ),
+      'Sample Id' => array(
+        'internal' => array(3),
+        'xylarium' => array(4),
+      ),
+      'Parameter Settings' => array(
+        'settings' => array(7),
+      ),
+    );
+
+    $form['dart'] = array(
+      '#type' => 'fieldset',
+      'file' => array(
+        '#type' => 'managed_file',
+        '#title' => t('DART Reference Data File: *'),
+        '#upload_location' => $dart_file_upload_location,
+        '#upload_validators' => array(
+          'file_validate_extensions' => array('txt csv xlsx'),
+        ),
+        '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: txt csv xlsx</span>',
+        '#required_groups' => $required_groups,
+        '#gttn_tpps_val' => array(
+          'standard' => TRUE,
+          'function' => 'gttn_tpps_managed_file_validate',
+        ),
+        '#standard_name' => 'DART',
+        'empty' => array(
+          '#default_value' => $values['dart']['file']['empty'] ?? 'NA',
+        ),
+        'columns' => array(
+          '#description' => 'Please define which columns hold the required data',
+        ),
+        'no-header' => array(),
+        'columns-options' => array(
+          '#type' => 'hidden',
+          '#value' => $column_options,
+        ),
+      ),
+    );
+  }
+
+  if (!empty($types['Isotope Reference Data'])) {
+    $form['isotope'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Isotope Reference Data information'),
+      // TODO
+    );
+  }
+
+  if (!empty($types['Genetic Reference Data'])) {
+    $form['genetic'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Genetic Reference Data information'),
+      // TODO
+    );
+  }
+
+  if (!empty($types['Anatomical Reference Data'])) {
+    $form['anatomic'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Anatomical Reference Data information'),
+      // TODO
+    );
+  }
+
   // Load the upload locations for genotype and phenotype files from the
   // GTTN-TPPS admin settings in the database.
   $genotype_upload_location = 'public://' . variable_get('gttn_tpps_genotype_files_dir', 'gttn_tpps_genotype');
