@@ -20,6 +20,8 @@ function gttn_tpps_admin_settings($form, &$form_state) {
   $accession = variable_get('gttn_tpps_accession_files_dir', 'gttn_tpps_accession');
   $genotype = variable_get('gttn_tpps_genotype_files_dir', 'gttn_tpps_genotype');
   $phenotype = variable_get('gttn_tpps_phenotype_files_dir', 'gttn_tpps_phenotype');
+  $dart = variable_get('gttn_tpps_dart_files_dir', 'gttn_tpps_dart');
+  $isotope = variable_get('gttn_tpps_isotope_files_dir', 'gttn_tpps_isotope');
 
   $form['gttn_tpps_maps_api_key'] = array(
     '#type' => 'textfield',
@@ -70,6 +72,20 @@ function gttn_tpps_admin_settings($form, &$form_state) {
     '#title' => t('Tree Accession files:'),
     '#default_value' => $accession,
     '#description' => t("Currently points to @path.", array('@path' => drupal_realpath("public://$accession"))),
+  );
+
+  $form['gttn_tpps_dart_files_dir'] = array(
+    '#type' => 'textfield',
+    '#title' => t('DART files:'),
+    '#default_value' => $dart,
+    '#description' => t("Currently points to @path.", array('@path' => drupal_realpath("public://$dart"))),
+  );
+
+  $form['gttn_tpps_isotope_files_dir'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Isotope files:'),
+    '#default_value' => $isotope,
+    '#description' => t("Currently points to @path.", array('@path' => drupal_realpath("public://$isotope"))),
   );
 
   // Create the genotype file directory field.
