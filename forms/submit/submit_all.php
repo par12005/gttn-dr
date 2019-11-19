@@ -32,7 +32,7 @@ function gttn_tpps_submit_all($accession) {
 }
 
 /**
- *
+ * DEPRECATED
  */
 function gttn_tpps_submit_page_1(&$form_state, $project_id, &$file_rank) {
 
@@ -71,7 +71,7 @@ function gttn_tpps_submit_page_1(&$form_state, $project_id, &$file_rank) {
 }
 
 /**
- *
+ * DEPRECATED
  */
 function gttn_tpps_submit_page_3(&$form_state, $project_id, &$file_rank, $organism_ids) {
 
@@ -335,7 +335,7 @@ function gttn_tpps_submit_page_3(&$form_state, $project_id, &$file_rank, $organi
 }
 
 /**
- *
+ * DEPRECATED
  */
 function gttn_tpps_submit_page_4(&$form_state, $project_id, &$file_rank, $organism_ids) {
   $fourthpage = $form_state['saved_values'][GTTN_PAGE_4];
