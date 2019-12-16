@@ -178,7 +178,7 @@ function gttn_tpps_flat_width($location, $delim = ',') {
   $longest = 0;
   $handle = fopen($location, 'r');
 
-  while (($line = fgets($handle))) {
+  while (($line = fgetcsv($handle))) {
     $longest = max($longest, count(explode($delim, $line)));
   }
 
@@ -933,11 +933,11 @@ function gttn_tpps_flat_generator($location, array $options = array()) {
   $handle = fopen($location, 'r');
 
   if (!$no_header) {
-    fgets($handle);
+    fgetcsv($handle);
   }
   $count = 0;
 
-  while (($line = fgets($handle))) {
+  while (($line = fgetcsv($handle))) {
     if (!empty($max_rows) and $count >= $max_rows) {
       break;
     }
