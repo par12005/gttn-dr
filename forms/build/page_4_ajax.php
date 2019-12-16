@@ -12,6 +12,13 @@ function gttn_tpps_isotope_callback(&$form, $form_state) {
 }
 
 /**
+ * 
+ */
+function gttn_tpps_genetic_callback(&$form, $form_state) {
+  return $form['genetic'];
+}
+
+/**
  * This function returns the newly built BioProject Id field.
  *
  * @param $form

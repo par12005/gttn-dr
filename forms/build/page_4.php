@@ -179,10 +179,165 @@ function page_4_create_form(&$form, &$form_state) {
   }
 
   if (!empty($types['Genetic Reference Data'])) {
+    $genotype_upload_location = 'public://' . variable_get('gttn_tpps_genotype_files_dir', 'gttn_tpps_genotype');
+
     $form['genetic'] = array(
       '#type' => 'fieldset',
       '#title' => t('Genetic Reference Data information'),
-      // TODO
+      '#prefix' => '<div id="gttn-tpps-genetic">',
+      '#suffix' => '</div>',
+    );
+
+    $marker_types = array(
+      'SNPs' => 'SNPs',
+      'SSRs/cpSSRs' => 'SSRs/cpSSRs',
+      'Other' => 'Other',
+    );
+
+    $form['genetic']['marker'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Marker type(s): *'),
+      '#options' => $marker_types,
+      '#ajax' => array(
+        'callback' => 'gttn_tpps_genetic_callback',
+        'wrapper' => 'gttn-tpps-genetic',
+      ),
+    );
+
+    $markers = gttn_tpps_get_ajax_value($form_state, array('genetic', 'marker'));
+    if (!empty($markers['Other'])) {
+      $form['genetic']['other-marker'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Other marker type: *'),
+      );
+    }
+
+    if (!empty($markers['SNPs'])) {
+      $snps_source = array(
+        0 => '- Select -',
+        'GBS' => 'GBS',
+        'Reference Genome' => 'Reference Genome',
+        'Transcriptome' => 'Transcriptome',
+        'Assay' => 'Assay',
+      );
+
+      $form['genetic']['snps_source'] = array(
+        '#type' => 'select',
+        '#title' => t('Source of SNPs: *'),
+        '#options' => $snps_source,
+        '#ajax' => array(
+          'callback' => 'gttn_tpps_genetic_callback',
+          'wrapper' => 'gttn-tpps-genetic',
+        ),
+      );
+
+      $snps_source_val = gttn_tpps_get_ajax_value($form_state, array('genetic', 'snps_source'));
+      if ($snps_source_val == 'GBS') {
+        $form['genetic']['gbs_type'] = array(
+          '#type' => 'select',
+          '#title' => t('GBS Type: *'),
+          '#options' => array(
+            0 => '- Select -',
+            'ddRAD' => 'ddRad',
+            'RAD' => 'RAD',
+            'NextRad' => 'NextRad',
+            'Other' => 'Other',
+            '#ajax' => array(
+              'callback' => 'gttn_tpps_genetic_callback',
+              'wrapper' => 'gttn-tpps-genetic',
+            ),
+          ),
+        );
+        
+        $gbs_type = gttn_tpps_get_ajax_value($form_state, array('genetic', 'gbs_type'));
+        if ($gbs_type == 'Other') {
+          $form['genetic']['other_gbs'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Other GBS Type: *'),
+          );
+        }
+
+        $form['genetic']['gbs_reference'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Intermediate Reference: *'),
+        );
+
+        $form['genetic']['gbs_align'] = array(
+          '#type' => 'managed_file',
+          '#title' => t('GBS Alignment file: *'),
+          '#upload_location' => $genotype_upload_location,
+          '#upload_validators' => array(
+            'file_validate_extensions' => array('txt csv xlsx'),
+          ),
+          '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: txt csv xlsx</span>',
+          '#standard_name' => 'GBS_Alignment',
+        );
+
+        $form['genetic']['vcf'] = array(
+          '#type' => 'managed_file',
+          '#title' => t('VCF File: *'),
+          '#upload_location' => $genotype_upload_location,
+          '#upload_validators' => array(
+            'file_validate_extensions' => array('txt csv xlsx'),
+          ),
+          '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: txt csv xlsx</span>',
+          '#standard_name' => 'VCF',
+        );
+      }
+
+      if ($snps_source_val == 'Assay') {
+        $form['genetic']['assay_type'] = array(
+          '#type' => 'select',
+          '#title' => t('Assay Type: *'),
+          '#options' => array(
+            0 => '- Select -',
+            'MassArray' => 'MassArray',
+            'Illumina' => 'Illumina',
+            'Thermo' => 'Thermo',
+          ),
+        );
+
+        $form['genetic']['assay_design_file'] = array(
+          '#type' => 'managed_file',
+          '#title' => t('Assay Design File: *'),
+          '#upload_location' => $genotype_upload_location,
+          '#upload_validators' => array(
+            'file_validate_extensions' => array('txt csv xlsx'),
+          ),
+          '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: txt csv xlsx</span>',
+          '#standard_name' => 'Assay_Design',
+        );
+
+        $form['genetic']['assay_genotype_table'] = array(
+          '#type' => 'managed_file',
+          '#title' => t('Assay Genotype Table: *'),
+          '#upload_location' => $genotype_upload_location,
+          '#upload_validators' => array(
+            'file_validate_extensions' => array('txt csv xlsx'),
+          ),
+          '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: txt csv xlsx</span>',
+          '#standard_name' => 'Assay_Genotype_Table',
+        );
+      }
+    }
+
+    if (!empty($markers['SSRs/cpSSRs'])) {
+      $form['genetic']['ssr_machine'] = array(
+        '#type' => 'textfield',
+        '#title' => t('SSR Machine: *'),
+      );
+    }
+
+    $form['genetic']['quality'] = array(
+      '#type' => 'textfield',
+      '#title' => t('DNA Quality'),
+      '#gttn_tpps_val' => array(),
+    );
+
+    $form['genetic']['location'] = array(
+      '#type' => 'textfield',
+      '#title' => t('DNA Storage Location'),
+      '#gttn_tpps_val' => array(),
     );
   }
 
@@ -196,11 +351,10 @@ function page_4_create_form(&$form, &$form_state) {
 
   // Load the upload locations for genotype and phenotype files from the
   // GTTN-TPPS admin settings in the database.
-  $genotype_upload_location = 'public://' . variable_get('gttn_tpps_genotype_files_dir', 'gttn_tpps_genotype');
   $phenotype_upload_location = 'public://' . variable_get('gttn_tpps_phenotype_files_dir', 'gttn_tpps_phenotype');
 
   // Ensure that the whole form allows collections of elements.
-  $form['#tree'] = TRUE;
+  /*$form['#tree'] = TRUE;
 
   // Get the number of species from the first page.
   $organism_number = $form_state['saved_values'][GTTN_PAGE_1]['organism']['number'];
@@ -332,7 +486,7 @@ function page_4_create_form(&$form, &$form_state) {
         );
       }
     }
-  }
+  }*/
 
   // Create the back button.
   $form['Back'] = array(
