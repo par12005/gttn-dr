@@ -24,6 +24,7 @@ require_once 'includes/submissions.inc';
 require_once 'includes/form_utils.inc';
 require_once 'includes/ols_utils.inc';
 require_once 'includes/chado_utils.inc';
+require_once 'includes/opencage_utils.inc';
 
 /**
  * Implements hook_menu().
@@ -508,6 +509,17 @@ function gttn_tpps_managed_file_process($element, &$form_state, $form) {
         // If there were saved values, load them into the table.
         $default = drupal_array_get_nested_value($saved_vals, $item_parents);
 
+        // If no saved values were loaded, try to guess column types.
+        if (!isset($default)) {
+          foreach ($options as $k => $val) {
+            similar_text(strtolower($val), strtolower($item), $percent);
+            if ($percent > 85) {
+              $default = $k;
+              break;
+            }
+          }
+        }
+
         // Column drop-down element.
         $element['columns'][$key] = array(
           '#type' => 'select',
@@ -775,6 +787,8 @@ function gttn_tpps_main($form, &$form_state, $accession = NULL) {
       $form_state['accession'] = $old_form_state['accession'];
       $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
       $form_state['stats'] = $old_form_state['stats'] ?? NULL;
+      $form_state['data'] = $old_form_state['data'] ?? NULL;
+      $form_state['file_info'] = $old_form_state['file_info'] ?? NULL;
     }
   }
   else {
@@ -789,6 +803,8 @@ function gttn_tpps_main($form, &$form_state, $accession = NULL) {
     $form_state['accession'] = $old_form_state['accession'];
     $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
     $form_state['stats'] = $old_form_state['stats'] ?? NULL;
+    $form_state['data'] = $old_form_state['data'] ?? NULL;
+    $form_state['file_info'] = $old_form_state['file_info'] ?? NULL;
   }
 
   // Hidden form step (AKA stage) element.
@@ -896,6 +912,7 @@ function gttn_tpps_main_validate(&$form, &$form_state) {
     gttn_tpps_validate($form, $form_state);
     if (!form_get_errors()) {
       gttn_tpps_update_stats($form, $form_state);
+      gttn_tpps_update_data($form, $form_state);
     }
   }
 
