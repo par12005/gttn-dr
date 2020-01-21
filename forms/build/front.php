@@ -32,10 +32,6 @@ function gttn_tpps_front_create_form(&$form, $form_state) {
 
     // Load all of the incomplete submission variables associated with the
     // user's username.
-    $results = db_select("public.variable", "variable")
-      ->fields('variable', array('name'))
-      ->condition('name', db_like('gttn_tpps_incomplete_' . $user->mail) . '%', 'LIKE')
-      ->execute();
     $states = gttn_tpps_load_submission_multiple(array('status' => 'Incomplete', 'uid' => $user->uid));
 
     // Iterate through each of the incomplete submission variables.

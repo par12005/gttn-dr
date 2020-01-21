@@ -249,3 +249,121 @@ function gttn_tpps_update_stats(&$form, &$form_state) {
       break;
   }
 }
+
+/**
+ * 
+ */
+function gttn_tpps_update_data(&$form, &$form_state) {
+  switch ($form_state['stage']) {
+    case GTTN_TYPE_PAGE:
+      $form_state['data']['project'] = $form_state['values']['project'];
+      $date = $form_state['data']['project']['props']['analysis_date'];
+      $form_state['data']['project']['props']['analysis_date'] = "{$date['day']}-{$date['month']}-{$date['year']}";
+      break;
+
+    case GTTN_PAGE_1:
+      $form_state['data']['organism'] = array();
+      for ($i = 1; $i <= $form_state['values']['organism']['number']; $i++) {
+        $parts = explode(' ', $form_state['values']['organism'][$i]);
+        $genus = $parts[0];
+        $species = implode(' ', array_slice($parts, 1));
+        $form_state['data']['organism'][] = array(
+          'genus' => $genus,
+          'species' => $species,
+        );
+      }
+
+      $form_state['data']['project']['props']['data_type'] = array();
+      foreach ($form_state['values']['data_type'] as $data_type) {
+        if (!empty($data_type)) {
+          $form_state['data']['project']['props']['data_type'][] = $data_type;
+        }
+      }
+      break;
+
+    case GTTN_PAGE_3:
+      $form_state['data']['trees'] = array();
+      $form_state['data']['samples'] = array();
+      $form_state['file_info'][GTTN_PAGE_3] = array();
+      for ($i = 1; $i <= $form_state['saved_values'][GTTN_PAGE_1]['organism']['number']; $i++) {
+        $fid = $form_state['values']['tree-accession']["species-$i"]['file'] ?? NULL;
+        if (!empty($fid) and file_load($fid)) {
+          $current_field = $form_state['values']['tree-accession']["species-$i"];
+          $no_header = $current_field['file-no-header'];
+          $form_state['file_info'][GTTN_PAGE_3][] = array(
+            'fid' => $fid,
+            'name' => 'Tree_Accession',
+            'columns' => $current_field['file-columns'],
+            'groups' => $current_field['file-groups'],
+          );
+
+          $id_col = $current_field['file-groups']['Tree Id'][1];
+          $content = gttn_tpps_parse_file($fid, 0, $no_header, array($id_col));
+
+          for ($j = 0; $j < count($content) - 1; $j++) {
+            $form_state['data']['trees'][] = array(
+              'id' => $content[$j][$id_col],
+            );
+          }
+        }
+      }
+
+      $fid = $form_state['values']['samples']['file'] ?? NULL;
+      if (!empty($fid) and file_load($fid)) {
+        $columns = $form_state['values']['samples']['file-columns'];
+        $groups = $form_state['values']['samples']['file-groups'];
+        $form_state['file_info'][GTTN_PAGE_3][] = array(
+          'fid' => $fid,
+          'name' => 'Sample_Accession',
+          'columns' => $columns,
+          'groups' => $groups,
+        );
+
+        $content = gttn_tpps_parse_file($fid, 0, $form_state['values']['samples']['file-no-header']);
+        $id_col = $groups['Sample Id'][1];
+        $source_col = $groups['Sample Source'][8];
+        $tissue_col = $groups['Tissue Type'][5];
+        $dim_col = $groups['Sample Dimensions'][7];
+        $xylarium = array_search(2, $columns);
+        $xylarium = ($xylarium === FALSE) ? NULL : $xylarium;
+        $date = $form_state['values']['samples']['date'] ?? NULL;
+        if (!isset($date)) {
+          $date_col = array_search(3, $columns);
+        }
+        $collector = $form_state['values']['samples']['collector'] ?? NULL;
+        if (!isset($collector)) {
+          $collector_col = array_search(4, $columns);
+        }
+        $method = $form_state['values']['samples']['method'] ?? NULL;
+        if (!isset($method)) {
+          $method_col = array_search(6, $columns);
+        }
+        $legal = $form_state['values']['samples']['legal'] ? TRUE : FALSE;
+        $share = $form_state['values']['samples']['sharable'] ? TRUE : FALSE;
+
+        for ($j = 0; $j < count($content) - 1; $j++) {
+          $form_state['data']['samples'][] = array(
+            'id' => $content[$j][$id_col],
+            'xylarium' => $xylarium,
+            'source' => $content[$j][$source_col],
+            'tissue' => $content[$j][$tissue_col],
+            'dimension' => $content[$j][$dim_col],
+            'date' => $date ?? ($content[$i][$date_col] ?? NULL),
+            'collector' => $collector ?? ($content[$i][$collector_col] ?? NULL),
+            'method' => $method ?? ($content[$i][$method_col] ?? NULL),
+            'legal' => $legal ?? NULL,
+            'share' => $share ?? NULL,
+          );
+        }
+      }
+      // TODO
+      break;
+
+    case GTTN_PAGE_4:
+      // TODO
+      break;
+
+    default:
+      break;
+  }
+}

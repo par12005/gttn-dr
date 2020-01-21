@@ -18,12 +18,7 @@ require_once 'page_3_ajax.php';
  */
 function page_3_create_form(&$form, &$form_state) {
   // Load saved values for the third page if they are available.
-  if (isset($form_state['saved_values'][GTTN_PAGE_3])) {
-    $values = $form_state['saved_values'][GTTN_PAGE_3];
-  }
-  else {
-    $values = array();
-  }
+  $values = $form_state['saved_values'][GTTN_PAGE_3] ?? array();
 
   // Create the tree accession set of fields.
   $form['tree-accession'] = array(

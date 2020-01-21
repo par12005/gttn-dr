@@ -11,47 +11,59 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
 
   global $user;
 
-  $form['name'] = array(
+  $form['project'] = array(
+    '#type' => 'fieldset',
+    '#tree' => TRUE,
+  );
+
+  $form['project']['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Submission Name: *'),
   );
 
-  $form['purpose'] = array(
+  $form['project']['description'] = array(
     '#type' => 'textarea',
     '#title' => t('Data Collection Purpose: *'),
-    '#description' => t('Please provide a brief description of why this data was collected.')
+    '#description' => t('Please provide a brief description of why this data was collected.'),
   );
 
-  $form['date'] = array(
+  $form['project']['props'] = array(
+    '#type' => 'fieldset',
+  );
+
+  $form['project']['props']['analysis_date'] = array(
     '#type' => 'date',
     '#title' => t('Analysis Date: *'),
+    '#gttn_tpps_data' => array(
+      'cv' => 'tripal_analysis',
+    ),
   );
 
-  $form['pub_doi'] = array(
+  $form['project']['props']['pub_doi'] = array(
     '#type' => 'textfield',
     '#title' => t('Publication DOI:'),
     '#gttn_tpps_val' => array(),
   );
 
-  $form['data_doi'] = array(
+  $form['project']['props']['data_doi'] = array(
     '#type' => 'textfield',
     '#title' => t('Data DOI:'),
     '#gttn_tpps_val' => array(),
   );
 
-  $form['db_url'] = array(
+  $form['project']['props']['db_url'] = array(
     '#type' => 'textfield',
     '#title' => t('Original Database URL:'),
     '#gttn_tpps_val' => array(),
   );
 
-  $form['project_name'] = array(
+  $form['project']['props']['project_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Project Name (Funding Agency/Grant Number):'),
     '#gttn_tpps_val' => array(),
   );
 
-  $form['type'] = array(
+  $form['project']['props']['type'] = array(
     '#type' => 'select',
     '#title' => t('Submission Type: *'),
     '#options' => array(
@@ -62,7 +74,7 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
     ),
   );
 
-  $form['permissions'] = array(
+  $form['project']['props']['permissions'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Data permissions'),
     '#description' => t('Please select the organizations which are allowed to view or browse this data'),
@@ -74,7 +86,7 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
     ->execute();
 
   while (($org = $query->fetchObject())) {
-    $form['permissions']['#options'][$org->organization_id] = $org->name;
+    $form['project']['props']['permissions']['#options'][$org->organization_id] = $org->name;
     $and = db_and()
       ->condition('uid', $user->uid)
       ->condition('organization_id', $org->organization_id);
@@ -83,11 +95,11 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
       ->condition($and)
       ->execute();
     if (!empty($member_query->fetchObject()->organization_id)) {
-      $form['permissions'][$org->organization_id]['#default_value'] = $org->organization_id;
+      $form['project']['props']['permissions'][$org->organization_id]['#default_value'] = $org->organization_id;
     }
   }
 
-  $form['disclaimer'] = array(
+  $form['project']['props']['disclaimer'] = array(
     '#type' => 'checkbox',
     '#title' => t('I have read and agree to the following disclaimer:'),
     '#description' => t('This is the placeholder disclaimer'),
