@@ -7,7 +7,7 @@
 /**
  * 
  */
-function gttn_tpps_dynamic_list(&$form, &$form_state, $id, $repeat, $options = array()) {
+function gttn_tpps_dynamic_list(array &$form, array &$form_state, $id, array $repeat, array $options = array()) {
   $label = $options['label'] ?? $id;
   $parents = $options['parents'] ?? array();
   $number_parents = $parents;
@@ -19,17 +19,19 @@ function gttn_tpps_dynamic_list(&$form, &$form_state, $id, $repeat, $options = a
   $minimum = $options['minimum'] ?? $default;
   $fieldset_title = $options['title'] ?? "$label information:";
   $button_callback = $options['callback'] ?? "gttn_tpps_{$id}_callback";
+  $list_wrapper = $options['wrapper'] ?? "$id-wrapper";
+  $sub_keys = $options['substitute_keys'] ?? array();
   $sub_fields = $options['substitute_fields'] ?? array();
   $replace_pattern = $options['replacement_pattern'] ?? '/!num/';
   
-  $number = gttn_tpps_get_ajax_number($form_state, $number_parents, $up, $down, $default, $minimum);
+  $number = gttn_tpps_get_ajax_number($form_state, $number_parents, $up . $name_suffix, $down . $name_suffix, $default, $minimum);
 
   $element = array(
     '#type' => 'fieldset',
     '#tree' => TRUE,
     '#title' => "<div class=\"fieldset-title\">$fieldset_title</div>",
     '#collapsible' => $options['collapsible'] ?? TRUE,
-    '#prefix' => "<div id=\"$id-wrapper\">",
+    '#prefix' => "<div id=\"$list_wrapper\">",
     '#suffix' => '</div>',
     'add' => array(
       '#type' => 'button',
@@ -37,7 +39,7 @@ function gttn_tpps_dynamic_list(&$form, &$form_state, $id, $repeat, $options = a
       '#value' => $up,
       '#name' => $up . $name_suffix,
       '#ajax' => array(
-        'wrapper' => "$id-wrapper",
+        'wrapper' => $list_wrapper,
         'callback' => $button_callback,
       ),
     ),
@@ -47,7 +49,7 @@ function gttn_tpps_dynamic_list(&$form, &$form_state, $id, $repeat, $options = a
       '#value' => $down,
       '#name' => $down . $name_suffix,
       '#ajax' => array(
-        'wrapper' => "$id-wrapper",
+        'wrapper' => $list_wrapper,
         'callback' => $button_callback,
       ),
     ),
@@ -67,6 +69,15 @@ function gttn_tpps_dynamic_list(&$form, &$form_state, $id, $repeat, $options = a
         $new_value = preg_replace($replace_pattern, $i, drupal_array_get_nested_value($repeat, $field));
         drupal_array_set_nested_value($instance, $field, $new_value);
       }
+    }
+    foreach ($sub_keys as $key) {
+      $value = drupal_array_get_nested_value($instance, $key);
+      drupal_array_set_nested_value($instance, $key, NULL);
+      $new_key = array();
+      foreach ($key as $key_item) {
+        $new_key[] = preg_replace($replace_pattern, $i, $key_item);
+      }
+      drupal_array_set_nested_value($instance, $new_key, $value);
     }
     $element[$i] = $instance;
   }
@@ -118,7 +129,7 @@ function gttn_tpps_get_ajax_value(&$state, $parents, $default = NULL, $file_name
   $value_parents = $parents;
   array_unshift($value_parents, 'complete form');
   $element = drupal_array_get_nested_value($state, $value_parents);
-  if ($element['#type'] != 'fieldset') {
+  if (isset($element['#type']) and $element['#type'] != 'fieldset') {
     array_push($value_parents, '#value');
   }
   $val = drupal_array_get_nested_value($state, $value_parents);
