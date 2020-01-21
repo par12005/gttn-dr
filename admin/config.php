@@ -7,14 +7,14 @@
 /**
  * Creates admin settings form for gttn-tpps.
  *
- * @param $form
- *   array The form to be populated.
- * @param $form_state
- *   array The state of the form to be populated.
+ * @param array $form
+ *   The form to be populated.
+ * @param array $form_state
+ *   The state of the form to be populated.
  *
  * @return array The populated form.
  */
-function gttn_tpps_admin_settings($form, &$form_state) {
+function gttn_tpps_admin_settings(array $form, array &$form_state) {
   // Get existing variable values.
   $authors = variable_get('gttn_tpps_author_files_dir', 'gttn_tpps_authors');
   $accession = variable_get('gttn_tpps_accession_files_dir', 'gttn_tpps_accession');
@@ -33,6 +33,12 @@ function gttn_tpps_admin_settings($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('GTTN-TPPS NCBI EUtils API Key'),
     '#default_value' => variable_get('gttn_tpps_ncbi_api_key', NULL),
+  );
+
+  $form['gttn_tpps_geocode_api_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('GTTN-TPPS OpenCage Geocoding API Key'),
+    '#default_value' => variable_get('gttn_tpps_geocode_api_key', NULL),
   );
 
   // Create the admin email field.
