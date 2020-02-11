@@ -460,6 +460,7 @@ function gttn_tpps_get_cvterms() {
       'project name' => 'The name of the project.',
       'project permissions' => 'Who is allowed to access the project.',
       'data collection purpose' => 'The reason the data was collected.',
+      'organism 4 letter code' => '4 letter abbreviation of species. Usually first two letters of genus + first two letters of species, may be different if that code already exists (use next letters from species if possible).',
     ),
   );
 }

@@ -22,7 +22,10 @@ function gttn_tpps_submit_all($accession) {
 
     gttn_tpps_submit_project($form_state);
 
+    gttn_tpps_submit_organism($form_state);
+
     // TODO.
+    throw new Exception('Submission Completed');
   }
   catch (\Exception $e) {
     $transaction->rollback();
@@ -31,8 +34,6 @@ function gttn_tpps_submit_all($accession) {
     gttn_tpps_update_submission($form_state, array('status' => 'Pending Approval'));
     watchdog_exception('gttn_tpps', $e);
   }
-
-  $transaction->rollback();
 }
 
 /**
@@ -120,6 +121,80 @@ function gttn_tpps_submit_project(&$state) {
     'surname' => $surname,
     'givennames' => $givennames,
   ));
+}
+
+/**
+ *
+ */
+function gttn_tpps_submit_organism(&$state) {
+  $organisms = $state['data']['organism'];
+  $org_type = array(
+    'name' => 'organism',
+    'is_obsolete' => 0,
+    'cv_id' => array(
+      'name' => 'obi',
+    ),
+  );
+
+  $state['ids']['organism_ids'] = array();
+  foreach ($organisms as $id => $info) {
+    $genus = $info['genus'];
+    $species = $info['species'];
+
+    $state['ids']['organism_ids'][$id] = db_select('chado.organism', 'o')
+      ->fields('o', array('organism_id'))
+      ->condition('genus', $genus)
+      ->condition('species', $species)
+      ->condition('type_id', tripal_get_cvterm($org_type)->cvterm_id)
+      ->range(0, 1)
+      ->execute()->fetchObject()->organism_id ?? NULL;
+
+    $code_exists = gttn_tpps_chado_prop_exists('organism', $state['ids']['organism_ids'][$id], 'organism 4 letter code');
+
+    if (!$code_exists) {
+      $g_offset = 0;
+      $s_offset = 0;
+      do {
+        if (isset($trial_code)) {
+          if ($s_offset < strlen($species) - 2) {
+            $s_offset++;
+          }
+          elseif ($g_offset < strlen($genus) - 2) {
+            $s_offset = 0;
+            $g_offset++;
+          }
+          else {
+            throw new Exception("GTTN-TPPS was unable to create a 4 letter species code for the species '$genus $species'.");
+          }
+        }
+        $trial_code = substr($genus, $g_offset, 2) . substr($species, $s_offset, 2);
+        $new_code_query = chado_select_record('organismprop', array('value'), array(
+          'type_id' => array(
+            'name' => 'organism 4 letter code',
+          ),
+          'value' => $trial_code,
+        ));
+      } while (!empty($new_code_query));
+
+      gttn_tpps_chado_insert_record('organismprop', array(
+        'organism_id' => $state['ids']['organism_ids'][$id],
+        'type_id' => chado_get_cvterm(array('name' => 'organism 4 letter code'))->cvterm_id,
+        'value' => $trial_code,
+      ));
+    }
+
+    gttn_tpps_chado_insert_record('project_organism', array(
+      'organism_id' => $state['ids']['organism_ids'][$id],
+      'project_id' => $state['ids']['project_id'],
+    ));
+
+    gttn_tpps_chado_insert_record('pub_organism', array(
+      'organism_id' => $state['ids']['organism_ids'][$id],
+      'pub_id' => $state['ids']['pub_id'],
+    ));
+
+    gttn_tpps_tripal_entity_publish('Organism', array("$genus $species", $state['ids']['organism_ids'][$id]));
+  }
 }
 
 /**
