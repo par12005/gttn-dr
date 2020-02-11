@@ -467,3 +467,46 @@ function gttn_tpps_tab_create($user) {
   drupal_add_css(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_CSS_PATH);
   return $final;
 }
+
+/**
+ * Creates and prints an HTML table of the first 3 lines of a file.
+ *
+ * This function techinically does not return a value, but will print() the
+ * rendered table of preview values to the page.
+ */
+function gttn_tpps_preview_file() {
+  $params = drupal_get_query_parameters($_POST);
+  if (!empty($params['fid'])) {
+    $fid = $params['fid'];
+    $no_header = FALSE;
+  }
+  else {
+    return;
+  }
+
+  if ((file_load($fid))) {
+    $content = gttn_tpps_parse_file($fid, 3, !empty($no_header));
+    $rows = array();
+    for ($i = 0; $i < count($content) - 1; $i++) {
+      $rows[] = $content[$i];
+    }
+    $vars = array(
+      'header' => $content['headers'],
+      'rows' => $rows,
+      'attributes' => array(
+        'class' => array(
+          'view',
+          "preview_$fid",
+        ),
+        'id' => 'gttn_tpps_table_display',
+      ),
+      'caption' => '',
+      'colgroups' => NULL,
+      'sticky' => FALSE,
+      'empty' => '',
+    );
+    $display = render(theme_table($vars));
+    print($display);
+    return;
+  }
+}

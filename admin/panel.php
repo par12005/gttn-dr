@@ -35,6 +35,7 @@ function gttn_tpps_admin_panel($form, &$form_state, $accession = NULL) {
     $approved = array();
     foreach ($states as $state) {
       if (!empty($state)) {
+        dpm($state);
         $row = array(
           l($state['accession'], "$base_url/gttn-admin-panel/{$state['accession']}"),
           $state['data']['project']['name'],
@@ -220,7 +221,7 @@ function gttn_tpps_admin_panel_submit($form, &$form_state) {
     drupal_mail('gttn_tpps', 'user_rejected', $to, user_preferred_language($user), $params, $from, TRUE);
     // Set submission status to Incomplete.
     unset($state['status']);
-    tpps_update_submission($state, array('status' => 'Incomplete'));
+    gttn_tpps_update_submission($state, array('status' => 'Incomplete'));
     // Let the admin know that the submission was successfully rejected.
     drupal_set_message(t('Submission Rejected. Message has been sent to user.'), 'status');
     drupal_goto('<front>');

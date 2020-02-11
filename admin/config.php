@@ -41,6 +41,13 @@ function gttn_tpps_admin_settings(array $form, array &$form_state) {
     '#default_value' => variable_get('gttn_tpps_geocode_api_key', NULL),
   );
 
+  $form['gttn_tpps_gps_epsilon'] = array(
+    '#type' => 'textfield',
+    '#title' => t('GTTN-TPPS GPS Epsilon'),
+    '#default_value' => variable_get('gttn_tpps_gps_epsilon', .001),
+    '#description' => t('This is the amount of error GTTN-TPPS should allow for when trying to match trees. An epsilon value of 1 is around 100km, and an epsilon value of .001 is around 100 m.'),
+  );
+
   // Create the admin email field.
   $form['gttn_tpps_admin_email'] = array(
     '#type' => 'textfield',

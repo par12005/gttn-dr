@@ -175,14 +175,20 @@ function gttn_tpps_xlsx_width($location) {
  *   The length of the longest line.
  */
 function gttn_tpps_flat_width($location, $delim = ',') {
+  $original = ini_get('auto_detect_line_endings');
+  if (!$original) {
+    ini_set('auto_detect_line_endings', TRUE);
+  }
+
   $longest = 0;
   $handle = fopen($location, 'r');
 
-  while (($line = fgetcsv($handle))) {
-    $longest = max($longest, count(explode($delim, $line)));
+  while (($line = fgetcsv($handle, 0, $delim))) {
+    $longest = max($longest, count($line));
   }
 
   fclose($handle);
+  ini_set('auto_detect_line_endings', $original);
   return $longest;
 }
 
@@ -348,9 +354,34 @@ function gttn_tpps_parse_file_column_helper($row, &$options) {
  *   The array of items found in file 1 that were not found in file 2.
  */
 function gttn_tpps_compare_files($fid_1, $fid_2, $file_1_id_name, $file_2_id_name, $file_1_no_header = FALSE, $file_2_no_header = FALSE) {
-  $file_1_content = gttn_tpps_parse_file_column($fid_1, $file_1_id_name, $file_1_no_header);
-  $file_2_content = gttn_tpps_parse_file_column($fid_2, $file_2_id_name, $file_2_no_header);
-  return array_diff($file_1_content, $file_2_content);
+  $missing = array();
+  $file_1_content = array_unique(gttn_tpps_parse_file_column($fid_1, $file_1_id_name, $file_1_no_header));
+  $file_2_content = array_unique(gttn_tpps_parse_file_column($fid_2, $file_2_id_name, $file_2_no_header));
+  asort($file_1_content);
+  asort($file_2_content);
+  reset($file_1_content);
+  reset($file_2_content);
+
+  while (current($file_1_content) !== FALSE and current($file_2_content) !== FALSE) {
+    if (current($file_1_content) < current($file_2_content)) {
+      $missing[] = current($file_1_content);
+      next($file_1_content);
+      continue;
+}
+    elseif (current($file_1_content) > current($file_2_content)) {
+      next($file_2_content);
+      continue;
+    }
+    next($file_1_content);
+    next($file_2_content);
+    continue;
+  }
+
+  while (current($file_1_content) !== FALSE) {
+    $missing[] = current($file_1_content);
+    next($file_1_content);
+  }
+  return $missing;
 }
 
 /**
@@ -629,11 +660,13 @@ function gttn_tpps_xlsx_get_dimension($location) {
  *   The cached strings for the current XML file.
  * @param bool $plain
  *   Whether or not to attempt to return an array of cell values, or just TRUE.
+ * @param mixed $columns
+ *   An array of columns to return. If NULL, return all columns.
  *
  * @return mixed
  *   If $plain is set to TRUE, an array of cell values. Otherwise TRUE.
  */
-function gttn_tpps_xlsx_get_row(&$reader, &$strings = array(), $plain = TRUE) {
+function gttn_tpps_xlsx_get_row(&$reader, &$strings = array(), $plain = TRUE, $columns = NULL) {
   while ($reader->read()) {
     if ($reader->nodeType == XMLReader::ELEMENT and $reader->name == 'row') {
       if ($plain) {
@@ -643,6 +676,9 @@ function gttn_tpps_xlsx_get_row(&$reader, &$strings = array(), $plain = TRUE) {
             $cell_type = $reader->getAttribute('t');
             preg_match('/([A-Z]+)([0-9]+)/', $reader->getAttribute('r'), $matches);
             $cell_location = $matches[1];
+            if (!empty($columns) and !isset($columns[$cell_location])) {
+              continue;
+            }
             $cells[$cell_location] = gttn_tpps_xlsx_get_cell_value($reader, $cell_type, $strings);
           }
         }
@@ -652,6 +688,34 @@ function gttn_tpps_xlsx_get_row(&$reader, &$strings = array(), $plain = TRUE) {
     }
   }
   return FALSE;
+}
+
+/**
+ * Translates the date from an .xlsx file.
+ *
+ * This function may seem strange at first, but skips $date = 60 on purpose.
+ * Day 60 in Excel's encoding represents 2/29/1900, which is not a real date.
+ *
+ * @param mixed $date
+ *   The date to be translated.
+ *
+ * @return mixed
+ *   The original date provided, a re-formated date, or NULL on failure.
+ */
+function gttn_tpps_xlsx_translate_date($date) {
+  if (strtotime($date) !== FALSE) {
+    return $date;
+  }
+
+  if ($date > 60) {
+    $date = $date - 1;
+    return date("m/d/Y", strtotime("12/31/1899 +$date days"));
+  }
+  if ($date < 60) {
+    return date("m/d/Y", strtotime("12/31/1899 +$date days"));
+  }
+
+  return NULL;
 }
 
 /**
@@ -850,6 +914,14 @@ function gttn_tpps_xlsx_generator($location, array $options = array()) {
   $columns = $options['columns'] ?? NULL;
   $max_rows = $options['max_rows'] ?? NULL;
 
+  if (!empty($columns)) {
+    $new_columns = array();
+    foreach ($columns as $col) {
+      $new_columns[$col] = $col;
+    }
+    $columns = $new_columns;
+  }
+
   $zip = new ZipArchive();
   $zip->open($location);
   $zip->extractTo($dir);
@@ -937,14 +1009,13 @@ function gttn_tpps_flat_generator($location, array $options = array()) {
   }
   $count = 0;
 
-  while (($line = fgetcsv($handle))) {
+  while (($vals = fgetcsv($handle, 0, $delim))) {
     if (!empty($max_rows) and $count >= $max_rows) {
       break;
     }
     $count++;
 
     $values = array();
-    $vals = explode($delim, $line);
 
     if (empty($columns)) {
       $hex = unpack('H*', 'A')[1];

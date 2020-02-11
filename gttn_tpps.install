@@ -440,6 +440,8 @@ function gttn_tpps_get_cvterms() {
       'Maximum',
       'Accuracy',
       'Data Type',
+      'County',
+      'Locality',
     ),
     'sio' => array(
       'latitude',

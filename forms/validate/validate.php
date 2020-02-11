@@ -267,7 +267,7 @@ function gttn_tpps_update_data(&$form, &$form_state) {
         $parts = explode(' ', $form_state['values']['organism'][$i]);
         $genus = $parts[0];
         $species = implode(' ', array_slice($parts, 1));
-        $form_state['data']['organism'][] = array(
+        $form_state['data']['organism'][$i] = array(
           'genus' => $genus,
           'species' => $species,
         );
@@ -301,7 +301,7 @@ function gttn_tpps_update_data(&$form, &$form_state) {
           $content = gttn_tpps_parse_file($fid, 0, $no_header, array($id_col));
 
           for ($j = 0; $j < count($content) - 1; $j++) {
-            $form_state['data']['trees'][] = array(
+            $form_state['data']['trees'][$content[$j][$id_col]] = array(
               'id' => $content[$j][$id_col],
             );
           }
@@ -342,7 +342,7 @@ function gttn_tpps_update_data(&$form, &$form_state) {
         $share = $form_state['values']['samples']['sharable'] ? TRUE : FALSE;
 
         for ($j = 0; $j < count($content) - 1; $j++) {
-          $form_state['data']['samples'][] = array(
+          $form_state['data']['samples'][$content[$j][$id_col]] = array(
             'id' => $content[$j][$id_col],
             'xylarium' => $xylarium,
             'source' => $content[$j][$source_col],
