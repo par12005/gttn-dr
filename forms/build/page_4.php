@@ -7,7 +7,6 @@
 
 require_once 'page_4_ajax.php';
 // Load the page 4 helper functions.
-require_once 'page_4_helper.php';
 
 /**
  * Populates the form element for the fourth page of the form.
@@ -349,11 +348,6 @@ function page_4_create_form(&$form, &$form_state) {
     );
   }
 
-  // Load the upload locations for genotype and phenotype files from the
-  // GTTN-TPPS admin settings in the database.
-  $phenotype_upload_location = 'public://' . variable_get('gttn_tpps_phenotype_files_dir', 'gttn_tpps_phenotype');
-
-  // Ensure that the whole form allows collections of elements.
   /*$form['#tree'] = TRUE;
 
   // Get the number of species from the first page.

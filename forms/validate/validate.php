@@ -238,7 +238,7 @@ function gttn_tpps_update_stats(&$form, &$form_state) {
       for ($i = 1; $i <= $form_state['stats']['species_count']; $i++) {
         $fid = $form_state['values']['tree-accession']["species-$i"]['file'];
         $no_header = !empty($form_state['values']['tree-accession']["species-$i"]['file-no-header']);
-        $form_state['stats']['tree_count'] += gttn_tpps_file_len($fid) - 1 + !empty($no_header);
+        $form_state['stats']['tree_count'] += gttn_tpps_file_len($fid) + !empty($no_header);
         if (empty($form_state['values']['tree-accession']['check'])) {
           break;
         }
@@ -360,7 +360,42 @@ function gttn_tpps_update_data(&$form, &$form_state) {
       break;
 
     case GTTN_PAGE_4:
-      // TODO
+      $types = $form_state['saved_values'][GTTN_PAGE_1]['data_type'];
+      $form_state['file_info'][GTTN_PAGE_4] = array();
+
+      if (!empty($types['DART Reference Data'])) {
+        $fid = $form_state['values']['dart']['file'];
+        $columns = $form_state['values']['dart']['file-columns'];
+        $groups = $form_state['values']['dart']['file-groups'];
+        $form_state['file_info'][GTTN_PAGE_4][] = array(
+          'fid' => $fid,
+          'name' => 'DART',
+          'columns' => $columns,
+          'groups' => $groups,
+        );
+        // TODO
+      }
+
+      if (!empty($types['Isotope Reference Data'])) {
+        $fid = $form_state['values']['isotope']['file'];
+        $columns = $form_state['values']['isotope']['file-columns'];
+        $groups = $form_state['values']['isotope']['file-groups'];
+        $form_state['file_info'][GTTN_PAGE_4][] = array(
+          'fid' => $fid,
+          'name' => 'Isotope',
+          'columns' => $columns,
+          'groups' => $groups,
+        );
+        // TODO
+      }
+
+      if (!empty($types['Genetic Reference Data'])) {
+        // TODO
+      }
+
+      if (!empty($types['Anatomical Reference Data'])) {
+        // TODO
+      }
       break;
 
     default:

@@ -20,6 +20,8 @@ function gttn_tpps_submit_all($accession) {
     $form_state['file_rank'] = 0;
     $form_state['ids'] = array();
 
+    gttn_tpps_submit_project($form_state);
+
     // TODO.
   }
   catch (\Exception $e) {
@@ -29,6 +31,95 @@ function gttn_tpps_submit_all($accession) {
     gttn_tpps_update_submission($form_state, array('status' => 'Pending Approval'));
     watchdog_exception('gttn_tpps', $e);
   }
+
+  $transaction->rollback();
+}
+
+/**
+ *
+ */
+function gttn_tpps_submit_project(&$state) {
+  $project = &$state['data']['project'];
+  $project_id = gttn_tpps_chado_insert_record('project', array(
+    'name' => $project['name'],
+    'description' => $project['description'],
+  ));
+  $state['ids']['project_id'] = $project_id;
+  $project['id'] = $project_id;
+  $props = $project['props'];
+
+  gttn_tpps_insert_prop('project', $project_id, 'analysis_date', array(
+    $project['props']['analysis_date'],
+  ));
+
+  $dois = array();
+  if (!empty($props['pub_doi'])) {
+    $dois[] = $props['pub_doi'];
+  }
+  if (!empty($props['data_doi'])) {
+    $dois[] = $props['data_doi'];
+  }
+  if (!empty($dois)) {
+    gttn_tpps_insert_prop('project', $project_id, 'DOI', $dois);
+  }
+
+  if (!empty($props['db_url'])) {
+    gttn_tpps_insert_prop('project', $project_id, 'URL', $props['db_url'], array(
+      'cv' => 'tripal_pub',
+    ));
+  }
+
+  if (!empty($props['project_name'])) {
+    gttn_tpps_insert_prop('project', $project_id, 'project name', $props['project_name']);
+  }
+
+  if (!empty($props['type'])) {
+    gttn_tpps_insert_prop('project', $project_id, 'Project Type', $props['type']);
+  }
+
+  $types = array();
+  foreach ($props['data_type'] as $type) {
+    if (!empty($type)) {
+      $types[] = $type;
+    }
+  }
+  gttn_tpps_insert_prop('project', $project_id, 'Data Type', $types, array(
+    'cv' => 'ncit',
+  ));
+
+  gttn_tpps_chado_insert_record('project_dbxref', array(
+    'project_id' => $project_id,
+    'dbxref_id' => $state['dbxref_id'],
+  ));
+
+  $user_name = gttn_profile_load_user($state['owner_uid'])->chado_record->name;
+  $pyear = $state['saved_values'][GTTN_TYPE_PAGE]['project']['props']['analysis_date']['year'];
+  $pub_uniquename = "{$project['name']}, $user_name, $pyear";
+  if (!empty($props['pub_doi'])) {
+    $pub_uniquename .= " {$props['pub_doi']}";
+  }
+
+  $pub_id = gttn_tpps_chado_insert_record('pub', array(
+    'title' => $project['name'],
+    'pyear' => $pyear,
+    'uniquename' => $pub_uniquename,
+    'type_id' => array(
+      'name' => 'null',
+    ),
+  ));
+
+  $state['ids']['pub_id'] = $pub_id;
+
+  $parts = explode(' ', $user_name);
+  $surname = end($parts);
+  $givennames = array_slice($parts, 0, -1);
+
+  gttn_tpps_chado_insert_record('pubauthor', array(
+    'pub_id' => $pub_id,
+    'rank' => 0,
+    'surname' => $surname,
+    'givennames' => $givennames,
+  ));
 }
 
 /**

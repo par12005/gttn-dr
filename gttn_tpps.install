@@ -235,65 +235,67 @@ function gttn_tpps_uninstall() {
 function gttn_tpps_schema() {
   $schema = array();
 
-  $schema['gttn_tpps_submission'] = array(
-    'description' => '',
-    'fields' => array(
-      'gttn_tpps_submission_id' => array(
-        'description' => 'The id of the GTTN-TPPS submission.',
-        'type' => 'serial',
-        'size' => 'normal',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'uid' => array(
-        'description' => 'user id of the user who created the submission.',
-        'type' => 'int',
-        'size' => 'big',
-        'not null' => TRUE,
-      ),
-      'status' => array(
-        'description' => 'Status of the submission - Incomplete, Pending Approval, Submission Job Running or Approved.',
-        'type' => 'varchar',
-        'size' => 'normal',
-        'not null' => TRUE,
-      ),
-      'accession' => array(
-        'description' => 'The GTTN-TGDR### accession number of the submission',
-        'type' => 'varchar',
-        'size' => 'normal',
-        'not null' => TRUE,
-      ),
-      'dbxref_id' => array(
-        'description' => 'The dbxref_id from chado.dbxref.',
-        'type' => 'int',
-        'size' => 'big',
-        'not null' => TRUE,
-      ),
-      'submission_state' => array(
-        'description' => 'The form_state of the submission.',
-        'type' => 'blob',
-        'size' => 'big',
-        'not null' => TRUE,
-      ),
-    ),
-    'foreign keys' => array(
-      'uid' => array(
-        'table' => 'users',
-        'columns' => array(
-          'uid' => 'uid',
+  if (!db_table_exists('gttn_tpps_submission')) {
+    $schema['gttn_tpps_submission'] = array(
+      'description' => '',
+      'fields' => array(
+        'gttn_tpps_submission_id' => array(
+          'description' => 'The id of the GTTN-TPPS submission.',
+          'type' => 'serial',
+          'size' => 'normal',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'uid' => array(
+          'description' => 'user id of the user who created the submission.',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'status' => array(
+          'description' => 'Status of the submission - Incomplete, Pending Approval, Submission Job Running or Approved.',
+          'type' => 'varchar',
+          'size' => 'normal',
+          'not null' => TRUE,
+        ),
+        'accession' => array(
+          'description' => 'The GTTN-TGDR### accession number of the submission',
+          'type' => 'varchar',
+          'size' => 'normal',
+          'not null' => TRUE,
+        ),
+        'dbxref_id' => array(
+          'description' => 'The dbxref_id from chado.dbxref.',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'submission_state' => array(
+          'description' => 'The form_state of the submission.',
+          'type' => 'blob',
+          'size' => 'big',
+          'not null' => TRUE,
         ),
       ),
-      'dbxref_id' => array(
-        'table' => 'chado.dbxref',
-        'columns' => array(
-          'dbxref_id' => 'dbxref_id',
+      'foreign keys' => array(
+        'uid' => array(
+          'table' => 'users',
+          'columns' => array(
+            'uid' => 'uid',
+          ),
+        ),
+        'dbxref_id' => array(
+          'table' => 'chado.dbxref',
+          'columns' => array(
+            'dbxref_id' => 'dbxref_id',
+          ),
         ),
       ),
-    ),
-    'primary key' => array(
-      'gttn_tpps_submission_id',
-    ),
-  );
+      'primary key' => array(
+        'gttn_tpps_submission_id',
+      ),
+    );
+  }
 
   if (!db_table_exists('chado.genotype_call')) {
     $schema['chado.genotype_call'] = array(
@@ -437,6 +439,7 @@ function gttn_tpps_get_cvterms() {
       'Minimum',
       'Maximum',
       'Accuracy',
+      'Data Type',
     ),
     'sio' => array(
       'latitude',

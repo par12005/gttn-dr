@@ -8,7 +8,6 @@ jQuery(document).ready(function ($) {
     jQuery("#progress").css('margin-bottom', '30px');
 
     if (jQuery('input[name="step"]')[0].value === 'summarypage'){
-      Supplemental_Files();
       jQuery("#gttn_tpps-status").insertAfter(".tgdr_form_status");
       jQuery("#edit-next").on('click', function(){
         jQuery("#gttn_tpps-status").html("<label>Loading... </label><br>This step may take several minutes.");

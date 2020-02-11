@@ -37,7 +37,7 @@ function gttn_tpps_admin_panel($form, &$form_state, $accession = NULL) {
       if (!empty($state)) {
         $row = array(
           l($state['accession'], "$base_url/gttn-admin-panel/{$state['accession']}"),
-          $state['saved_values'][GTTN_TYPE_PAGE]['name'],
+          $state['data']['project']['name'],
           $state['status'],
         );
         if ($state['status'] == 'Pending Approval') {
@@ -74,7 +74,9 @@ function gttn_tpps_admin_panel($form, &$form_state, $accession = NULL) {
     $form['#attributes'] = array('class' => array('hide-me'));
     $form['#suffix'] = "<div class='gttn_tpps_table'><label for='gttn_tpps_table_display'>Completed GTTN-TPPS Submissions</label>" . theme_table($vars) . "</div>";
   }
-  // If the accession number was set in the url query, then display the detailed information about that submission, and the appropriate form fields if the submission is still pending approval.
+  // If the accession number was set in the url query, then display the
+  // detailed information about that submission, and the appropriate form
+  // fields if the submission is still pending approval.
   else {
     $submission_state = gttn_tpps_load_submission($accession);
     $status = $submission_state['status'];

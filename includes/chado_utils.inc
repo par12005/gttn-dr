@@ -422,6 +422,36 @@ function gttn_tpps_chado_prop_exists($base_table, $id, $name, array $options = a
 }
 
 /**
+ * 
+ */
+function gttn_tpps_insert_prop($base_table, $id, $type, $vals, array $options = array()) {
+  $prop_table = $base_table . 'prop';
+  $rank = 0;
+  if (!is_array($vals)) {
+    $vals = array($vals);
+  }
+  foreach ($vals as $val) {
+    $record = array(
+      "{$base_table}_id" => $id,
+      'rank' => $rank,
+      'value' => $val,
+      'type_id' => array(
+        'name' => $type,
+        'is_obsolete' => 0,
+      ),
+    );
+
+    if (!empty($options['cv'])) {
+      $record['type_id']['cv_id'] = array(
+        'name' => $options['cv'],
+      );
+    }
+    gttn_tpps_chado_insert_record($prop_table, $record);
+    $rank++;
+  }
+}
+
+/**
  * Returns an array of field names associated with a db table.
  *
  * This function first checks the chado schema of the table. If there is no

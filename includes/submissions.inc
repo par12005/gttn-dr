@@ -58,6 +58,7 @@ function gttn_tpps_load_submission_multiple(array $conditions = array(), $state 
  * 
  */
 function gttn_tpps_create_submission(array $state, $uid) {
+  $state['owner_uid'] = $uid;
   $values = array(
     'uid' => $uid,
     'status' => 'Incomplete',

@@ -8,10 +8,10 @@
  *
  */
 function gttn_tpps_flatten($state) {
-  $data = isset($state['saved_values']) ? $state['saved_values'] : NULL;
+  $data = $state['saved_values'] ?? NULL;
 
   if (!$data) {
-    return;
+    return array();
   }
   unset($data['frontpage']);
   unset($data['summarypage']);
@@ -24,13 +24,38 @@ function gttn_tpps_flatten($state) {
   else {
     $data['#page_1_cleared'] = FALSE;
   }
-  if (!empty($type_page['type'])) {
-    $data["Submission Type"] = $type_page['type'];
+  $project = $type_page['project'] ?? NULL;
+  $data["Submission Name"] = $project['name'] ?? NULL;
+  $data["Reason for Submission"] = $project['description'] ?? NULL;
+  $props = $project['props'] ?? NULL;
+  if (!empty($props['analysis_date'])) {
+    $data["Analysis Date"] = date("jS F, Y", strtotime("{$props['analysis_date']['day']}-{$props['analysis_date']['month']}-{$props['analysis_date']['year']}"));
+  }
+  $data["Publication DOI"] = $props['pub_doi'] ?? NULL;
+  $data["Data DOI"] = $props['data_doi'] ?? NULL;
+  $data["Database URL"] = $props['db_url'] ?? NULL;
+  $data["Project Name"] = $props['projecet_name'] ?? NULL;
+  $data["Submission Type"] = $props['type'] ?? NULL;
+  $access = array();
+  foreach ($props['permissions'] as $org_id) {
+    if (!empty($org_id)) {
+      $name = db_select('gttn_profile_organization', 'o')
+        ->fields('o', array('name'))
+        ->condition('organization_id', $org_id)
+        ->range(0, 1)
+        ->execute()->fetchObject()->name;
+      if (!empty($name)) {
+        $access[] = $name;
+      }
+    }
+  }
+  if (!empty($access)) {
+    $data["Labs with Access Permissions"] = implode(', ', $access);
   }
   unset($data[GTTN_TYPE_PAGE]);
 
   $page_1 = &$data[GTTN_PAGE_1];
-  $org = &$page_1['organism'];
+  $org = &$page_1['organism'] ?? NULL;
 
   if (isset($page_1['#cleared']) and $page_1['#cleared']) {
     $data['#page_2_cleared'] = TRUE;
@@ -41,10 +66,19 @@ function gttn_tpps_flatten($state) {
   if (isset($org['number'])) {
     $data['#number_organisms'] = $org['number'];
     for ($i = 1; $i <= $data['#number_organisms']; $i++) {
-      if (isset($org["$i"]) and $org["$i"] != '') {
-        $data["Species $i"] = $org["$i"];
+      if (!empty($org[$i])) {
+        $data["Species $i"] = $org[$i];
       }
     }
+  }
+  $data_types = array();
+  foreach ($page_1['data_type'] as $type) {
+    if (!empty($type)) {
+      $data_types[] = $type;
+    }
+  }
+  if (!empty($data_types)) {
+    $data["Data Types"] = implode(', ', $data_types);
   }
   unset($data[GTTN_PAGE_1]);
 
@@ -56,30 +90,23 @@ function gttn_tpps_flatten($state) {
   else {
     $data['#page_3_cleared'] = FALSE;
   }
-  $page_3 = &$data[GTTN_PAGE_3]['tree-accession'];
-  if (isset($page_3['check']) and $page_3['check']) {
-    for ($i = 1; $i <= $data['#number_organisms']; $i++) {
-      if (isset($page_3["species-$i"]['file']) and $page_3["species-$i"]['file']) {
-        $organism_name = $data["Species $i"];
-        $data["$organism_name Accession File"] = $page_3["species-$i"]['file'];
-        if (!empty($page_3["species-$i"]['file-groups']['Location (latitude/longitude or country/state)']['#type']) and $page_3["species-$i"]['file-groups']['Location (latitude/longitude or country/state)']['#type'] == "gps") {
-          $data["#{$organism_name}_accession_no_header"] = isset($page_3["species-$i"]['file-no-header']) ? $page_3["species-$i"]['file-no-header'] : '0';
-          $data["#{$organism_name}_accession_id_col"] = $page_3["species-$i"]['file-groups']['Tree Id'][1];
-          $data["#{$organism_name}_accession_lat_col"] = $page_3["species-$i"]['file-groups']['Location (latitude/longitude or country/state)'][4];
-          $data["#{$organism_name}_accession_long_col"] = $page_3["species-$i"]['file-groups']['Location (latitude/longitude or country/state)'][5];
-        }
+  $page_3 = &$data[GTTN_PAGE_3];
+  $tree_acc = $page_3['tree-accession'] ?? NULL;
+  $samples = $page_3['samples'] ?? NULL;
+  for ($i = 1; $i <= $data['#number_organisms']; $i++) {
+    if (!empty($tree_acc["species-$i"]['file'])) {
+      $organism_name = $data["Species $i"];
+      $data["$organism_name Accession File"] = $tree_acc["species-$i"]['file'];
+      if (!empty($tree_acc["species-$i"]['file-groups']['Location (latitude/longitude or country/state)']['#type']) and $tree_acc["species-$i"]['file-groups']['Location (latitude/longitude or country/state)']['#type'] == "gps") {
+        $data["#{$organism_name}_accession_no_header"] = $tree_acc["species-$i"]['file-no-header'] ?? '0';
+        $data["#{$organism_name}_accession_id_col"] = $tree_acc["species-$i"]['file-groups']['Tree Id'][1];
+        $data["#{$organism_name}_accession_lat_col"] = $tree_acc["species-$i"]['file-groups']['Location (latitude/longitude or country/state)'][4];
+        $data["#{$organism_name}_accession_long_col"] = $tree_acc["species-$i"]['file-groups']['Location (latitude/longitude or country/state)'][5];
       }
     }
   }
-  elseif (isset($page_3['file']) and $page_3['file']) {
-    $data['Tree Accession File'] = $page_3['file'];
-    if (!empty($page_3['file-groups']['Location (latitude/longitude or country/state)']['#type']) and $page_3['file-groups']['Location (latitude/longitude or country/state)']['#type'] == "gps") {
-      $data["#accession_no_header"] = isset($page_3['file-no-header']) ? $page_3['file-no-header'] : '0';
-      $data["#accession_id_col"] = $page_3['file-groups']['Tree Id'][1];
-      $data["#accession_lat_col"] = $page_3['file-groups']['Location (latitude/longitude or country/state)'][4];
-      $data["#accession_long_col"] = $page_3['file-groups']['Location (latitude/longitude or country/state)'][5];
-    }
-  }
+  $data["Number of Trees"] = $state['stats']['tree_count'] ?? NULL;
+  $data["Samples File"] = !empty($samples['file']) ? $samples['file'] : NULL;
   unset($data[GTTN_PAGE_3]);
 
   $page_4 = &$data[GTTN_PAGE_4];
@@ -90,7 +117,10 @@ function gttn_tpps_flatten($state) {
   else {
     $data['#page_4_cleared'] = FALSE;
   }
-  for ($i = 1; $i <= $data['#number_organisms']; $i++) {
+  $data["DART File"] = !empty($page_4['dart']['file']) ? $page_4['dart']['file'] : NULL;
+  // TODO
+
+  /*for ($i = 1; $i <= $data['#number_organisms']; $i++) {
     if (isset($page_4["organism-$i"])) {
       $org = &$page_4["organism-$i"];
       $org_name = isset($data["Species $i"]) ? $data["Species $i"] : NULL;
@@ -209,7 +239,7 @@ function gttn_tpps_flatten($state) {
         }
       }
     }
-  }
+  }*/
   unset($data[GTTN_PAGE_4]);
 
   $data['#dbxref_id'] = isset($state['dbxref_id']) ? $state['dbxref_id'] : NULL;
@@ -228,16 +258,14 @@ function gttn_tpps_flatten($state) {
 /**
  *
  */
-function gttn_tpps_table_display($state) {
-
-  $accession = $state['saved_values'][GTTN_PAGE_4]['accession'];
-  $display = "<div class='gttn_tpps_complete_submission'><table id='gttn_tpps_$accession' style='width:-webkit-fill-available' border='1'><thead>";
-  $display .= "</thead><tbody>";
-
+function gttn_tpps_table_display(array &$state) {
   $flat = gttn_tpps_flatten($state);
+  $map_api_key = variable_get('gttn_tpps_maps_api_key', NULL);
 
+  $rows = array();
+  $content = "";
   foreach ($flat as $key => $val) {
-    if ($key[0] !== '#') {
+    if ($key[0] != '#') {
       $key_str = filter_xss(check_plain($key));
       $val_str = filter_xss(check_plain($val));
 
@@ -245,13 +273,55 @@ function gttn_tpps_table_display($state) {
         // Create links to files.
         $file_url = check_plain(file_create_url(file_load($val)->uri));
         $val_str = "<a href='$file_url' target='blank'>$file_name</a>";
+        $val_str .= "<br><input id=\"fid_$val\" class=\"preview_button\" type=\"button\" value=\"Preview file\"></input>";
+        if (preg_match('/^(.*)Accession File/', $key, $matches)) {
+          $name = "";
+          if ($matches[1] != "Tree ") {
+            $parts = explode(" ", $matches[1]);
+            $name = implode("_", $parts);
+          }
+
+          $val_str .= "<div id=\"{$name}map_wrapper\"></div>"
+            . "<input id=\"{$name}map_button\" type=\"button\" value=\"Click here to view trees on map!\"></input>"
+            . "<div id=\"{$name}accession_fid\" style=\"display:none;\">$val</div>"
+            . "<script>jQuery('#{$name}map_button').click(getCoordinates);</script>";
+        }
+      }
+      elseif ($key == 'Publication DOI') {
+        $link = preg_match('/https?:\/\//', $val_str) ? $val_str : "https://doi.org/$val_str";
+        $val_str = "<a href=\"$link\" target=\"blank\">$val_str</a>";
       }
 
-      $display .= "<tr><td>$key_str</td><td>$val_str</td></tr>";
+      $rows[] = array($key_str, $val_str);
+    }
+    elseif (preg_match('/^#(.*)accession_(.*)/', $key, $matches)) {
+      $val_str = filter_xss(check_plain($val));
+      $parts = explode(" ", substr($matches[0], 1));
+      $item_id = implode("_", $parts);
+      $content .= "<div id=\"$item_id\" style=\"display:none;\">$val_str</div>";
     }
   }
+  if (!empty($map_api_key)) {
+    $content .= "<script src=\"https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js\"></script><script src=\"https://maps.googleapis.com/maps/api/js?key=$map_api_key&callback=initMap\"
+    async defer></script>";
+  }
 
-  $display .= "</tbody></table></div><br>";
+  $headers = array(
+    'Field',
+    'Value',
+  );
+
+  $vars = array(
+    'header' => $headers,
+    'rows' => $rows,
+    'attributes' => array('class' => array('view'), 'id' => 'gttn_tpps_table_display'),
+    'caption' => '',
+    'colgroups' => NULL,
+    'sticky' => FALSE,
+    'empty' => '',
+  );
+
+  $display = theme_table($vars) . $content;
 
   return $display;
 }
@@ -259,17 +329,13 @@ function gttn_tpps_table_display($state) {
 /**
  *
  */
-function gttn_tpps_completed_display($form, $form_state) {
-
-  global $user;
+function gttn_tpps_completed_display($accession = NULL) {
   global $base_url;
-  $params = drupal_get_query_parameters();
-  $accession = $params['id'];
+  $display = "";
   $link = "$base_url/gttn_tpps_details/accession/$accession";
 
-  $old_form_state = variable_get('gttn_tpps_complete_' . $user->mail . $accession);
-  dpm($old_form_state);
-  $values = $old_form_state['saved_values'];
+  $old_form_state = gttn_tpps_load_submission($accession);
+  $title = $old_form_state['data']['project']['name'];
 
   $css = "
     .tgdr_complete_submission {
@@ -289,6 +355,24 @@ function gttn_tpps_completed_display($form, $form_state) {
   );
 
   return $form;
+  $css = "
+  .tgdr_complete_submission {
+    background: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    padding: 0px 10px;
+  }		
+  ";
+  drupal_add_css($css, 'inline');
+
+  $display .= "<label for='gttn_tpps_$accession'>$title</label><p>You can view the GTTN-TPPS Details page with completed and approved GTTN-TPPS data <a href=\"$link\">here</a></p>";
+
+  $display .= gttn_tpps_table_display($old_form_state);
+
+  drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
+  drupal_add_css(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_CSS_PATH);
+
+  return render($display);
 }
 
 /**

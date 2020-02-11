@@ -789,6 +789,7 @@ function gttn_tpps_main($form, &$form_state, $accession = NULL) {
       $form_state['stats'] = $old_form_state['stats'] ?? NULL;
       $form_state['data'] = $old_form_state['data'] ?? NULL;
       $form_state['file_info'] = $old_form_state['file_info'] ?? NULL;
+      $form_state['owner_uid'] = $old_form_state['owner_uid'] ?? NULL;
     }
   }
   else {
@@ -805,6 +806,7 @@ function gttn_tpps_main($form, &$form_state, $accession = NULL) {
     $form_state['stats'] = $old_form_state['stats'] ?? NULL;
     $form_state['data'] = $old_form_state['data'] ?? NULL;
     $form_state['file_info'] = $old_form_state['file_info'] ?? NULL;
+    $form_state['owner_uid'] = $old_form_state['owner_uid'] ?? NULL;
   }
 
   // Hidden form step (AKA stage) element.
@@ -1008,10 +1010,9 @@ function gttn_tpps_main_submit($form, &$form_state) {
       if (gettype($form_state['stage']) == 'integer') {
         if ($form_state['triggering_element']['#value'] == 'Back') {
           $form_state['stage']--;
+          break;
         }
-        else {
-          $form_state['stage']++;
-        }
+        $form_state['stage']++;
         break;
       }
       drupal_set_message(t('Invalid form stage.'), 'error');
