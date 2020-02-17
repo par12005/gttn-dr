@@ -442,6 +442,11 @@ function gttn_tpps_get_cvterms() {
       'Data Type',
       'County',
       'Locality',
+      'Tissue',
+      'Dimension',
+      'Collection Date',
+      'Biospecimen Collection Method',
+      'Legal',
     ),
     'sio' => array(
       'latitude',
@@ -451,6 +456,9 @@ function gttn_tpps_get_cvterms() {
       'country',
       'province',
       'city',
+    ),
+    'obi' => array(
+      'specimen collector',
     ),
     'analysis_property' => array(
       'Analysis Type',
@@ -463,6 +471,7 @@ function gttn_tpps_get_cvterms() {
       'project permissions' => 'Who is allowed to access the project.',
       'data collection purpose' => 'The reason the data was collected.',
       'organism 4 letter code' => '4 letter abbreviation of species. Usually first two letters of genus + first two letters of species, may be different if that code already exists (use next letters from species if possible).',
+      'shareable' => 'Whether or not the sample is shareable between labs.',
     ),
   );
 }
