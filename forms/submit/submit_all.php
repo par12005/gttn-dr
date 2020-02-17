@@ -391,41 +391,201 @@ function gttn_tpps_submit_trees(&$state) {
       break;
     }
   }
-  print_r($state['data']['trees']);
 
   if ($state['data']['project']['props']['type'] != 'New Trees') {
     gttn_tpps_matching_trees($state['ids']['project_id']);
   }
 
   // Submit samples.
-  $samples = $thirdpage['samples'];
-  gttn_tpps_chado_insert_record('projectprop', array(
-    'project_id' => $state['ids']['project_id'],
-    'type_id' => array(
-      'cv_id' => array(
-        'name' => 'schema',
+  if (!empty($thirdpage['samples'])) {
+    $samples = $thirdpage['samples'];
+    $sample_count = 0;
+    $record_group = variable_get('gttn_tpps_record_group', 10000);
+    gttn_tpps_chado_insert_record('projectprop', array(
+      'project_id' => $state['ids']['project_id'],
+      'type_id' => array(
+        'cv_id' => array(
+          'name' => 'schema',
+        ),
+        'name' => 'url',
+        'is_obsolete' => 0,
       ),
-      'name' => 'url',
-      'is_obsolete' => 0,
-    ),
-    'value' => file_create_url(file_load($samples['file'])->uri),
-    'rank' => $state['file_rank'],
-  ));
-  $state['file_rank']++;
-
-  $records = array(
-    'stock' => array(),
-    'stockprop' => array(),
-    'project_stock' => array(),
-  );
-  foreach ($state['data']['samples'] as $sample) {
-    $sample_id = $sample['id'];
-    $records['stock'][$sample_id] = array(
-      'uniquename' => "$accession-$sample_id",
-      'type_id' => $cvterms['org'],
-      'organism_id' => gttn_tpps_source_get_organism($sample['source'], $state),
-      //TODO
+      'value' => file_create_url(file_load($samples['file'])->uri),
+      'rank' => $state['file_rank'],
+    ));
+    $state['file_rank']++;
+  
+    $records = array(
+      'stock' => array(),
+      'stockprop' => array(),
+      'project_stock' => array(),
     );
+
+    $sample_cvt = tripal_get_cvterm(array(
+      'name' => 'biological sample',
+      'cv_id' => array(
+        'name' => 'sep',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
+    $tissue_cvt = tripal_get_cvterm(array(
+      'name' => 'Tissue',
+      'cv_id' => array(
+        'name' => 'ncit',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
+    $dim_cvt = tripal_get_cvterm(array(
+      'name' => 'Dimension',
+      'cv_id' => array(
+        'name' => 'ncit',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
+    $date_cvt = tripal_get_cvterm(array(
+      'name' => 'Collection Date',
+      'cv_id' => array(
+        'name' => 'ncit',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
+    $collector_cvt = tripal_get_cvterm(array(
+      'name' => 'specimen collector',
+      'cv_id' => array(
+        'name' => 'obi',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
+    $method_cvt = tripal_get_cvterm(array(
+      'name' => 'Biospecimen Collection Method',
+      'cv_id' => array(
+        'name' => 'ncit',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
+    $legal_cvt = tripal_get_cvterm(array(
+      'name' => 'Legal',
+      'cv_id' => array(
+        'name' => 'ncit',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
+    $share_cvt = tripal_get_cvterm(array(
+      'name' => 'shareable',
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
+    foreach ($state['data']['samples'] as $sample) {
+      $sample_id = $sample['id'];
+      $records['stock'][$sample_id] = array(
+        'uniquename' => "$accession-$sample_id",
+        'type_id' => $sample_cvt,
+        'organism_id' => gttn_tpps_source_get_organism($sample['source'], $state),
+      );
+
+      $records['stockprop']["$sample_id-tissue"] = array(
+        'type_id' => $tissue_cvt,
+        'value' => $sample['tissue'],
+        '#fk' => array(
+          'stock' => $sample_id,
+        ),
+      );
+
+      $records['stockprop']["$sample_id-dim"] = array(
+        'type_id' => $dim_cvt,
+        'value' => $sample['dimension'],
+        '#fk' => array(
+          'stock' => $sample_id,
+        ),
+      );
+
+      $records['stockprop']["$sample_id-date"] = array(
+        'type_id' => $date_cvt,
+        'value' => $sample['date'],
+        '#fk' => array(
+          'stock' => $sample_id,
+        ),
+      );
+
+      $records['stockprop']["$sample_id-collector"] = array(
+        'type_id' => $collector_cvt,
+        'value' => $sample['collector'],
+        '#fk' => array(
+          'stock' => $sample_id,
+        ),
+      );
+
+      $records['stockprop']["$sample_id-method"] = array(
+        'type_id' => $method_cvt,
+        'value' => $sample['method'],
+        '#fk' => array(
+          'stock' => $sample_id,
+        ),
+      );
+
+      $records['stockprop']["$sample_id-legal"] = array(
+        'type_id' => $legal_cvt,
+        'value' => $sample['legal'],
+        '#fk' => array(
+          'stock' => $sample_id,
+        ),
+      );
+
+      $records['stockprop']["$sample_id-share"] = array(
+        'type_id' => $share_cvt,
+        'value' => $sample['share'],
+        '#fk' => array(
+          'stock' => $sample_id,
+        ),
+      );
+
+      $records['stock_relationship'][$sample_id] = array(
+        'type_id' => $cvterms['has_part'],
+        '#fk' => array(
+          'object' => $sample_id,
+        ),
+      );
+      if (!empty($state['data']['trees'][$sample['source']]['stock_id'])) {
+        // Don't need to use #fk since the tree stock record has already been
+        // created.
+        $records['stock_relationship'][$sample_id]['subject_id'] = $state['data']['trees'][$sample['source']]['stock_id'];
+      }
+      else {
+        // Need to use #fk since the sample stock record doesn't exist yet.
+        $records['stock_relationship'][$sample_id]['#fk']['subject'] = $state['data']['samples'][$sample['source']]['id'];
+      }
+
+      $sample_count++;
+      if ($sample_count >= $record_group) {
+        $new_ids = gttn_tpps_chado_insert_multi($records, $multi_insert_options);
+        foreach ($new_ids as $s_id => $stock_id) {
+          $state['data']['samples'][$s_id]['stock_id'] = $stock_id;
+        }
+
+        $records = array(
+          'stock' => array(),
+          'stockprop' => array(),
+          'stock_relationship' => array(),
+          'project_stock' => array(),
+        );
+        $sample_count = 0;
+      }
+    }
+
+    if ($sample_count > 0) {
+      $new_ids = gttn_tpps_chado_insert_multi($records, $multi_insert_options);
+      foreach ($new_ids as $s_id => $stock_id) {
+        $state['data']['samples'][$s_id]['stock_id'] = $stock_id;
+      }
+      $sample_count = 0;
+    }
   }
 }
 
