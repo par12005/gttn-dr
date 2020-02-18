@@ -26,6 +26,10 @@ function gttn_tpps_submit_all($accession) {
 
     gttn_tpps_submit_trees($form_state);
 
+    if (!empty($form_state['saved_values'][GTTN_PAGE_4]['dart'])) {
+      gttn_tpps_submit_dart($form_state);
+    }
+
     // TODO.
     throw new Exception('Submission Completed');
   }
@@ -590,267 +594,89 @@ function gttn_tpps_submit_trees(&$state) {
 }
 
 /**
- * DEPRECATED
+ * 
  */
-function gttn_tpps_submit_page_3(&$form_state, $project_id, &$file_rank, $organism_ids) {
+function gttn_tpps_submit_dart(&$state) {
+  $dart = $state['saved_values'][GTTN_PAGE_4]['dart'];
+  $file = file_load($dart['file']);
 
-  $firstpage = $form_state['saved_values'][GTTN_PAGE_1];
-  $thirdpage = $form_state['saved_values'][GTTN_PAGE_3];
-  $organism_number = $firstpage['organism']['number'];
-
-  $stock_ids = array();
-  $org_term_id = chado_get_cvterm(array(
-    'name' => 'organism',
-    'cv_id' => array(
-      'name' => 'obi',
+  gttn_tpps_chado_insert_record('projectprop', array(
+    'project_id' => $state['ids']['project_id'],
+    'type_id' => array(
+      'cv_id' => array(
+        'name' => 'schema',
+      ),
+      'name' => 'url',
+      'is_obsolete' => 0,
     ),
-  ))->cvterm_id;
-  $url_id = chado_get_cvterm(array(
-    'name' => 'url',
-    'cv_id' => array(
-      'name' => 'schema',
-    ),
-  ))->cvterm_id;
+    'value' => file_create_url($file->uri),
+    'rank' => $state['file_rank'],
+  ));
+  $state['file_rank']++;
 
-  if ($organism_number == '1' or $thirdpage['tree-accession']['check'] == 0) {
-    // Single file.
-    gttn_tpps_create_record('projectprop', array(
-      'project_id' => $project_id,
-      'type_id' => $url_id,
-      'value' => file_create_url(file_load($thirdpage['tree-accession']['file'])->uri),
-      'rank' => $file_rank,
-    ));
+  $records = array(
+    'phenotype' => array(),
+    'stock_phenotype' => array(),
+    'phenotypeprop' => array(),
+  );
 
-    $file = file_load($thirdpage['tree-accession']['file']);
-    $location = drupal_realpath($file->uri);
-    $content = gttn_tpps_parse_xlsx($location);
-    $column_vals = $thirdpage['tree-accession']['file-columns'];
-    $groups = $thirdpage['tree-accession']['file-groups'];
+  $cvterms = array(
+    'dart' => tripal_get_cvterm(array(
+      'name' => 'direct analysis in real time',
+      'cv_id' => array(
+        'name' => 'chmo',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id,
+    'collector' => tripal_get_cvterm(array(
+      'name' => 'specimen collector',
+      'cv_id' => array(
+        'name' => 'obi',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id,
+    'dart_type' => tripal_get_cvterm(array(
+      'name' => 'type of DART',
+      'is_obsolete' => 0,
+    ))->cvterm_id,
+    'settings' => tripal_get_cvterm(array(
+      'name' => 'Device Parameters',
+      'cv_id' => array(
+        'name' => 'ncit',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id,
+    'lab' => tripal_get_cvterm(array(
+      'name' => 'Laboratory Vendor Name',
+      'cv_id' => array(
+        'name' => 'ncit',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id,
+    'cal_type' => tripal_get_cvterm(array(
+      'name' => 'calibration type',
+      'is_obsolete' => 0,
+    ))->cvterm_id,
+  );
 
-    foreach ($column_vals as $col => $val) {
-      if ($val == '8') {
-        $county_col_name = $col;
-      }
-      if ($val == '9') {
-        $district_col_name = $col;
-      }
-    }
+  $options = array(
+    'accession' => $state['accession'],
+    'no_header' => $dart['file-no-header'],
+    'groups' => $dart['file-groups'],
+    'cols' => $dart['file-columns'],
+    'samples' => $state['data']['samples'],
+    'records' => &$records,
+    'suffix' => 0,
+    'cvterms' => $cvterms,
+    'record_count' => 0,
+  );
 
-    $id_col_accession_name = $groups['Tree Id']['1'];
-
-    if ($organism_number == '1') {
-      // Only one species.
-      for ($i = 0; $i < count($content) - 1; $i++) {
-        $tree_id = $content[$i][$id_col_accession_name];
-        $stock_ids[$tree_id] = gttn_tpps_create_record('stock', array(
-          'uniquename' => t($tree_id),
-          'type_id' => $org_term_id,
-          'organism_id' => $organism_ids[1],
-        ));
-      }
-    }
-    else {
-      // Multiple species in one tree accession file -> users must define species and genus columns
-      // get genus/species column.
-      if ($groups['Genus and Species']['#type'] == 'separate') {
-        $genus_col_name = $groups['Genus and Species']['6'];
-        $species_col_name = $groups['Genus and Species']['7'];
-      }
-      else {
-        $org_col_name = $groups['Genus and Species']['10'];
-      }
-
-      // Parse file.
-      for ($i = 0; $i < count($content) - 1; $i++) {
-        $tree_id = $content[$i][$id_col_accession_name];
-        for ($j = 1; $j <= $organism_number; $j++) {
-          // Match genus and species to genus and species given on page 1.
-          if ($groups['Genus and Species']['#type'] == 'separate') {
-            $genus_full_name = "{$content[$i][$genus_col_name]} {$content[$i][$species_col_name]}";
-          }
-          else {
-            $genus_full_name = "{$content[$i][$org_col_name]}";
-          }
-
-          if ($firstpage['organism'][$j] == $genus_full_name) {
-            // Obtain organism id from matching species.
-            $id = $organism_ids[$j];
-            break;
-          }
-        }
-
-        // Create record with the new id.
-        $stock_ids[$tree_id] = gttn_tpps_create_record('stock', array(
-          'uniquename' => t($tree_id),
-          'type_id' => $org_term_id,
-          'organism_id' => $id,
-        ));
-      }
-    }
-
-    if ($groups['Location (latitude/longitude or country/state)']['#type'] == 'gps') {
-      $lat_name = $groups['Location (latitude/longitude or country/state)']['4'];
-      $long_name = $groups['Location (latitude/longitude or country/state)']['5'];
-
-      for ($i = 0; $i < count($content) - 1; $i++) {
-        $tree_id = $content[$i][$id_col_accession_name];
-        $stock_id = $stock_ids[$tree_id];
-
-        gttn_tpps_create_record('stockprop', array(
-          'stock_id' => $stock_id,
-          'type_id' => '54718',
-          'value' => $content[$i][$lat_name],
-        ));
-
-        gttn_tpps_create_record('stockprop', array(
-          'stock_id' => $stock_id,
-          'type_id' => '54717',
-          'value' => $content[$i][$long_name],
-        ));
-      }
-    }
-    else {
-      $country_col_name = $groups['Location (latitude/longitude or country/state)']['2'];
-      $state_col_name = $groups['Location (latitude/longitude or country/state)']['3'];
-
-      for ($i = 0; $i < count($content) - 1; $i++) {
-        $tree_id = $content[$i][$id_col_accession_name];
-        $stock_id = $stock_ids[$tree_id];
-
-        gttn_tpps_create_record('stockprop', array(
-          'stock_id' => $stock_id,
-          'type_id' => '128162',
-          'value' => $content[$i][$country_col_name],
-        ));
-
-        gttn_tpps_create_record('stockprop', array(
-          'stock_id' => $stock_id,
-          'type_id' => '128947',
-          'value' => $content[$i][$state_col_name],
-        ));
-
-        if (isset($county_col_name)) {
-          gttn_tpps_create_record('stockprop', array(
-            'stock_id' => $stock_id,
-            'type_id' => '128946',
-            'value' => $content[$i][$county_col_name],
-          ));
-        }
-
-        if (isset($district_col_name)) {
-          gttn_tpps_create_record('stockprop', array(
-            'stock_id' => $stock_id,
-            'type_id' => '128945',
-            'value' => $content[$i][$district_col_name],
-          ));
-        }
-      }
-    }
-
-    $file->status = FILE_STATUS_PERMANENT;
-    $file = file_save($file);
-    $file_rank++;
+  gttn_tpps_file_iterator($file->fid, 'gttn_tpps_process_dart', $options);
+  if ($options['record_count'] > 0) {
+    gttn_tpps_chado_insert_multi($records);
+    $options['record_count'] = 0;
   }
-  else {
-    // Multiple files, sorted by species.
-    for ($i = 1; $i <= $organism_number; $i++) {
-      gttn_tpps_create_record('projectprop', array(
-        'project_id' => $project_id,
-        'type_id' => $url_term_id,
-        'value' => drupal_realpath(file_load($thirdpage['tree-accession']["species-$i"]['file'])->uri),
-        'rank' => $file_rank,
-      ));
-
-      $file = file_load($thirdpage['tree-accession']["species-$i"]['file']);
-      $location = drupal_realpath($file->uri);
-      $content = gttn_tpps_parse_xlsx($location);
-      $column_vals = $thirdpage['tree-accession']["species-$i"]['file-columns'];
-      $groups = $thirdpage['tree-accession']["species-$i"]['file-groups'];
-
-      $id_col_accession_name = $groups['Tree Id']['1'];
-
-      foreach ($column_vals as $col => $val) {
-        if ($val == '8') {
-          $county_col_name = $col;
-        }
-        if ($val == '9') {
-          $district_col_name = $col;
-        }
-      }
-
-      for ($j = 0; $j < count($content) - 1; $j++) {
-        $tree_id = $content[$j][$id_col_accession_name];
-        $stock_ids[$tree_id] = gttn_tpps_create_record('stock', array(
-          'uniquename' => t($tree_id),
-          'type_id' => $org_term_id,
-          'organism_id' => $organism_ids[$i],
-        ));
-
-        if ($groups['Location (latitude/longitude or country/state)']['#type'] == 'gps') {
-          $lat_name = $groups['Location (latitude/longitude or country/state)']['4'];
-          $long_name = $groups['Location (latitude/longitude or country/state)']['5'];
-
-          gttn_tpps_create_record('stockprop', array(
-            'stock_id' => $stock_ids[$tree_id],
-            'type_id' => '54718',
-            'value' => $content[$j][$lat_name],
-          ));
-
-          gttn_tpps_create_record('stockprop', array(
-            'stock_id' => $stock_ids[$tree_id],
-            'type_id' => '54717',
-            'value' => $content[$j][$long_name],
-          ));
-        }
-        else {
-          $country_col_name = $groups['Location (latitude/longitude or country/state)']['2'];
-          $state_col_name = $groups['Location (latitude/longitude or country/state)']['3'];
-
-          gttn_tpps_create_record('stockprop', array(
-            'stock_id' => $stock_id,
-            'type_id' => '128162',
-            'value' => $content[$j][$country_col_name],
-          ));
-
-          gttn_tpps_create_record('stockprop', array(
-            'stock_id' => $stock_id,
-            'type_id' => '128947',
-            'value' => $content[$j][$state_col_name],
-          ));
-
-          if (isset($county_col_name)) {
-            gttn_tpps_create_record('stockprop', array(
-              'stock_id' => $stock_id,
-              'type_id' => '128946',
-              'value' => $content[$j][$county_col_name],
-            ));
-          }
-
-          if (isset($district_col_name)) {
-            gttn_tpps_create_record('stockprop', array(
-              'stock_id' => $stock_id,
-              'type_id' => '128945',
-              'value' => $content[$j][$district_col_name],
-            ));
-          }
-        }
-      }
-
-      $file->status = FILE_STATUS_PERMANENT;
-      $file = file_save($file);
-      $file_rank++;
-    }
-  }
-
-  foreach ($stock_ids as $tree_id => $stock_id) {
-    gttn_tpps_create_record('project_stock', array(
-      'stock_id' => $stock_id,
-      'project_id' => $project_id,
-    ));
-  }
-
-  $form_state['file_rank'] = $file_rank;
-
+  // TODO.
 }
 
 /**
@@ -1145,6 +971,114 @@ function gttn_tpps_process_accession($row, array &$options) {
     );
     $stock_count = 0;
   }
+}
+
+/**
+ * Processes one row of a supplied DART file.
+ *
+ * @param mixed $row
+ *   The value yielded by tpps_file_generator().
+ * @param array $options
+ *   The supplied options to tpps_file_iterator().
+ */
+function gttn_tpps_process_dart($row, array &$options) {
+  $accession = $options['accession'];
+  $records = &$options['records'];
+  $samples = $options['samples'];
+  $cols = $options['cols'];
+  $groups = $options['groups'];
+  $suffix = &$options['suffix'];
+  $cvterms = $options['cvterms'];
+  $record_count = &$options['record_count'];
+  $record_group = variable_get('gttn_tpps_record_group', 10000);
+
+  $lab_col = $groups['Lab Name']['1'];
+  $spectra_col = $groups['Spectra Id']['2'];
+  $sample_col = ($groups['Sample Id']['#type'] == 'internal') ? $groups['Sample Id']['3'] : $groups['Sample Id']['4'];
+  $settings_col = $groups['Parameter Settings']['7'];
+  $collector_col = array_search('5', $cols);
+  $type_col = array_search('6', $cols);
+  $cal_type_col = array_search('8', $cols);
+
+  $spectra_id = $row[$spectra_col];
+  $sample_id = $row[$sample_col];
+  $dart_name = "$accession-$sample_id-DART-$suffix";
+
+  if (!array_key_exists($sample_id, $samples)) {
+    throw new Exception("Error: Sample ID $sample_id not found in sample data.");
+  }
+
+  $records['phenotype'][$dart_name] = array(
+    'uniquename' => $dart_name,
+    'name' => 'DART',
+    'attr_id' => $cvterms['dart'],
+    'value' => $spectra_id,
+  );
+
+  $records['stock_phenotype'][$dart_name] = array(
+    'stock_id' => $samples[$sample_id]['stock_id'],
+    '#fk' => array(
+      'phenotype' => $dart_name,
+    ),
+  );
+
+  $records['phenotypeprop']["$dart_name-settings"] = array(
+    'type_id' => $cvterms['settings'],
+    'value' => $row[$settings_col],
+    '#fk' => array(
+      'phenotype' => $dart_name,
+    ),
+  );
+
+  $records['phenotypeprop']["$dart_name-lab"] = array(
+    'type_id' => $cvterms['lab'],
+    'value' => $row[$lab_col],
+    '#fk' => array(
+      'phenotype' => $dart_name,
+    ),
+  );
+
+  if (!empty($collector_col) and !empty($row[$collector_col])) {
+    $records['phenotypeprop']["$dart_name-gatherer"] = array(
+      'type_id' => $cvterms['collector'],
+      'value' => $row[$collector_col],
+      'fk' => array(
+        'phenotype' => $dart_name,
+      ),
+    );
+  }
+
+  if (!empty($type_col) and !empty($row[$type_col])) {
+    $records['phenotypeprop']["$dart_name-type"] = array(
+      'type_id' => $cvterms['dart_type'],
+      'value' => $row[$type_col],
+      'fk' => array(
+        'phenotype' => $dart_name,
+      ),
+    );
+  }
+
+  if (!empty($cal_type_col) and !empty($row[$cal_type_col])) {
+    $records['phenotypeprop']["$dart_name-calibration_type"] = array(
+      'type_id' => $cvterms['cal_type'],
+      'value' => $row[$cal_type_col],
+      'fk' => array(
+        'phenotype' => $dart_name,
+      ),
+    );
+  }
+
+  $record_count++;
+  if ($record_count >= $record_group) {
+    gttn_tpps_chado_insert_multi($records);
+    $records = array(
+      'phenotype' => array(),
+      'phenotypeprop' => array(),
+      'stock_phenotype' => array(),
+    );
+    $record_count = 0;
+  }
+  $suffix++;
 }
 
 /**
