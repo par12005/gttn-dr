@@ -84,10 +84,10 @@ function gttn_tpps_menu() {
   /*
    * View a completed GTTN submission.
    */
-  $items['gttn-completed-submission'] = array(
+  $items['gttn-completed-submission/%'] = array(
     'title' => 'GTTN-TPPS Completed Submission',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('gttn_tpps_completed_display'),
+    'page callback' => 'gttn_tpps_completed_display',
+    'page arguments' => array(1),
     'access callback' => 'gttn_tpps_access',
     'access arguments' => array('view own gttn-tpps submission'),
     'type' => MENU_NORMAL_ITEM,
@@ -291,9 +291,7 @@ function gttn_tpps_access($permission, array $args = array()) {
         return TRUE;
     }
   }
-  else {
-    return FALSE;
-  }
+  return FALSE;
 }
 
 /**
@@ -826,6 +824,10 @@ function gttn_tpps_main($form, &$form_state, $accession = NULL) {
   // set, then initialize the project.
   if (!isset($form_state['dbxref_id']) or !isset($form_state['accession'])) {
     gttn_tpps_init_project($form, $form_state);
+  }
+
+  if (!gttn_tpps_access('access gttn-tpps form', array('accession' => $form_state['accession']))) {
+    throw new \Exception('Insufficient permissions. Please log in and reload this page.');
   }
 
   // Add the overhead status bar to the form.
