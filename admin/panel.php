@@ -224,7 +224,7 @@ function gttn_tpps_admin_panel_submit($form, &$form_state) {
     gttn_tpps_update_submission($state, array('status' => 'Incomplete'));
     // Let the admin know that the submission was successfully rejected.
     drupal_set_message(t('Submission Rejected. Message has been sent to user.'), 'status');
-    drupal_goto('<front>');
+    drupal_goto('gttn-admin-panel');
   }
   // If the reject button was not pressed, then the submission is approved.
   elseif ($form_state['triggering_element']['#value'] == 'Approve') {
