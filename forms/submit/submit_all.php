@@ -11,12 +11,12 @@ function gttn_tpps_submit_all($accession) {
   $form_state = gttn_tpps_load_submission($accession);
   $form_state['status'] = 'Submission Job Running';
   gttn_tpps_update_submission($form_state, array('status' => 'Submission Job Running'));
+  gttn_tpps_submission_clear_db($accession);
   $project_id = $form_state['ids']['project_id'] ?? NULL;
   $transaction = db_transaction();
 
   try {
     $form_state = gttn_tpps_load_submission($accession);
-    $values = $form_state['saved_values'];
     $form_state['file_rank'] = 0;
     $form_state['ids'] = array();
 
@@ -30,8 +30,15 @@ function gttn_tpps_submit_all($accession) {
       gttn_tpps_submit_dart($form_state);
     }
 
+    if (!empty($form_state['saved_values'][GTTN_PAGE_4]['isotope'])) {
+      gttn_tpps_submit_isotope($form_state);
+      throw new Exception("Isotope Completed\n");
+    }
+
     // TODO.
-    throw new Exception('Submission Completed');
+    //throw new Exception('Submission Completed');
+    $form_state['status'] = 'Approved';
+    gttn_tpps_update_submission($form_state);
   }
   catch (\Exception $e) {
     $transaction->rollback();
@@ -594,7 +601,7 @@ function gttn_tpps_submit_trees(&$state) {
 }
 
 /**
- * 
+ *
  */
 function gttn_tpps_submit_dart(&$state) {
   $dart = $state['saved_values'][GTTN_PAGE_4]['dart'];
@@ -677,6 +684,46 @@ function gttn_tpps_submit_dart(&$state) {
     $options['record_count'] = 0;
   }
   // TODO.
+}
+
+/**
+ *
+ */
+function gttn_tpps_submit_isotope(&$state) {
+  $iso = $state['saved_values'][GTTN_PAGE_4]['isotope'];
+  $file = file_load($iso['file']);
+
+  gttn_tpps_chado_insert_record('projectprop', array(
+    'project_id' => $state['ids']['project_id'],
+    'type_id' => array(
+      'cv_id' => array(
+        'name' => 'schema',
+      ),
+      'name' => 'url',
+      'is_obsolete' => 0,
+    ),
+    'value' => file_create_url($file->uri),
+    'rank' => $state['file_rank'],
+  ));
+  $state['file_rank']++;
+
+  $records = array(
+    'phenotype' => array(),
+    'stock_phenotype' => array(),
+    'phenotypeprop' => array(),
+  );
+
+  $core_len = FALSE;
+  if ($iso['used_core']) {
+    $core_len = $iso['core_len'];
+  }
+
+  $options = array(
+    'records' => &$records,
+    'core_len' => $core_len,
+  );
+
+  gttn_tpps_file_iterator($file->fid, 'gttn_tpps_process_isotope', $options);
 }
 
 /**
@@ -1042,7 +1089,7 @@ function gttn_tpps_process_dart($row, array &$options) {
     $records['phenotypeprop']["$dart_name-gatherer"] = array(
       'type_id' => $cvterms['collector'],
       'value' => $row[$collector_col],
-      'fk' => array(
+      '#fk' => array(
         'phenotype' => $dart_name,
       ),
     );
@@ -1052,7 +1099,7 @@ function gttn_tpps_process_dart($row, array &$options) {
     $records['phenotypeprop']["$dart_name-type"] = array(
       'type_id' => $cvterms['dart_type'],
       'value' => $row[$type_col],
-      'fk' => array(
+      '#fk' => array(
         'phenotype' => $dart_name,
       ),
     );
@@ -1062,7 +1109,7 @@ function gttn_tpps_process_dart($row, array &$options) {
     $records['phenotypeprop']["$dart_name-calibration_type"] = array(
       'type_id' => $cvterms['cal_type'],
       'value' => $row[$cal_type_col],
-      'fk' => array(
+      '#fk' => array(
         'phenotype' => $dart_name,
       ),
     );
@@ -1079,6 +1126,14 @@ function gttn_tpps_process_dart($row, array &$options) {
     $record_count = 0;
   }
   $suffix++;
+}
+
+/**
+ *
+ */
+function gttn_tpps_process_isotope($row, array &$options) {
+  $records = &$options['records'];
+  // TODO.
 }
 
 /**

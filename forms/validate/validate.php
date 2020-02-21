@@ -373,13 +373,12 @@ function gttn_tpps_update_data(&$form, &$form_state) {
           'columns' => $columns,
           'groups' => $groups,
         );
-        // TODO
       }
 
       if (!empty($types['Isotope Reference Data'])) {
         $fid = $form_state['values']['isotope']['file'];
-        $columns = $form_state['values']['isotope']['file-columns'];
-        $groups = $form_state['values']['isotope']['file-groups'];
+        $columns = $form_state['values']['isotope']['file-columns'] ?? NULL;
+        $groups = $form_state['values']['isotope']['file-groups'] ?? NULL;
         $form_state['file_info'][GTTN_PAGE_4][] = array(
           'fid' => $fid,
           'name' => 'Isotope',
