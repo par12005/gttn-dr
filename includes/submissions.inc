@@ -8,6 +8,9 @@
  * 
  */
 function gttn_tpps_load_submission($accession, $state = TRUE) {
+  if (empty($accession)) {
+    return NULL;
+  }
   $result = db_select('gttn_tpps_submission', 's')
     ->fields('s')
     ->condition('accession', $accession)
@@ -122,23 +125,32 @@ function gttn_tpps_submission_rename_files($accession) {
  */
 function gttn_tpps_submission_clear_db($accession) {
   $state = gttn_tpps_load_submission($accession);
-  $state['file_rank'] = 0;
-  $project_id = $state['ids']['project_id'] ?? NULL;
-  if (empty($project_id)) {
+  $transaction = db_transaction();
+
+  try {
+    $state['file_rank'] = 0;
+    $project_id = $state['ids']['project_id'] ?? NULL;
+    if (empty($project_id)) {
+      return FALSE;
+    }
+
+    $stocks_sql = "SELECT stock_id FROM chado.project_stock WHERE project_id = $project_id";
+    chado_query("DELETE FROM chado.project_organism WHERE project_id = $project_id");
+    chado_query("DELETE FROM chado.projectprop WHERE project_id = $project_id");
+    chado_query("DELETE FROM chado.phenotype_cvterm WHERE phenotype_id IN (SELECT phenotype_id from chado.stock_phenotype WHERE stock_id in ($stocks_sql))");
+    chado_query("DELETE FROM chado.phenotype WHERE phenotype_id IN (SELECT phenotype_id FROM chado.stock_phenotype WHERE stock_id IN ($stocks_sql))");
+    chado_query("DELETE FROM chado.genotype_call WHERE project_id = $project_id");
+    chado_query("DELETE FROM chado.stock_genotype WHERE stock_id IN ($stocks_sql)");
+    chado_query("DELETE FROM chado.stock_phenotype WHERE stock_id IN ($stocks_sql)");
+    chado_query("DELETE FROM chado.stock WHERE stock_id IN ($stocks_sql)");
+
+    $state['ids'] = array('project_id' => $project_id);
+    gttn_tpps_update_submission($state);
+    return TRUE;
+  }
+  catch (\Exception $e) {
+    $transaction->rollback();
+    throw new \Exception("There was an error clearing the database for GTTN-TPPS submission number $accession: " . $e->getMessage());
     return FALSE;
   }
-
-  $stocks_sql = "SELECT stock_id FROM chado.project_stock WHERE project_id = $project_id";
-  chado_query("DELETE FROM chado.project_organism WHERE project_id = $project_id");
-  chado_query("DELETE FROM chado.projectprop WHERE project_id = $project_id");
-  chado_query("DELETE FROM chado.phenotype_cvterm WHERE phenotype_id IN (SELECT phenotype_id from chado.stock_phenotype WHERE stock_id in ($stocks_sql))");
-  chado_query("DELETE FROM chado.phenotype WHERE phenotype_id IN (SELECT phenotype_id FROM chado.stock_phenotype WHERE stock_id IN ($stocks_sql))");
-  chado_query("DELETE FROM chado.genotype_call WHERE project_id = $project_id");
-  chado_query("DELETE FROM chado.stock_genotype WHERE stock_id IN ($stocks_sql)");
-  chado_query("DELETE FROM chado.stock_phenotype WHERE stock_id IN ($stocks_sql)");
-  chado_query("DELETE FROM chado.stock WHERE stock_id IN ($stocks_sql)");
-
-  $state['ids'] = array('project_id' => $project_id);
-  gttn_tpps_update_submission($state);
-  return TRUE;
 }
