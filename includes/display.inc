@@ -327,34 +327,20 @@ function gttn_tpps_table_display(array &$state) {
 }
 
 /**
- *
+ * @param string $accession
+ *   The accession of the submission we want to display.
  */
-function gttn_tpps_completed_display($accession = NULL) {
+function gttn_tpps_completed_display(string $accession = '') {
   global $base_url;
   $display = "";
-  $link = "$base_url/gttn_tpps_details/accession/$accession";
 
   $old_form_state = gttn_tpps_load_submission($accession);
+  if (empty($old_form_state)) {
+    throw new \Exception("Invalid submission accession: '$accession'");
+  }
+  $link = "$base_url/gttn_tpps_details/accession/$accession";
   $title = $old_form_state['data']['project']['name'];
 
-  $css = "
-    .tgdr_complete_submission {
-        background: #ffffff;
-        border: 1px solid #cccccc;
-        border-radius: 4px;
-        padding: 0px 10px;
-    }		
-    ";
-  drupal_add_css($css, 'inline');
-
-  $display = gttn_tpps_table_display($old_form_state);
-
-  $form['a'] = array(
-    '#type' => 'hidden',
-    '#suffix' => $display,
-  );
-
-  return $form;
   $css = "
   .tgdr_complete_submission {
     background: #ffffff;
@@ -441,7 +427,7 @@ function gttn_tpps_tab_create($user) {
     $acc = NULL;
 
     if (isset($state['accession'])) {
-      $acc = "<a href='$base_url/gttn-tpps/{$state['accession']}' style='text-decoration: underline;'>{$state['accession']}</a>";
+      $acc = "<a href='$base_url/gttn-completed-submission/{$state['accession']}' style='text-decoration: underline;'>{$state['accession']}</a>";
     }
 
     $rows[] = array(
