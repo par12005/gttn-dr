@@ -20,12 +20,7 @@ require_once 'page_4_ajax.php';
  */
 function page_4_create_form(&$form, &$form_state) {
   // Load saved values for the fourth page if they are available.
-  if (isset($form_state['saved_values'][GTTN_PAGE_4])) {
-    $values = $form_state['saved_values'][GTTN_PAGE_4];
-  }
-  else {
-    $values = array();
-  }
+  $values = $form_state['saved_values'][GTTN_PAGE_4] ?? array();
 
   $types = $form_state['saved_values'][GTTN_PAGE_1]['data_type'];
 
@@ -136,6 +131,19 @@ function page_4_create_form(&$form, &$form_state) {
       ),
     );
 
+    $column_options = array(
+      0 => 'N/A',
+      1 => 'Sample ID',
+    );
+
+    $col_index = 2;
+
+    $required_groups = array(
+      'Sample ID' => array(
+        'id' => array(1),
+      ),
+    );
+
     foreach ($isotopes as $iso) {
       $iso_used = gttn_tpps_get_ajax_value($form_state, array(
         'isotope',
@@ -159,6 +167,11 @@ function page_4_create_form(&$form, &$form_state) {
             ),
           ),
         );
+        $column_options[$col_index] = $iso;
+        $required_groups[$iso] = array(
+          $iso => array($col_index),
+        );
+        $col_index++;
       }
     }
 
@@ -172,7 +185,21 @@ function page_4_create_form(&$form, &$form_state) {
       '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: txt csv xlsx</span>',
       '#standard_name' => 'Isotope',
       'empty' => array(
-        '#default_value' => $values['dart']['file']['empty'] ?? 'NA',
+        '#default_value' => $values['isotope']['file']['empty'] ?? 'NA',
+      ),
+
+      '#required_groups' => $required_groups,
+      '#gttn_tpps_val' => array(
+        'standard' => TRUE,
+        'function' => 'gttn_tpps_managed_file_validate',
+      ),
+      'columns' => array(
+        '#description' => 'Please define which columns hold the required data',
+      ),
+      'no-header' => array(),
+      'columns-options' => array(
+        '#type' => 'hidden',
+        '#value' => $column_options,
       ),
     );
   }

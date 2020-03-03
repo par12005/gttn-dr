@@ -449,6 +449,7 @@ function gttn_tpps_get_cvterms() {
       'Legal',
       'Device Parameters',
       'Laboratory Vendor Name',
+      'Isotope',
     ),
     'sio' => array(
       'latitude',
@@ -479,6 +480,8 @@ function gttn_tpps_get_cvterms() {
       'shareable' => 'Whether or not the sample is shareable between labs.',
       'type of DART' => 'The type of DART TOFMS.',
       'calibration type' => 'The type of calibration used.',
+      'isotope standard' => 'The isotope standard used to obtain an isotope reading.',
+      'increment borer' => 'Whether or not an increment borer was used to obtain a sample used in an isotope reading.',
     ),
   );
 }

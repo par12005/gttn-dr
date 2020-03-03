@@ -36,7 +36,7 @@ function gttn_tpps_submit_all($accession) {
     }
 
     // TODO.
-    //throw new Exception('Submission Completed');
+    throw new Exception('Submission Completed');
     $form_state['status'] = 'Approved';
     gttn_tpps_update_submission($form_state);
   }
@@ -707,6 +707,24 @@ function gttn_tpps_submit_isotope(&$state) {
   ));
   $state['file_rank']++;
 
+  $cvterms = array(
+    'isotope' => tripal_get_cvterm(array(
+      'name' => 'Isotope',
+      'cv_id' => array(
+        'name' => 'ncit',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id,
+    'std' => tripal_get_cvterm(array(
+      'name' => 'isotope standard',
+      'is_obsolete' => 0,
+    ))->cvterm_id,
+    'borer' => tripal_get_cvterm(array(
+      'name' => 'increment borer',
+      'is_obsolete' => 0,
+    ))->cvterm_id,
+  );
+
   $records = array(
     'phenotype' => array(),
     'stock_phenotype' => array(),
@@ -718,9 +736,25 @@ function gttn_tpps_submit_isotope(&$state) {
     $core_len = $iso['core_len'];
   }
 
+  $standards = array();
+  $types = array();
+  foreach ($iso['used'] as $name) {
+    if (!empty($name)) {
+      $standards[$name] = $iso[$name]['standard'];
+      $types[$name] = $iso[$name]['type'];
+    }
+  }
+
   $options = array(
     'records' => &$records,
+    'accession' => $state['accession'],
     'core_len' => $core_len,
+    'standards' => $standards,
+    'type' => $types,
+    'groups' => $iso['file-groups'],
+    'record_count' => 0,
+    'suffix' => 0,
+    'cvterms' => $cvterms,
   );
 
   gttn_tpps_file_iterator($file->fid, 'gttn_tpps_process_isotope', $options);
@@ -1133,6 +1167,39 @@ function gttn_tpps_process_dart($row, array &$options) {
  */
 function gttn_tpps_process_isotope($row, array &$options) {
   $records = &$options['records'];
+  $accession = $options['accession'];
+  $groups = $options['groups'];
+  $standards = $options['standards'];
+  $types = $options['types'];
+  $suffix = &$options['suffix'];
+  $count = &$options['record_count'];
+  $cvterms = $options['cvterms'];
+
+  $sample_id = $row[$groups['Sample ID']['1']];
+  unset($groups['Sample ID']);
+  foreach ($groups as $name => $col_id) {
+    $isotope_name = "$accession-$sample_id-$name-$suffix";
+    $records['phenotype'][$isotope_name] = array(
+      'uniquename' => $isotope_name,
+      'name' => $name,
+      'value' => $row[$col_id],
+      'attr_id' => $cvterms['isotope'],
+    );
+
+    if ($options['core_len'] !== FALSE) {
+      $records['phenotypeprop']["$isotope_name-core_len"] = array(
+        'type_id' => $cvterms['borer'],
+        'value' => $options['core_len'],
+        '#fk' => array(
+          'phenotype' => $isotope_name,
+        ),
+      );
+    }
+
+    // TODO.
+    $suffix++;
+    $count++;
+  }
   // TODO.
 }
 

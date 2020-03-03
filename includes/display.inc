@@ -118,6 +118,7 @@ function gttn_tpps_flatten($state) {
     $data['#page_4_cleared'] = FALSE;
   }
   $data["DART File"] = !empty($page_4['dart']['file']) ? $page_4['dart']['file'] : NULL;
+  $data["Isotope File"] = !empty($page_4['isotope']['file']) ? $page_4['isotope']['file'] : NULL;
   // TODO
 
   /*for ($i = 1; $i <= $data['#number_organisms']; $i++) {
