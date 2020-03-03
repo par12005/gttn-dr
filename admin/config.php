@@ -21,6 +21,7 @@ function gttn_tpps_admin_settings(array $form, array &$form_state) {
   $genotype = variable_get('gttn_tpps_genotype_files_dir', 'gttn_tpps_genotype');
   $phenotype = variable_get('gttn_tpps_phenotype_files_dir', 'gttn_tpps_phenotype');
   $dart = variable_get('gttn_tpps_dart_files_dir', 'gttn_tpps_dart');
+  $dart_raw = variable_get('gttn_tpps_dart_raw_dir', 'gttn_tpps_dart_raw');
   $isotope = variable_get('gttn_tpps_isotope_files_dir', 'gttn_tpps_isotope');
 
   $form['gttn_tpps_maps_api_key'] = array(
@@ -89,9 +90,16 @@ function gttn_tpps_admin_settings(array $form, array &$form_state) {
 
   $form['gttn_tpps_dart_files_dir'] = array(
     '#type' => 'textfield',
-    '#title' => t('DART files:'),
+    '#title' => t('DART metadata files:'),
     '#default_value' => $dart,
     '#description' => t("Currently points to @path.", array('@path' => drupal_realpath("public://$dart"))),
+  );
+
+  $form['gttn_tpps_dart_raw_dir'] = array(
+    '#type' => 'textfield',
+    '#title' => t('DART raw data files:'),
+    '#default_value' => $dart_raw,
+    '#description' => t("Currently points to @path.", array('@path' => drupal_realpath("public://$dart_raw"))),
   );
 
   $form['gttn_tpps_isotope_files_dir'] = array(
