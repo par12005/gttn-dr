@@ -32,7 +32,6 @@ function gttn_tpps_submit_all($accession) {
 
     if (!empty($form_state['saved_values'][GTTN_PAGE_4]['isotope'])) {
       gttn_tpps_submit_isotope($form_state);
-      throw new Exception("Isotope Completed\n");
     }
 
     // TODO.
@@ -723,6 +722,10 @@ function gttn_tpps_submit_isotope(&$state) {
       'name' => 'increment borer',
       'is_obsolete' => 0,
     ))->cvterm_id,
+    'type' => tripal_get_cvterm(array(
+      'name' => 'isotope type',
+      'is_obsolete' => 0,
+    ))->cvterm_id,
   );
 
   $records = array(
@@ -741,7 +744,7 @@ function gttn_tpps_submit_isotope(&$state) {
   foreach ($iso['used'] as $name) {
     if (!empty($name)) {
       $standards[$name] = $iso[$name]['standard'];
-      $types[$name] = $iso[$name]['type'];
+      $types[$name] = ($iso[$name]['type'] == 1) ? 'Whole Wood' : 'Cellulose';
     }
   }
 
@@ -758,6 +761,10 @@ function gttn_tpps_submit_isotope(&$state) {
   );
 
   gttn_tpps_file_iterator($file->fid, 'gttn_tpps_process_isotope', $options);
+  if ($options['record_count'] > 0) {
+    gttn_tpps_chado_insert_multi($records);
+    $options['record_count'] = 0;
+  }
 }
 
 /**
@@ -1174,10 +1181,14 @@ function gttn_tpps_process_isotope($row, array &$options) {
   $suffix = &$options['suffix'];
   $count = &$options['record_count'];
   $cvterms = $options['cvterms'];
+  $record_group = variable_get('gttn_tpps_record_group', 10000);
 
   $sample_id = $row[$groups['Sample ID']['1']];
   unset($groups['Sample ID']);
-  foreach ($groups as $name => $col_id) {
+  foreach ($groups as $name => $col_info) {
+    $isotope = $col_info['#type'];
+    unset($col_info['#type']);
+    $col_id = current($col_info);
     $isotope_name = "$accession-$sample_id-$name-$suffix";
     $records['phenotype'][$isotope_name] = array(
       'uniquename' => $isotope_name,
@@ -1196,9 +1207,34 @@ function gttn_tpps_process_isotope($row, array &$options) {
       );
     }
 
+    $records['phenotypeprop']["$isotope_name-standard"] = array(
+      'type_id' => $cvterms['std'],
+      'value' => $standards[$isotope],
+      '#fk' => array(
+        'phenotype' => $isotope_name,
+      ),
+    );
+
+    $records['phenotypeprop']["$isotope_name-type"] = array(
+      'type_id' => $cvterms['type'],
+      'value' => $types[$isotope],
+      '#fk' => array(
+        'phenotype' => $isotope_name,
+      ),
+    );
+
     // TODO.
-    $suffix++;
     $count++;
+    if ($count >= $record_group) {
+      gttn_tpps_chado_insert_multi($records);
+      $records = array(
+        'phenotype' => array(),
+        'phenotypeprop' => array(),
+        'stock_phenotype' => array(),
+      );
+      $count = 0;
+    }
+    $suffix++;
   }
   // TODO.
 }

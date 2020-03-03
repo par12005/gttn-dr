@@ -482,6 +482,7 @@ function gttn_tpps_get_cvterms() {
       'calibration type' => 'The type of calibration used.',
       'isotope standard' => 'The isotope standard used to obtain an isotope reading.',
       'increment borer' => 'Whether or not an increment borer was used to obtain a sample used in an isotope reading.',
+      'isotope type' => 'The type of isotope being collected - Whole Wood or Cellulose.',
     ),
   );
 }
