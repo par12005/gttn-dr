@@ -502,6 +502,45 @@ function gttn_tpps_file_validate_columns(array &$form_state, array $required_gro
 }
 
 /**
+ * Saves file column selections for a single file to the values of form_state.
+ *
+ * This function acts as a helper to gttn_tpps_save_file_columns().
+ *
+ * @param array $form
+ *   The form being validated.
+ * @param array $form_state
+ *   The state of the form being validated.
+ * @param array $parents
+ *   An array of array keys leading to the file element in the form.
+ */
+function gttn_tpps_save_columns(array &$form, array &$form_state, array $parents) {
+  $fid = drupal_array_get_nested_value($form_state['values'], $parents);
+  if (!empty($fid) and ($file = file_load($fid))) {
+    file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
+  }
+
+  $val_parents = $parents;
+  array_unshift($val_parents, 'values');
+  $end = array_pop($val_parents);
+  $col_parents = $val_parents;
+  array_push($col_parents, "$end-columns");
+  drupal_array_set_nested_value($form_state['values'], $col_parents, array());
+
+  $form_val_parents = $parents;
+  array_push($form_val_parents, '#value');
+  $cols = drupal_array_get_nested_value($form, $form_val_parents)['columns'] ?? NULL;
+  if (!empty($cols)) {
+    foreach ($cols as $col => $val) {
+      if ($col[0] != '#') {
+        $current_parents = $col_parents;
+        array_push($current_parents, $col);
+        drupal_array_set_nested_value($form_state, $current_parents, $val);
+      }
+    }
+  }
+}
+
+/**
  * Saves file column selections to the values of the form_state.
  *
  * This function is called before the form is validated so that the column
@@ -516,94 +555,27 @@ function gttn_tpps_save_file_columns(array &$form, array &$form_state) {
 
   if ($form_state['stage'] == GTTN_PAGE_3) {
     for ($i = 1; $i <= $form_state['stats']['species_count']; $i++) {
-      if (($file = file_load($form_state['values']['tree-accession']["species-$i"]['file'])) and $form_state['values']['tree-accession']["species-$i"]['file'] != 0) {
-        file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
-      }
-
-      $form_state['values']['tree-accession']["species-$i"]['file-columns'] = array();
-
-      if (isset($form['tree-accession']["species-$i"]['file']['#value']['columns'])) {
-        foreach ($form['tree-accession']["species-$i"]['file']['#value']['columns'] as $col => $val) {
-          if ($col[0] != '#') {
-            $form_state['values']['tree-accession']["species-$i"]['file-columns'][$col] = $form['tree-accession']["species-$i"]['file']['#value']['columns'][$col];
-          }
-        }
-      }
-
+      gttn_tpps_save_columns($form, $form_state, array('tree-accession', "species-$i", 'file'));
       if (empty($form_state['values']['tree-accession']['check'])) {
         break;
       }
     }
+
+    if (!empty($form_state['values']['samples']['file'])) {
+      gttn_tpps_save_columns($form, $form_state, array('samples', 'file'));
+    }
   }
   elseif ($form_state['stage'] == GTTN_PAGE_4) {
-    if (isset($form['organism-1']['genotype'])) {
-      for ($i = 1; $i <= $form_state['saved_values'][GTTN_PAGE_1]['organism']['number']; $i++) {
 
-        if (!empty($form_state['values']["organism-$i"]['genotype']['files']['snps-assay']) and ($file = file_load($form_state['values']["organism-$i"]['genotype']['files']['snps-assay']))) {
-          file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
-
-          $form_state['values']["organism-$i"]['genotype']['files']['snps-assay-columns'] = array();
-
-          if (isset($form["organism-$i"]['genotype']['files']['snps-assay']['#value']['columns'])) {
-            foreach ($form["organism-$i"]['genotype']['files']['snps-assay']['#value']['columns'] as $col => $val) {
-              if ($col[0] != '#') {
-                $form_state['values']["organism-$i"]['genotype']['files']['snps-assay-columns'][$col] = $form["organism-$i"]['genotype']['files']['snps-assay']['#value']['columns'][$col];
-              }
-            }
-          }
-        }
-
-        if (!empty($form_state['values']["organism-$i"]['genotype']['files']['other']) and ($file = file_load($form_state['values']["organism-$i"]['genotype']['files']['other']))) {
-          file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
-
-          $form_state['values']["organism-$i"]['genotype']['files']['other-columns'] = array();
-
-          if (isset($form["organism-$i"]['genotype']['files']['other']['#value']['columns'])) {
-            foreach ($form["organism-$i"]['genotype']['files']['other']['#value']['columns'] as $col => $val) {
-              if ($col[0] != '#') {
-                $form_state['values']["organism-$i"]['genotype']['files']['other-columns'][$col] = $form["organism-$i"]['genotype']['files']['other']['#value']['columns'][$col];
-              }
-            }
-          }
-        }
-      }
+    if (!empty($form['dart'])) {
+      gttn_tpps_save_columns($form, $form_state, array('dart', 'file'));
     }
 
-    if (isset($form['organism-1']['phenotype'])) {
-      for ($i = 1; $i <= $form_state['saved_values'][GTTN_PAGE_1]['organism']['number']; $i++) {
-        if (!isset($form["organism-$i"]['phenotype']['iso'])) {
-          if (($file = file_load($form_state['values']["organism-$i"]['phenotype']['file'])) and $form_state['values']["organism-$i"]['phenotype']['file'] != 0) {
-            file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
-          }
-
-          $form_state['values']["organism-$i"]['phenotype']['file-columns'] = array();
-
-          if (isset($form["organism-$i"]['phenotype']['file']['#value']['columns'])) {
-            foreach ($form["organism-$i"]['phenotype']['file']['#value']['columns'] as $col => $val) {
-              if ($col[0] != '#') {
-                $form_state['values']["organism-$i"]['phenotype']['file-columns'][$col] = $form["organism-$i"]['phenotype']['file']['#value']['columns'][$col];
-              }
-            }
-          }
-
-          if ($form_state['values']["organism-$i"]['phenotype']['check'] != '0') {
-            if (($file = file_load($form_state['values']["organism-$i"]['phenotype']['metadata'])) and $form_state['values']["organism-$i"]['phenotype']['metadata'] != 0) {
-              file_usage_add($file, 'gttn_tpps', 'gttn_tpps_project', substr($form_state['accession'], 9));
-            }
-
-            $form_state['values']["organism-$i"]['phenotype']['metadata-columns'] = array();
-
-            if (isset($form["organism-$i"]['phenotype']['metadata']['#value']['columns'])) {
-              foreach ($form["organism-$i"]['phenotype']['metadata']['#value']['columns'] as $col => $val) {
-                if ($col[0] != '#') {
-                  $form_state['values']["organism-$i"]['phenotype']['metadata-columns'][$col] = $form["organism-$i"]['phenotype']['metadata']['#value']['columns'][$col];
-                }
-              }
-            }
-          }
-        }
-      }
+    if (!empty($form['isotope'])) {
+      gttn_tpps_save_columns($form, $form_state, array('isotope', 'file'));
     }
+
+    // TODO.
   }
 }
 
