@@ -225,6 +225,87 @@ function gttn_tpps_accession_conditional(&$form, &$form_state, $value, $parents)
 }
 
 /**
+ *
+ */
+function gttn_tpps_validate_dart(&$form, &$form_state, $value, $parents) {
+  if (empty($value)) {
+    form_set_error('dart][raw', 'DART Raw Data File: field is required.');
+    return;
+  }
+  if (!($file = file_load($value))) {
+    form_set_error('dart][raw', 'DART Raw Data File: error loading file.');
+    return;
+  }
+
+  $loc = drupal_realpath($file->uri);
+  $ext = gttn_tpps_get_path_extension($loc);
+  $unzip_dir = dirname($loc) . '/tmp';
+  if (is_dir($unzip_dir) or mkdir($unzip_dir)) {
+    switch ($ext) {
+      case 'zip':
+        $zip = new \ZipArchive();
+        $zip->open($loc);
+        break;
+
+      case 'gz':
+        $zip = new \PharData($loc);
+        $zip->decompress();
+        break;
+
+      case 'tar':
+        $zip = new \PharData($loc);
+        break;
+
+      default:
+        return;
+    }
+    $zip->extractTo($unzip_dir);
+
+    $dir = $unzip_dir;
+    $files = scandir($dir);
+    if ($files and count($files) == 3 and is_dir($dir . '/' . $files[2])) {
+      $dir .= '/' . $files[2];
+      $files = scandir($dir);
+    }
+
+    if ($files) {
+      $form_state['data']['dart'] = gttn_tpps_parse_dart_dir($dir, $files);
+      foreach ($form_state['data']['dart'] as $sample => $info) {
+        if (empty($form_state['data']['samples'][$sample])) {
+          form_set_error('dart][raw', "DART Raw Data File: Sample data is missing for the DART file you provided: $sample.txt. We expected to see a sample called '$sample'.");
+        }
+      }
+    }
+  }
+  gttn_tpps_rmdir($unzip_dir);
+}
+
+/**
+ *
+ */
+function gttn_tpps_parse_dart_dir($dir, $files) {
+  $results = array();
+  foreach ($files as $file_name) {
+    if ($file_name[0] != '.') {
+      $sample = basename($file_name, '.txt');
+      $results[$sample] = array();
+      $handle = fopen($dir . '/' . $file_name, 'r');
+
+      while (!feof($handle)) {
+        $line = preg_split('/\s+/', fgets($handle));
+        if (count($line) == 3 and $line[2] === '') {
+          $results[$sample][] = array(
+            'measure' => (float)$line[0],
+            'value' => (float)$line[1],
+          );
+        }
+      }
+    }
+  }
+  return $results;
+}
+
+/**
  * 
  */
 function gttn_tpps_update_stats(&$form, &$form_state) {

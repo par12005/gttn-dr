@@ -26,6 +26,7 @@ function page_4_create_form(&$form, &$form_state) {
 
   if (!empty($types['DART Reference Data'])) {
     $dart_file_upload_location = 'public://' . variable_get('gttn_tpps_dart_files_dir', 'gttn_tpps_dart');
+    $dart_raw_upload_location = 'public://' . variable_get('gttn_tpps_dart_raw_dir', 'gttn_tpps_dart_raw');
     $column_options = array(
       0 => 'N/A',
       1 => 'Analysis lab Name',
@@ -58,7 +59,7 @@ function page_4_create_form(&$form, &$form_state) {
       '#type' => 'fieldset',
       'file' => array(
         '#type' => 'managed_file',
-        '#title' => t('DART Reference Data File: *'),
+        '#title' => t('DART Reference Metadata File: *'),
         '#upload_location' => $dart_file_upload_location,
         '#upload_validators' => array(
           'file_validate_extensions' => array('txt csv xlsx'),
@@ -80,6 +81,20 @@ function page_4_create_form(&$form, &$form_state) {
         'columns-options' => array(
           '#type' => 'hidden',
           '#value' => $column_options,
+        ),
+      ),
+      'raw' => array(
+        '#type' => 'managed_file',
+        '#title' => t('DART Reference Raw Data File: *'),
+        '#upload_location' => $dart_raw_upload_location,
+        '#upload_validators' => array(
+          'file_validate_extensions' => array('zip gz tar'),
+        ),
+        '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: zip gz tar</span>',
+        '#standard_name' => 'Raw_DART',
+        '#gttn_tpps_val' => array(
+          'standard' => TRUE,
+          'function' => 'gttn_tpps_validate_dart',
         ),
       ),
     );
