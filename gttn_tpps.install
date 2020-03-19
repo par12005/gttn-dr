@@ -479,6 +479,7 @@ function gttn_tpps_get_cvterms() {
       'organism 4 letter code' => '4 letter abbreviation of species. Usually first two letters of genus + first two letters of species, may be different if that code already exists (use next letters from species if possible).',
       'shareable' => 'Whether or not the sample is shareable between labs.',
       'type of DART' => 'The type of DART TOFMS.',
+      'DART measure' => 'A single DART measurement.',
       'calibration type' => 'The type of calibration used.',
       'isotope standard' => 'The isotope standard used to obtain an isotope reading.',
       'increment borer' => 'Whether or not an increment borer was used to obtain a sample used in an isotope reading.',
