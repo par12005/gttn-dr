@@ -9,10 +9,13 @@
  */
 function gttn_tpps_summary_create_form(&$form, $form_state) {
 
+  $form['table'] = array(
+    '#markup' => gttn_tpps_table_display($form_state),
+  );
+
   $form['Back'] = array(
     '#type' => 'submit',
     '#value' => t('Back'),
-    '#prefix' => gttn_tpps_table_display($form_state),
   );
 
   $form['Next'] = array(
