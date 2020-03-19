@@ -206,9 +206,10 @@ function gttn_tpps_chado_insert_multi(array $record_groups, array $options = arr
     }
     foreach ($records as $id => $values) {
       $unique = !empty($schema['unique keys']) ? $schema['unique keys'] : array();
+      if (!empty($values[$primary])) {
+        $unique['primary'] = array($primary);
+      }
 
-      $u_cols = array('*');
-      $u_vals = array();
       $exists = FALSE;
 
       if (!empty($values['#fk'])) {
@@ -221,6 +222,8 @@ function gttn_tpps_chado_insert_multi(array $record_groups, array $options = arr
       }
 
       foreach ($unique as $fields) {
+        $u_cols = array('*');
+        $u_vals = array();
         foreach ($fields as $field) {
           if (!array_key_exists($field, $values)) {
             if (array_key_exists('default', $schema['fields'][$field])) {
@@ -477,4 +480,31 @@ function gttn_tpps_table_columns($table) {
     $cols[] = $name;
   }
   return $cols;
+}
+
+/**
+ * Create a projectprop record for a file associated with a submission.
+ *
+ * @param array $state
+ *   The state of the associated submission.
+ * @param int $fid
+ *   The Drupal managed file identifier number.
+ */
+function gttn_tpps_add_project_file(array &$state, $fid) {
+  if (empty($fid) or !($file = file_load($fid))) {
+    return;
+  }
+  gttn_tpps_chado_insert_record('projectprop', array(
+    'project_id' => $state['ids']['project_id'],
+    'type_id' => array(
+      'cv_id' => array(
+        'name' => 'schema',
+      ),
+      'name' => 'url',
+      'is_obsolete' => 0,
+    ),
+    'value' => file_create_url($file->uri),
+    'rank' => $state['file_rank'],
+  ));
+  $state['file_rank']++;
 }
