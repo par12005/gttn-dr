@@ -34,6 +34,10 @@ function gttn_tpps_submit_all($accession) {
       gttn_tpps_submit_isotope($form_state);
     }
 
+    if (!empty($form_state['saved_values'][GTTN_PAGE_4]['genetic'])) {
+      gttn_tpps_submit_genetic($form_state);
+    }
+
     // TODO.
     throw new Exception('Submission Completed');
     $form_state['status'] = 'Approved';
@@ -343,19 +347,7 @@ function gttn_tpps_submit_trees(&$state) {
   for ($i = 1; $i <= $organism_number; $i++) {
     $tree_accession = $thirdpage['tree-accession']["species-$i"];
 
-    gttn_tpps_chado_insert_record('projectprop', array(
-      'project_id' => $state['ids']['project_id'],
-      'type_id' => array(
-        'cv_id' => array(
-          'name' => 'schema',
-        ),
-        'name' => 'url',
-        'is_obsolete' => 0,
-      ),
-      'value' => file_create_url(file_load($tree_accession['file'])->uri),
-      'rank' => $state['file_rank'],
-    ));
-    $state['file_rank']++;
+    gttn_tpps_add_project_file($state, $tree_accession['file']);
 
     $column_vals = $tree_accession['file-columns'];
     $groups = $tree_accession['file-groups'];
@@ -411,19 +403,7 @@ function gttn_tpps_submit_trees(&$state) {
     $samples = $thirdpage['samples'];
     $sample_count = 0;
     $record_group = variable_get('gttn_tpps_record_group', 10000);
-    gttn_tpps_chado_insert_record('projectprop', array(
-      'project_id' => $state['ids']['project_id'],
-      'type_id' => array(
-        'cv_id' => array(
-          'name' => 'schema',
-        ),
-        'name' => 'url',
-        'is_obsolete' => 0,
-      ),
-      'value' => file_create_url(file_load($samples['file'])->uri),
-      'rank' => $state['file_rank'],
-    ));
-    $state['file_rank']++;
+    gttn_tpps_add_project_file($state, $samples['file']);
   
     $records = array(
       'stock' => array(),
@@ -604,21 +584,10 @@ function gttn_tpps_submit_trees(&$state) {
  */
 function gttn_tpps_submit_dart(&$state) {
   $dart = $state['saved_values'][GTTN_PAGE_4]['dart'];
-  $file = file_load($dart['file']);
-
-  gttn_tpps_chado_insert_record('projectprop', array(
-    'project_id' => $state['ids']['project_id'],
-    'type_id' => array(
-      'cv_id' => array(
-        'name' => 'schema',
-      ),
-      'name' => 'url',
-      'is_obsolete' => 0,
-    ),
-    'value' => file_create_url($file->uri),
-    'rank' => $state['file_rank'],
-  ));
-  $state['file_rank']++;
+  gttn_tpps_add_project_file($state, $dart['file']);
+  $phenotype_ids = array();
+  $spectra_ids = array();
+  $record_group = variable_get('gttn_tpps_record_group', 10000);
 
   $records = array(
     'phenotype' => array(),
@@ -675,14 +644,59 @@ function gttn_tpps_submit_dart(&$state) {
     'suffix' => 0,
     'cvterms' => $cvterms,
     'record_count' => 0,
+    'phenotype_ids' => &$phenotype_ids,
+    'spectra_ids' => &$spectra_ids,
   );
 
-  gttn_tpps_file_iterator($file->fid, 'gttn_tpps_process_dart', $options);
+  gttn_tpps_file_iterator($dart['file'], 'gttn_tpps_process_dart', $options);
   if ($options['record_count'] > 0) {
-    gttn_tpps_chado_insert_multi($records);
+    $phenotype_ids += gttn_tpps_chado_insert_multi($records, array(
+      'fks' => 'phenotype',
+    ));
     $options['record_count'] = 0;
   }
-  // TODO.
+
+  gttn_tpps_add_project_file($state, $dart['raw']);
+  $measure_cvt = chado_get_cvterm(array(
+    'name' => 'DART measure',
+    'is_obsolete' => 0,
+  ))->cvterm_id;
+
+  $records = array(
+    'phenotypeprop' => array(),
+  );
+
+  $record_count = 0;
+  foreach ($state['data']['dart'] as $sample_id => $measurements) {
+    $spectra_id = $spectra_ids[$sample_id];
+    $phenotype_id = $phenotype_ids["{$state['accession']}-$sample_id-$spectra_id"];
+    $rank = 0;
+    foreach ($measurements as $info) {
+      $val = "{$info['measure']}: {$info['value']}";
+      $records['phenotypeprop'][] = array(
+        'phenotype_id' => $phenotype_id,
+        'type_id' => $measure_cvt,
+        'value' => $val,
+        'rank' => $rank++,
+      );
+      $record_count++;
+
+      if ($record_count >= $record_group) {
+        gttn_tpps_chado_insert_multi($records);
+        $records = array(
+          'phenotypeprop' => array(),
+        );
+        $record_count = 0;
+      }
+    }
+  }
+
+  if ($record_count > 0) {
+    $fks = gttn_tpps_chado_insert_multi($records);
+    print_r($fks);
+    $record_count = 0;
+    unset($records);
+  }
 }
 
 /**
@@ -690,21 +704,8 @@ function gttn_tpps_submit_dart(&$state) {
  */
 function gttn_tpps_submit_isotope(&$state) {
   $iso = $state['saved_values'][GTTN_PAGE_4]['isotope'];
-  $file = file_load($iso['file']);
 
-  gttn_tpps_chado_insert_record('projectprop', array(
-    'project_id' => $state['ids']['project_id'],
-    'type_id' => array(
-      'cv_id' => array(
-        'name' => 'schema',
-      ),
-      'name' => 'url',
-      'is_obsolete' => 0,
-    ),
-    'value' => file_create_url($file->uri),
-    'rank' => $state['file_rank'],
-  ));
-  $state['file_rank']++;
+  gttn_tpps_add_project_file($state, $iso['file']);
 
   $cvterms = array(
     'isotope' => tripal_get_cvterm(array(
@@ -760,11 +761,18 @@ function gttn_tpps_submit_isotope(&$state) {
     'cvterms' => $cvterms,
   );
 
-  gttn_tpps_file_iterator($file->fid, 'gttn_tpps_process_isotope', $options);
+  gttn_tpps_file_iterator($iso['file'], 'gttn_tpps_process_isotope', $options);
   if ($options['record_count'] > 0) {
     gttn_tpps_chado_insert_multi($records);
     $options['record_count'] = 0;
   }
+}
+
+/**
+ *
+ */
+function gttn_tpps_submit_genetic(&$state) {
+
 }
 
 /**
@@ -1090,7 +1098,8 @@ function gttn_tpps_process_dart($row, array &$options) {
 
   $spectra_id = $row[$spectra_col];
   $sample_id = $row[$sample_col];
-  $dart_name = "$accession-$sample_id-DART-$suffix";
+  $dart_name = "$accession-$sample_id-$spectra_id";
+  $options['spectra_ids'][$sample_id] = $spectra_id;
 
   if (!array_key_exists($sample_id, $samples)) {
     throw new Exception("Error: Sample ID $sample_id not found in sample data.");
@@ -1158,7 +1167,9 @@ function gttn_tpps_process_dart($row, array &$options) {
 
   $record_count++;
   if ($record_count >= $record_group) {
-    gttn_tpps_chado_insert_multi($records);
+    $options['phenotype_ids'] += gttn_tpps_chado_insert_multi($records, array(
+      'fks' => 'phenotype',
+    ));
     $records = array(
       'phenotype' => array(),
       'phenotypeprop' => array(),
