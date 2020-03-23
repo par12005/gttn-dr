@@ -450,6 +450,7 @@ function gttn_tpps_get_cvterms() {
       'Device Parameters',
       'Laboratory Vendor Name',
       'Isotope',
+      'Genetic Marker',
     ),
     'sio' => array(
       'latitude',
@@ -484,6 +485,11 @@ function gttn_tpps_get_cvterms() {
       'isotope standard' => 'The isotope standard used to obtain an isotope reading.',
       'increment borer' => 'Whether or not an increment borer was used to obtain a sample used in an isotope reading.',
       'isotope type' => 'The type of isotope being collected - Whole Wood or Cellulose.',
+      'SNPs source' => 'Source of a SNP (GBS, Assay, Reference Genome, Transcriptome).',
+      'GBS type' => 'Genotyping By Sequencing type (ddRAD, RAD, NextRad, etc.).',
+      'SSR Machine' => 'The type of SSR machine used.',
+      'DNA storage location' => 'The location where the DNA used for analysis is being stored.',
+      'Assay type' => 'The type of genetic assay.',
     ),
   );
 }
