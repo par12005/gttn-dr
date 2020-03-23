@@ -283,10 +283,10 @@ function page_4_create_form(&$form, &$form_state) {
             'RAD' => 'RAD',
             'NextRad' => 'NextRad',
             'Other' => 'Other',
-            '#ajax' => array(
-              'callback' => 'gttn_tpps_genetic_callback',
-              'wrapper' => 'gttn-tpps-genetic',
-            ),
+          ),
+          '#ajax' => array(
+            'callback' => 'gttn_tpps_genetic_callback',
+            'wrapper' => 'gttn-tpps-genetic',
           ),
         );
         
@@ -299,8 +299,13 @@ function page_4_create_form(&$form, &$form_state) {
         }
 
         $form['genetic']['gbs_reference'] = array(
-          '#type' => 'textfield',
+          '#type' => 'managed_file',
           '#title' => t('Intermediate Reference: *'),
+          '#upload_location' => $genotype_upload_location,
+          '#upload_validators' => array(
+            'file_validate_extensions' => array(),
+          ),
+          '#standard_name' => 'GBS_Reference',
         );
 
         $form['genetic']['gbs_align'] = array(
