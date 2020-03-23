@@ -12,7 +12,6 @@ function gttn_tpps_submit_all($accession) {
   $form_state['status'] = 'Submission Job Running';
   gttn_tpps_update_submission($form_state, array('status' => 'Submission Job Running'));
   gttn_tpps_submission_clear_db($accession);
-  $project_id = $form_state['ids']['project_id'] ?? NULL;
   $transaction = db_transaction();
 
   try {
@@ -772,7 +771,59 @@ function gttn_tpps_submit_isotope(&$state) {
  *
  */
 function gttn_tpps_submit_genetic(&$state) {
+  $project_id = $state['ids']['project_id'];
+  $genetic = $state['saved_values'][GTTN_PAGE_4]['genetic'];
+  $markers = $genetic['marker'];
+  $insert_markers = array();
 
+  if (!empty($markers['SNPs'])) {
+    $insert_markers[] = 'SNP';
+    $source = $genetic['snps_source'];
+
+    gttn_tpps_insert_prop('project', $project_id, 'SNPs source', $source);
+
+    if ($source === 'GBS') {
+      $type = $genetic['gbs_type'];
+      if ($type === 'Other') {
+        $type = $genetic['other_gbs'];
+      }
+
+      gttn_tpps_insert_prop('project', $project_id, 'GBS type', $type);
+
+      gttn_tpps_add_project_file($state, $genetic['gbs_reference']);
+
+      gttn_tpps_add_project_file($state, $genetic['gbs_align']);
+
+      gttn_tpps_add_project_file($state, $genetic['vcf']);
+    }
+
+    if ($source === 'Assay') {
+      gttn_tpps_insert_prop('project', $project_id, 'Assay type', $genetic['assay_type']);
+
+      gttn_tpps_add_project_file($state, $genetic['assay_design_file']);
+
+      gttn_tpps_add_project_file($state, $genetic['assay_genotype_table']);
+    }
+  }
+
+  if (!empty($markers['SSRs/cpSSRs'])) {
+    $insert_markers[] = 'SSR';
+    gttn_tpps_insert_prop('project', $project_id, 'SSR Machine', $genetic['ssr_machine']);
+  }
+
+  if (!empty($markers['Other'])) {
+    $insert_markers[] = $genetic['other-marker'];
+  }
+
+  gttn_tpps_insert_prop('project', $project_id, 'Genetic Marker', $insert_markers, array(
+    'cv' => 'ncit',
+  ));
+
+  gttn_tpps_insert_prop('project', $project_id, 'quality_value', $genetic['quality'], array(
+    'cv' => 'sequence',
+  ));
+
+  gttn_tpps_insert_prop('project', $project_id, 'DNA storage location', $genetic['location']);
 }
 
 /**

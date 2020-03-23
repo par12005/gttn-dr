@@ -300,7 +300,7 @@ function page_4_create_form(&$form, &$form_state) {
 
         $form['genetic']['gbs_reference'] = array(
           '#type' => 'managed_file',
-          '#title' => t('Intermediate Reference: *'),
+          '#title' => t('Intermediate Reference File: *'),
           '#upload_location' => $genotype_upload_location,
           '#upload_validators' => array(
             'file_validate_extensions' => array(),
@@ -310,7 +310,7 @@ function page_4_create_form(&$form, &$form_state) {
 
         $form['genetic']['gbs_align'] = array(
           '#type' => 'managed_file',
-          '#title' => t('GBS Alignment file: *'),
+          '#title' => t('GBS Alignment File: *'),
           '#upload_location' => $genotype_upload_location,
           '#upload_validators' => array(
             'file_validate_extensions' => array('txt csv xlsx'),
