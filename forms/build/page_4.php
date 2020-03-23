@@ -324,9 +324,9 @@ function page_4_create_form(&$form, &$form_state) {
           '#title' => t('VCF File: *'),
           '#upload_location' => $genotype_upload_location,
           '#upload_validators' => array(
-            'file_validate_extensions' => array('txt csv xlsx'),
+            'file_validate_extensions' => array('vcf'),
           ),
-          '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: txt csv xlsx</span>',
+          '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: vcf</span>',
           '#standard_name' => 'VCF',
         );
       }
