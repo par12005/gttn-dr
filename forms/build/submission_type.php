@@ -44,6 +44,12 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
       '#options' => $options,
     );
   }
+  else {
+    $form['project']['props']['organization'] = array(
+      '#type' => 'hidden',
+      '#value' => current($user->organizations),
+    );
+  }
 
   $form['project']['props']['analysis_date'] = array(
     '#type' => 'date',
