@@ -52,6 +52,7 @@ function gttn_tpps_standard_errors(&$form, &$form_state, $value, $parents) {
     case 'select':
     case 'textarea':
     case 'textfield':
+    case 'radios':
       if (empty($value)) {
         $name = gttn_tpps_get_field_name($form_element['#title']);
         form_set_error(implode('][', $parents), "$name: field is required.");

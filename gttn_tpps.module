@@ -659,6 +659,7 @@ function gttn_tpps_leaves(&$elements, $vals, $saved_vals) {
         'checkbox',
         'select',
         'managed_file',
+        'radios',
       );
       // If element is a type that should pull from 'saved_values' and
       // doesn't already have a default value, try to load the old value.
