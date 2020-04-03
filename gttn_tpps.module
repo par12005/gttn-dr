@@ -931,6 +931,8 @@ function gttn_tpps_main_validate(&$form, &$form_state) {
   else {
     $form_state['values']['#cleared'] = FALSE;
   }
+  drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
+  drupal_add_css(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_CSS_PATH);
 }
 
 /**
