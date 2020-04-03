@@ -250,9 +250,6 @@ function page_3_create_form(&$form, &$form_state) {
       'Sample Source' => array(
         'source' => array(8),
       ),
-      'Tissue Type' => array(
-        'tissue' => array(5),
-      ),
       'Sample Dimensions' => array(
         'dimension' => array(7),
       ),
@@ -270,8 +267,6 @@ function page_3_create_form(&$form, &$form_state) {
       '#gttn_tpps_val' => array(
         'standard' => TRUE,
         'function' => 'gttn_tpps_managed_file_validate',
-        // TODO: validate date, collector, method, etc. when those fields are empty.
-        //'additional_function' => 'gttn_tpps_validate_accession',
       ),
       '#standard_name' => 'Samples',
       'empty' => array(
@@ -294,8 +289,7 @@ function page_3_create_form(&$form, &$form_state) {
     if (empty($date_cols)) {
       $form['samples']['date'] = array(
         '#type' => 'date',
-        '#title' => t('Sample Collection Date'),
-        '#gttn_tpps_val' => array(),
+        '#title' => t('Sample Collection Date: *'),
       );
     }
 
@@ -306,9 +300,26 @@ function page_3_create_form(&$form, &$form_state) {
     if (empty($collector_cols)) {
       $form['samples']['collector'] = array(
         '#type' => 'textfield',
-        '#title' => t('Sample Collector'),
-        '#gttn_tpps_val' => array(),
+        '#title' => t('Sample Collector: *'),
         '#description' => t('The person who collected the samples.'),
+      );
+    }
+
+    $tissue_cols = gttn_tpps_get_file_columns($form_state, array(
+      'samples',
+      'file',
+    ), 5);
+    if (empty($tissue_cols)) {
+      $form['samples']['tissue'] = array(
+        '#type' => 'select',
+        '#title' => t('Tissue Type: *'),
+        '#options' => array(
+          '- Select -',
+          'Wood' => 'Wood',
+          'Bark' => 'Bark',
+          'Leaf' => 'Leaf',
+          'DNA' => 'DNA',
+        ),
       );
     }
 
@@ -319,7 +330,7 @@ function page_3_create_form(&$form, &$form_state) {
     if (empty($method_cols)) {
       $form['samples']['method'] = array(
         '#type' => 'select',
-        '#title' => t('Sampling Method:'),
+        '#title' => t('Sampling Method: *'),
         '#options' => array(
           '- Select -',
           'Increment Core' => 'Increment Core',
@@ -327,7 +338,6 @@ function page_3_create_form(&$form, &$form_state) {
           'Disc' => 'Disc',
           'Cube' => 'Cube',
         ),
-        '#gttn_tpps_val' => array(),
       );
     }
 

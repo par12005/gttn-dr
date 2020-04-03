@@ -17,7 +17,7 @@ function gttn_tpps_validate(&$form, &$form_state, $values = NULL, array $parents
   if (empty($values)) {
     $values = $form_state['values'];
   }
-  
+
   foreach ($values as $key => $value) {
     $current_parents = $parents;
     array_push($current_parents, $key);
@@ -402,24 +402,16 @@ function gttn_tpps_update_data(&$form, &$form_state) {
         );
 
         $content = gttn_tpps_parse_file($fid, 0, $form_state['values']['samples']['file-no-header']);
-        $id_col = $groups['Sample Id'][1];
+        $id_col = $groups['Sample Id'][1] ?? $groups['Sample Id'][2];
         $source_col = $groups['Sample Source'][8];
-        $tissue_col = $groups['Tissue Type'][5];
         $dim_col = $groups['Sample Dimensions'][7];
-        $xylarium = array_search(2, $columns);
-        $xylarium = ($xylarium === FALSE) ? NULL : $xylarium;
-        $date = $form_state['values']['samples']['date'] ?? NULL;
-        if (!isset($date)) {
-          $date_col = array_search(3, $columns);
-        }
-        $collector = $form_state['values']['samples']['collector'] ?? NULL;
-        if (!isset($collector)) {
-          $collector_col = array_search(4, $columns);
-        }
-        $method = $form_state['values']['samples']['method'] ?? NULL;
-        if (!isset($method)) {
-          $method_col = array_search(6, $columns);
-        }
+        $xylarium = $content[$j][($groups['Sample Id'][2] ?? '')] ?? NULL;
+
+        $date = $form_state['values']['samples']['date'] ?? ($content[$j][array_search(3, $columns)] ?? NULL);
+        $collector = $form_state['values']['samples']['collector'] ?? ($content[$j][array_search(4, $columns)] ?? NULL);
+        $tissue = $form_state['values']['samples']['tissue'] ?? ($content[$j][array_search(5, $columns)] ?? NULL);
+        $method = $form_state['values']['samples']['method'] ?? ($content[$j][array_search(6, $columns)] ?? NULL);
+
         $legal = $form_state['values']['samples']['legal'] ? TRUE : FALSE;
         $share = $form_state['values']['samples']['sharable'] ? TRUE : FALSE;
 
@@ -428,11 +420,11 @@ function gttn_tpps_update_data(&$form, &$form_state) {
             'id' => $content[$j][$id_col],
             'xylarium' => $xylarium,
             'source' => $content[$j][$source_col],
-            'tissue' => $content[$j][$tissue_col],
+            'tissue' => $tissue ?? NULL,
             'dimension' => $content[$j][$dim_col],
-            'date' => $date ?? ($content[$i][$date_col] ?? NULL),
-            'collector' => $collector ?? ($content[$i][$collector_col] ?? NULL),
-            'method' => $method ?? ($content[$i][$method_col] ?? NULL),
+            'date' => $date ?? NULL,
+            'collector' => $collector ?? NULL,
+            'method' => $method ?? NULL,
             'legal' => $legal ?? NULL,
             'share' => $share ?? NULL,
           );
