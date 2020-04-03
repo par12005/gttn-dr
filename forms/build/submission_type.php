@@ -10,6 +10,7 @@
 function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
 
   global $user;
+  $user = gttn_profile_load_user($user->uid);
 
   $form['project'] = array(
     '#type' => 'fieldset',
@@ -30,6 +31,19 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
   $form['project']['props'] = array(
     '#type' => 'fieldset',
   );
+
+  if (count($user->organizations) > 1) {
+    $options = array();
+    $orgs = gttn_profile_organization_load($user->organizations);
+    foreach ($orgs as $org) {
+      $options[$org->organization_id] = $org->name;
+    }
+    $form['project']['props']['organization'] = array(
+      '#type' => 'radios',
+      '#title' => t('Which of your organization are you submitting for?*'),
+      '#options' => $options,
+    );
+  }
 
   $form['project']['props']['analysis_date'] = array(
     '#type' => 'date',
