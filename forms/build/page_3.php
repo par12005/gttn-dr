@@ -231,6 +231,21 @@ function page_3_create_form(&$form, &$form_state) {
       '#suffix' => '</div>',
     );
 
+    $form['samples']['type'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('These samples are physical samples'),
+      '#default_value' => $values['samples']['type'] ?? 1,
+      '#ajax' => array(
+        'callback' => 'gttn_tpps_samples_callback',
+        'wrapper' => 'gttn_tpps_samples'
+      ),
+    );
+
+    $type = gttn_tpps_get_ajax_value($form_state, array(
+      'samples',
+      'type',
+    ), 1);
+
     $column_options = array(
       0 => 'N/A',
       1 => 'Internal Sample ID',
@@ -241,7 +256,14 @@ function page_3_create_form(&$form, &$form_state) {
       6 => 'Sampling Method',
       7 => 'Dimensions',
       8 => 'Sample Source',
+      10 => 'Remaining Volume of Sample',
+      11 => 'Sample has been analyzed',
     );
+
+    if (!$type) {
+      $column_options[9] = 'DNA Storage Location';
+    }
+
     $required_groups = array(
       'Sample Id' => array(
         'internal' => array(1),
@@ -252,6 +274,9 @@ function page_3_create_form(&$form, &$form_state) {
       ),
       'Sample Dimensions' => array(
         'dimension' => array(7),
+      ),
+      'Remaining Volume of Sample' => array(
+        'volume' => array(10),
       ),
     );
 
@@ -339,6 +364,30 @@ function page_3_create_form(&$form, &$form_state) {
           'Cube' => 'Cube',
         ),
       );
+    }
+
+    $analyzed_cols = gttn_tpps_get_file_columns($form_state, array(
+      'samples',
+      'file',
+    ), 11);
+    if (empty($analyzed_cols)) {
+      $form['samples']['analyzed'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('These samples have been analyzed'),
+      );
+    }
+
+    if (!$type) {
+      $storage_cols = gttn_tpps_get_file_columns($form_state, array(
+        'samples',
+        'file',
+      ), 9);
+      if (empty($storage_cols)) {
+        $form['samples']['storage'] = array(
+          '#type' => 'textfield',
+          '#title' => t('DNA Storage location: *'),
+        );
+      }
     }
 
     $form['samples']['legal'] = array(

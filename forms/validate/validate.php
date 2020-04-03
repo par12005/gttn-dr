@@ -392,6 +392,7 @@ function gttn_tpps_update_data(&$form, &$form_state) {
 
       $fid = $form_state['values']['samples']['file'] ?? NULL;
       if (!empty($fid) and file_load($fid)) {
+        $samples_type = $form_state['values']['samples']['type'];
         $columns = $form_state['values']['samples']['file-columns'];
         $groups = $form_state['values']['samples']['file-groups'];
         $form_state['file_info'][GTTN_PAGE_3][] = array(
@@ -405,12 +406,35 @@ function gttn_tpps_update_data(&$form, &$form_state) {
         $id_col = $groups['Sample Id'][1] ?? $groups['Sample Id'][2];
         $source_col = $groups['Sample Source'][8];
         $dim_col = $groups['Sample Dimensions'][7];
-        $xylarium = $content[$j][($groups['Sample Id'][2] ?? '')] ?? NULL;
+        $xylarium_col = $groups['Sample Id'][2] ?? FALSE;
+        $remaining_col = $groups['Remaining Volume of Sample'][10];
 
-        $date = $form_state['values']['samples']['date'] ?? ($content[$j][array_search(3, $columns)] ?? NULL);
-        $collector = $form_state['values']['samples']['collector'] ?? ($content[$j][array_search(4, $columns)] ?? NULL);
-        $tissue = $form_state['values']['samples']['tissue'] ?? ($content[$j][array_search(5, $columns)] ?? NULL);
-        $method = $form_state['values']['samples']['method'] ?? ($content[$j][array_search(6, $columns)] ?? NULL);
+        $date = $form_state['values']['samples']['date'] ?? NULL;
+        if (empty($date)) {
+          $date_col = array_search(3, $columns);
+        }
+        $collector = $form_state['values']['samples']['collector'] ?? NULL;
+        if (empty($collector)) {
+          $collector_col = array_search(4, $columns);
+        }
+        $tissue = $form_state['values']['samples']['tissue'] ?? NULL;
+        if (empty($tissue)) {
+          $tissue_col = array_search(5, $columns);
+        }
+        $method = $form_state['values']['samples']['method'] ?? NULL;
+        if (empty($method)) {
+          $method_col = array_search(6, $columns);
+        }
+        if (!$samples_type) {
+          $storage = $form_state['values']['samples']['storage'] ?? NULL;
+          if (empty($storage)) {
+            $storage_col = array_search(9, $columns);
+          }
+        }
+        $analyzed = $form_state['values']['samples']['analyzed'] ?? NULL;
+        if (empty($analyzed)) {
+          $analyzed_col = array_search(11, $columns);
+        }
 
         $legal = $form_state['values']['samples']['legal'] ? TRUE : FALSE;
         $share = $form_state['values']['samples']['sharable'] ? TRUE : FALSE;
@@ -418,16 +442,22 @@ function gttn_tpps_update_data(&$form, &$form_state) {
         for ($j = 0; $j < count($content) - 1; $j++) {
           $form_state['data']['samples'][$content[$j][$id_col]] = array(
             'id' => $content[$j][$id_col],
-            'xylarium' => $xylarium,
+            'xylarium' => $xylarium_col ? $content[$j][$xylarium_col] : NULL,
             'source' => $content[$j][$source_col],
-            'tissue' => $tissue ?? NULL,
+            'tissue' => $tissue ?? ($content[$j][$tissue_col] ?? NULL),
             'dimension' => $content[$j][$dim_col],
-            'date' => $date ?? NULL,
-            'collector' => $collector ?? NULL,
-            'method' => $method ?? NULL,
+            'date' => $date ?? ($content[$j][$date_col] ?? NULL),
+            'collector' => $collector ?? ($content[$j][$collector_col] ?? NULL),
+            'method' => $method ?? ($content[$j][$method_col] ?? NULL),
+            'remaining' => $content[$j][$remaining_col],
+            'type' => $samples_type ? 'Physical' : 'DNA',
+            'analyzed' => $analyzed ?? ($content[$j][$analyzed_col] ?? NULL),
             'legal' => $legal ?? NULL,
             'share' => $share ?? NULL,
           );
+          if (!$samples_type) {
+            $form_state['data']['samples'][$content[$j][$id_col]]['storage'] = $storage ?? ($content[$j][$storage_col] ?? NULL);
+          }
         }
       }
       // TODO
