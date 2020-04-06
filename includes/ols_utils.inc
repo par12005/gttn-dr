@@ -8,10 +8,15 @@
  * 
  */
 function gttn_tpps_ols_search($query, $ontology = NULL) {
+  $obo_id = NULL;
+  if (count(explode('|', $query)) > 1) {
+    $parts = explode('|', $query);
+    $obo_id = $parts[1];
+  }
   $args = array();
-  $args[] = "q=" . urlencode($query);
+  $args[] = "q=" . urlencode((empty($obo_id) ? $query : $obo_id));
   $args[] = "exact=true";
-  $args[] = "queryFields=label";
+  $args[] = empty($obo_id) ? "queryFields=label" : "queryFields=obo_id";
   if (!empty($ontology)) {
     $args[] = "ontology=$ontology";
   }

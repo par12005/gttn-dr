@@ -446,7 +446,7 @@ function gttn_tpps_get_cvterms() {
       'Dimension',
       'Collection Date',
       'Biospecimen Collection Method',
-      'Volume',
+      'Volume|NCIT:C25335',
       'Legal',
       'Device Parameters',
       'Laboratory Vendor Name',
@@ -507,8 +507,13 @@ function gttn_tpps_install_cvterms() {
   $cvterms = gttn_tpps_get_cvterms();
   foreach ($cvterms as $ontology => $terms) {
     foreach ($terms as $key => $term) {
+      $name = $term;
+      if ($ontology != 'local' and count(explode('|', $term)) > 1) {
+        $parts = explode('|', $term);
+        $name = $parts[0];
+      }
       $query = array(
-        'name' => ($ontology == 'local') ? $key : $term,
+        'name' => ($ontology == 'local') ? $key : $name,
         'cv_id' => array(
           'name' => $ontology,
         ),
