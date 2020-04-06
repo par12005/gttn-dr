@@ -471,6 +471,29 @@ function gttn_tpps_submit_trees(&$state) {
       'is_obsolete' => 0,
     ))->cvterm_id;
 
+    $remaining_cvt = tripal_get_cvterm(array(
+      'name' => 'Volume',
+      'cv_id' => array(
+        'name' => 'ncit',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
+    $type_cvt = tripal_get_cvterm(array(
+      'name' => 'sample type',
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
+    $analyzed_cvt = tripal_get_cvterm(array(
+      'name' => 'sample analyzed',
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
+    $storage_cvt = tripal_get_cvterm(array(
+      'name' => 'storage location',
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
     foreach ($state['data']['samples'] as $sample) {
       $sample_id = $sample['id'];
       $records['stock'][$sample_id] = array(
@@ -541,6 +564,40 @@ function gttn_tpps_submit_trees(&$state) {
           'stock' => $sample_id,
         ),
       );
+
+      $records['stockprop']["$sample_id-remaining"] = array(
+        'type_id' => $remaining_cvt,
+        'value' => $sample['remaining'],
+        '#fk' => array(
+          'stock' => $sample_id
+        ),
+      );
+
+      $records['stockprop']["$sample_id-type"] = array(
+        'type_id' => $type_cvt,
+        'value' => $sample['type'],
+        '#fk' => array(
+          'stock' => $sample_id
+        ),
+      );
+
+      $records['stockprop']["$sample_id-analyzed"] = array(
+        'type_id' => $analyzed_cvt,
+        'value' => $sample['analyzed'],
+        '#fk' => array(
+          'stock' => $sample_id
+        ),
+      );
+
+      if (isset($sample['storage'])) {
+        $records['stockprop']["$sample_id-storage"] = array(
+          'type_id' => $storage_cvt,
+          'value' => $sample['storage'],
+          '#fk' => array(
+            'stock' => $sample_id
+          ),
+        );
+      }
 
       $records['stock_relationship'][$sample_id] = array(
         'type_id' => $cvterms['has_part'],
