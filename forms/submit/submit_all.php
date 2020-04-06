@@ -888,10 +888,6 @@ function gttn_tpps_submit_genetic(&$state) {
 
   $multi_insert_options = array(
     'fk_overrides' => $overrides,
-    'entities' => array(
-      'label' => 'Genotype',
-      'table' => 'genotype',
-    ),
   );
 
   $options = array(
@@ -948,7 +944,7 @@ function gttn_tpps_submit_genetic(&$state) {
     gttn_tpps_insert_prop('project', $project_id, 'SSR Machine', $genetic['ssr_machine']);
 
     $ssr_fid = $genetic['ssr_spreadsheet'];
-    gttn_tpps_add_project_file($form_state, $ssr_fid);
+    gttn_tpps_add_project_file($state, $ssr_fid);
 
     $options['type'] = 'ssrs';
     $options['headers'] = gttn_tpps_ssrs_headers($ssr_fid, $genetic['ploidy']);
