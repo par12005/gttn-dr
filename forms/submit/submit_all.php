@@ -495,9 +495,16 @@ function gttn_tpps_submit_trees(&$state) {
         ),
       );
 
+      $date = $sample['date'];
+      if (is_array($date)) {
+        $date = date("m/d/Y", strtotime($date['day'] . '-' . $date['month'] . '-' . $date['year']));
+      }
+      elseif (is_int($date)) {
+        $date = gttn_tpps_xlsx_translate_date($date);
+      }
       $records['stockprop']["$sample_id-date"] = array(
         'type_id' => $date_cvt,
-        'value' => $sample['date'],
+        'value' => $date,
         '#fk' => array(
           'stock' => $sample_id,
         ),
