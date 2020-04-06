@@ -298,6 +298,11 @@ function page_4_create_form(&$form, &$form_state) {
           );
         }
 
+        $form['genetic']['gbs_machine'] = array(
+          '#type' => 'textfield',
+          '#title' => t('GBS Sequencer Machine: *'),
+        );
+
         $options = array(
           'key' => 'filename',
           'recurse' => FALSE,
@@ -384,9 +389,9 @@ function page_4_create_form(&$form, &$form_state) {
       }
 
       if ($snps_source_val == 'Assay') {
-        $form['genetic']['assay_type'] = array(
+        $form['genetic']['assay_source'] = array(
           '#type' => 'select',
-          '#title' => t('Assay Type: *'),
+          '#title' => t('Assay Source: *'),
           '#options' => array(
             0 => '- Select -',
             'MassArray' => 'MassArray',

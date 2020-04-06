@@ -491,9 +491,10 @@ function gttn_tpps_get_cvterms() {
       'isotope type' => 'The type of isotope being collected - Whole Wood or Cellulose.',
       'SNPs source' => 'Source of a SNP (GBS, Assay, Reference Genome, Transcriptome).',
       'GBS type' => 'Genotyping By Sequencing type (ddRAD, RAD, NextRad, etc.).',
+      'GBS Machine' => 'The type of GBS sequencing machine used.',
       'SSR Machine' => 'The type of SSR machine used.',
       'DNA storage location' => 'The location where the DNA used for analysis is being stored.',
-      'Assay type' => 'The type of genetic assay.',
+      'Assay source' => 'The source of genetic assay - MassArray, Illumina, or Thermo.',
     ),
   );
 }

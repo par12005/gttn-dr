@@ -854,7 +854,14 @@ function gttn_tpps_submit_genetic(&$state) {
 
       gttn_tpps_insert_prop('project', $project_id, 'GBS type', $type);
 
-      gttn_tpps_add_project_file($state, $genetic['gbs_reference']);
+      gttn_tpps_insert_prop('project', $project_id, 'GBS Machine', $genetic['gbs_machine']);
+
+      if (isset($genetic['gbs_reference']) and $genetic['gbs_reference'] != 'manual') {
+        gttn_tpps_insert_prop('project', $project_id, 'GBS Reference', $genetic['gbs_reference']);
+      }
+      else {
+        gttn_tpps_add_project_file($state, $genetic['manual_reference']);
+      }
 
       gttn_tpps_add_project_file($state, $genetic['gbs_align']);
 
@@ -862,7 +869,7 @@ function gttn_tpps_submit_genetic(&$state) {
     }
 
     if ($source === 'Assay') {
-      gttn_tpps_insert_prop('project', $project_id, 'Assay type', $genetic['assay_type']);
+      gttn_tpps_insert_prop('project', $project_id, 'Assay source', $genetic['assay_source']);
 
       gttn_tpps_add_project_file($state, $genetic['assay_design_file']);
 
