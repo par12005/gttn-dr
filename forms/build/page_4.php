@@ -298,7 +298,51 @@ function page_4_create_form(&$form, &$form_state) {
           );
         }
 
-        $form['genetic']['gbs_reference'] = array(
+        $options = array(
+          'key' => 'filename',
+          'recurse' => FALSE,
+        );
+
+        $genome_dir = variable_get('gttn_tpps_local_genome_dir', NULL);
+        $ref_genome_arr = array();
+        $ref_genome_arr[0] = '- Select -';
+
+        if ($genome_dir) {
+          $results = file_scan_directory($genome_dir, '/^([A-Z][a-z]{3})$/', $options);
+          $code_cvterm = chado_get_cvterm(array(
+            'name' => 'organism 4 letter code',
+            'is_obsolete' => 0,
+          ))->cvterm_id;
+          foreach ($results as $key => $value) {
+            $org_id_query = chado_select_record('organismprop', array('organism_id'), array(
+              'value' => $key,
+              'type_id' => $code_cvterm,
+            ));
+            if (!empty($org_id_query)) {
+              $org_query = chado_select_record('organism', array('genus', 'species'), array(
+                'organism_id' => current($org_id_query)->organism_id,
+              ));
+              $result = current($org_query);
+
+              $versions = file_scan_directory("$genome_dir/$key", '/^v([0-9]|.)+$/', $options);
+              foreach ($versions as $item) {
+                $opt_string = $result->genus . " " . $result->species . " " . $item->filename;
+                $ref_genome_arr[$opt_string] = $opt_string;
+              }
+            }
+          }
+        }
+
+        if (count($ref_genome_arr) > 1) {
+          $ref_genome_arr['manual'] = t('I would like to upload my own reference file.');
+          $form['genetic']['gbs_reference'] = array(
+            '#type' => 'select',
+            '#title' => t('GBS Intermediate Reference File: *'),
+            '#options' => $ref_genome_arr,
+          );
+        }
+
+        $form['genetic']['manual_reference'] = array(
           '#type' => 'managed_file',
           '#title' => t('Intermediate Reference File: *'),
           '#upload_location' => $genotype_upload_location,
@@ -308,14 +352,22 @@ function page_4_create_form(&$form, &$form_state) {
           '#standard_name' => 'GBS_Reference',
         );
 
+        if (count($ref_genome_arr) > 1) {
+          $form['genetic']['manual_reference']['#states'] = array(
+            'visible' => array(
+              ':input[name="genetic[gbs_reference]"]' => array('value' => 'manual'),
+            ),
+          );
+        }
+
         $form['genetic']['gbs_align'] = array(
           '#type' => 'managed_file',
           '#title' => t('GBS Alignment File: *'),
           '#upload_location' => $genotype_upload_location,
           '#upload_validators' => array(
-            'file_validate_extensions' => array('txt csv xlsx'),
+            'file_validate_extensions' => array('sam bam'),
           ),
-          '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: txt csv xlsx</span>',
+          '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: sam bam</span>',
           '#standard_name' => 'GBS_Alignment',
         );
 
