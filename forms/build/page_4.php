@@ -429,6 +429,54 @@ function page_4_create_form(&$form, &$form_state) {
         '#type' => 'textfield',
         '#title' => t('SSR Machine: *'),
       );
+
+      $form['genetic']['ploidy'] = array(
+        '#type' => 'select',
+        '#title' => t('Ploidy'),
+        '#options' => array(
+          0 => '- Select -',
+          'Haploid' => 'Haploid',
+          'Diploid' => 'Diploid',
+          'Polyploid' => 'Polyploid',
+        ),
+        '#ajax' => array(
+          'callback' => 'gttn_tpps_genetic_callback',
+          'wrapper' => 'gttn-tpps-genetic',
+        ),
+      );
+
+      $ploidy = gttn_tpps_get_ajax_value($form_state, array(
+        'genetic',
+        'ploidy',
+      ));
+
+      $form['genetic']['ssr_spreadsheet'] = array(
+        '#type' => 'managed_file',
+        '#title' => t('SSRs/cpSSRs Spreadsheet: *'),
+        '#upload_location' => "$genotype_upload_location",
+        '#upload_validators' => array(
+          'file_validate_extensions' => array('csv tsv xlsx'),
+        ),
+        '#description' => t('Please upload a spreadsheet containing your SSRs/cpSSRs data. The format of this file is very important! GTTN-TPPS will parse your file based on the ploidy you have selected above. For any ploidy, GTTN-TPPS will assume that the first column of your file is the column that holds the Sample Identifier that matches your sample file.'),
+        '#tree' => TRUE,
+      );
+
+      switch ($ploidy) {
+        case 'Haploid':
+          $form['genetic']['ssr_spreadsheet']['#description'] .= ' For haploid, GTTN-TPPS assumes that each remaining column in the spreadsheet is a marker.';
+          break;
+
+        case 'Diploid':
+          $form['genetic']['ssr_spreadsheet']['#description'] .= ' For diploid, GTTN-TPPS will assume that pairs of columns together are describing an individual marker, so the second and third columns would be the first marker, the fourth and fifth columns would be the second marker, etc.';
+          break;
+
+        case 'Polyploid':
+          $form['genetic']['ssr_spreadsheet']['#description'] .= ' For polyploid, GTTN-TPPS will read columns until it arrives at a non-empty column with a different name from the last.';
+          break;
+
+        default:
+          break;
+      }
     }
 
     $form['genetic']['quality'] = array(
