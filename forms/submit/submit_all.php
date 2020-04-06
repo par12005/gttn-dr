@@ -839,6 +839,72 @@ function gttn_tpps_submit_genetic(&$state) {
   $genetic = $state['saved_values'][GTTN_PAGE_4]['genetic'];
   $markers = $genetic['marker'];
   $insert_markers = array();
+  $genotype_count = 0;
+  $genotype_total = 0;
+  $seq_var_cvterm = chado_get_cvterm(array(
+    'name' => 'sequence_variant',
+    'cv_id' => array(
+      'name' => 'sequence',
+    ),
+    'is_obsolete' => 0,
+  ))->cvterm_id;
+
+  foreach ($state['data']['organism'] as $id => $info) {
+    // Get species codes.
+    $species_codes[$id] = current(chado_select_record('organismprop', array('value'), array(
+      'type_id' => chado_get_cvterm(array(
+        'name' => 'organism 4 letter code',
+        'is_obsolete' => 0,
+      ))->cvterm_id,
+      'organism_id' => $id,
+    ), array(
+      'limit' => 1,
+    )))->value;
+  }
+
+  $overrides = array(
+    'genotype_call' => array(
+      'variant' => array(
+        'table' => 'feature',
+        'columns' => array(
+          'variant_id' => 'feature_id',
+        ),
+      ),
+      'marker' => array(
+        'table' => 'feature',
+        'columns' => array(
+          'marker_id' => 'feature_id',
+        ),
+      ),
+    ),
+  );
+
+  $records = array(
+    'feature' => array(),
+    'genotype' => array(),
+    'genotype_call' => array(),
+    'stock_genotype' => array(),
+  );
+
+  $multi_insert_options = array(
+    'fk_overrides' => $overrides,
+    'entities' => array(
+      'label' => 'Genotype',
+      'table' => 'genotype',
+    ),
+  );
+
+  $options = array(
+    'records' => $records,
+    'tree_info' => $state['data']['trees'],
+    'species_codes' => $species_codes,
+    'genotype_count' => $genotype_count,
+    'genotype_total' => &$genotype_total,
+    'project_id' => $project_id,
+    'seq_var_cvterm' => $seq_var_cvterm,
+    'overrides' => $overrides,
+    'multi_insert' => $multi_insert_options,
+  );
 
   if (!empty($markers['SNPs'])) {
     $insert_markers[] = 'SNP';
@@ -880,6 +946,26 @@ function gttn_tpps_submit_genetic(&$state) {
   if (!empty($markers['SSRs/cpSSRs'])) {
     $insert_markers[] = 'SSR';
     gttn_tpps_insert_prop('project', $project_id, 'SSR Machine', $genetic['ssr_machine']);
+
+    $ssr_fid = $genetic['ssr_spreadsheet'];
+    gttn_tpps_add_project_file($form_state, $ssr_fid);
+
+    $options['type'] = 'ssrs';
+    $options['headers'] = gttn_tpps_ssrs_headers($ssr_fid, $genetic['ploidy']);
+    $options['marker'] = 'SSR';
+    $options['type_cvterm'] = chado_get_cvterm(array(
+      'name' => 'microsatellite',
+      'cv_id' => array(
+        'name' => 'sequence',
+      ),
+      'is_obsolete' => 0,
+    ))->cvterm_id;
+
+    gttn_tpps_file_iterator($ssr_fid, 'gttn_tpps_process_ssr_spreadsheet', $options);
+
+    gttn_tpps_chado_insert_multi($options['records'], $multi_insert_options);
+    unset($options['records']);
+    $genotype_count = 0;
   }
 
   if (!empty($markers['Other'])) {
@@ -1189,6 +1275,210 @@ function gttn_tpps_process_accession($row, array &$options) {
     );
     $stock_count = 0;
   }
+}
+
+/**
+ * This function formats headers for a microsatellite spreadsheet.
+ *
+ * SSR/cpSSR spreadsheets will often have blank or duplicate headers, depending
+ * on the ploidy of the organism they are meant for. This file standardizes the
+ * headers for the spreadsheet so that they can be used with the
+ * gttn_tpps_process_ssr_spreadsheet() function.
+ *
+ * @param int $fid
+ *   The Drupal managed file id of the file.
+ * @param string $ploidy
+ *   The ploidy of the organism, as indicated by the user.
+ *
+ * @return array
+ *   The array of standardized headers for the spreadsheet.
+ */
+function gttn_tpps_ssrs_headers($fid, $ploidy) {
+  $headers = gttn_tpps_file_headers($fid);
+  if ($ploidy == 'Haploid') {
+    return $headers;
+  }
+  $row_len = count($headers);
+  $results = $headers;
+
+  while (($k = array_search(NULL, $results))) {
+    unset($results[$k]);
+  }
+
+  $marker_num = 0;
+  $first = TRUE;
+  reset($headers);
+  $num_headers = count($results);
+  $num_unique_headers = count(array_unique($results));
+
+  foreach ($headers as $key => $val) {
+    next($headers);
+    $next_key = key($headers);
+    if ($first) {
+      $first = FALSE;
+      continue;
+    }
+
+    switch ($ploidy) {
+      case 'Diploid':
+        if ($num_headers == ($row_len + 1) / 2) {
+          // Every other marker column name is left blank.
+          if (array_key_exists($key, $results)) {
+            $last = $results[$key];
+            $results[$key] .= "_A";
+            break;
+          }
+          $results[$key] = $last . "_B";
+          break;
+        }
+
+        if ($num_headers == $row_len) {
+          // All of the marker column names are filled out.
+          if ($num_headers != $num_unique_headers) {
+            // The marker column names are duplicates, need to append
+            // _A and _B.
+            if ($results[$key] == $results[$next_key]) {
+              $results[$key] .= "_A";
+              break;
+            }
+            $results[$key] .= "_B";
+          }
+        }
+        break;
+
+      case 'Polyploid':
+        if ($num_headers == $row_len) {
+          // All of the marker column names are filled out.
+          if ($num_unique_headers != $num_headers) {
+            // The marker column names are duplicates, need to append
+            // _1, _2, up to X ploidy.
+            // The total number of headers divided by the number of
+            // unique headers should be equal to the ploidy.
+            $ploidy_suffix = ($marker_num % ($num_headers - 1 / $num_unique_headers - 1)) + 1;
+            $results[$key] .= "_$ploidy_suffix";
+          }
+          $marker_num++;
+          break;
+        }
+        $ploidy_suffix = ($marker_num % ($row_len - 1 / $num_headers - 1)) + 1;
+        if (array_key_exists($key, $results)) {
+          $last = $results[$key];
+          $results[$key] .= "_$ploidy_suffix";
+        }
+        else {
+          $results[$key] = "{$last}_$ploidy_suffix";
+        }
+        $marker_num++;
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  return $results;
+
+}
+
+/**
+ * This function processes a single row of an ssr spreadsheet.
+ *
+ * @param mixed $row
+ *   The item yielded by the GTTN-TPPS file generator.
+ * @param array $options
+ *   Additional options set when calling gttn_tpps_file_iterator().
+ */
+function gttn_tpps_process_ssr_spreadsheet($row, &$options) {
+  $type = $options['type'];
+  $records = &$options['records'];
+  $headers = $options['headers'];
+  $tree_info = &$options['tree_info'];
+  $species_codes = $options['species_codes'];
+  $genotype_count = &$options['genotype_count'];
+  $genotype_total = &$options['genotype_total'];
+  $project_id = $options['project_id'];
+  $marker = $options['marker'];
+  $type_cvterm = $options['type_cvterm'];
+  $seq_var_cvterm = $options['seq_var_cvterm'];
+  $multi_insert_options = $options['multi_insert'];
+  $record_group = variable_get('gttn_tpps_record_group', 10000);
+  $stock_id = NULL;
+  if ($type == 'other') {
+    $val = $row[$options['tree_id']];
+    $stock_id = $tree_info[trim($val)]['stock_id'];
+    $current_id = $tree_info[trim($val)]['organism_id'];
+    $species_code = $species_codes[$current_id];
+  }
+  foreach ($row as $key => $val) {
+    if (empty($headers[$key])) {
+      continue;
+    }
+
+    if (!isset($stock_id)) {
+      $stock_id = $tree_info[trim($val)]['stock_id'];
+      $current_id = $tree_info[trim($val)]['organism_id'];
+      $species_code = $species_codes[$current_id];
+      continue;
+    }
+    $genotype_count++;
+
+    if ($type == 'ssrs' and ($val === 0 or $val === "0")) {
+      $val = "NA";
+    }
+
+    $variant_name = $headers[$key];
+    $marker_name = $variant_name . $marker;
+    $genotype_name = "$marker-$variant_name-$species_code-$val";
+
+    $records['feature'][$marker_name] = array(
+      'organism_id' => $current_id,
+      'uniquename' => $marker_name,
+      'type_id' => $seq_var_cvterm,
+    );
+
+    $records['feature'][$variant_name] = array(
+      'organism_id' => $current_id,
+      'uniquename' => $variant_name,
+      'type_id' => $seq_var_cvterm,
+    );
+
+    $records['genotype'][$genotype_name] = array(
+      'name' => $genotype_name,
+      'uniquename' => $genotype_name,
+      'description' => $val,
+      'type_id' => $type_cvterm,
+    );
+
+    $records['genotype_call']["$stock_id-$genotype_name"] = array(
+      'project_id' => $project_id,
+      'stock_id' => $stock_id,
+      '#fk' => array(
+        'genotype' => $genotype_name,
+        'variant' => $variant_name,
+        'marker' => $marker_name,
+      ),
+    );
+
+    $records['stock_genotype']["$stock_id-$genotype_name"] = array(
+      'stock_id' => $stock_id,
+      '#fk' => array(
+        'genotype' => $genotype_name,
+      ),
+    );
+
+    if ($genotype_count >= $record_group) {
+      gttn_tpps_chado_insert_multi($records, $multi_insert_options);
+      $records = array(
+        'feature' => array(),
+        'genotype' => array(),
+        'genotype_call' => array(),
+        'stock_genotype' => array(),
+      );
+      $genotype_total += $genotype_count;
+      $genotype_count = 0;
+    }
+  }
+
 }
 
 /**

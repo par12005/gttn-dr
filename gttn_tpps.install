@@ -462,6 +462,9 @@ function gttn_tpps_get_cvterms() {
       'province',
       'city',
     ),
+    'so' => array(
+      'microsatellite',
+    ),
     'chmo' => array(
       'direct analysis in real time',
     ),
