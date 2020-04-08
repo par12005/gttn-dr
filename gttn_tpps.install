@@ -12,6 +12,8 @@
 function gttn_tpps_install() {
   gttn_tpps_alter_gttn_tpps_submission();
 
+  gttn_tpps_alter_gttn_tpps_organization_inventory();
+
   chado_create_custom_table('genotype_call', array(
     'description' => '',
     'fields' => array(
@@ -297,93 +299,39 @@ function gttn_tpps_schema() {
     );
   }
 
-  if (!db_table_exists('chado.genotype_call')) {
-    $schema['chado.genotype_call'] = array(
+  if (!db_table_exists('gttn_tpps_organization_inventory')) {
+    $schema['gttn_tpps_organization_inventory'] = array(
       'description' => '',
       'fields' => array(
-        'genotype_call_id' => array(
-          'description' => '',
-          'type' => 'serial',
-          'size' => 'normal',
-          'unsigned' => TRUE,
-          'not null' => TRUE,
-        ),
-        'variant_id' => array(
+        'organization_id' => array(
           'description' => '',
           'type' => 'int',
           'size' => 'big',
           'not null' => TRUE,
         ),
-        'marker_id' => array(
+        'sample_id' => array(
           'description' => '',
           'type' => 'int',
           'size' => 'big',
           'not null' => TRUE,
-        ),
-        'genotype_id' => array(
-          'description' => '',
-          'type' => 'int',
-          'size' => 'big',
-          'not null' => TRUE,
-        ),
-        'project_id' => array(
-          'description' => '',
-          'type' => 'int',
-          'size' => 'big',
-          'not null' => TRUE,
-        ),
-        'stock_id' => array(
-          'description' => '',
-          'type' => 'int',
-          'size' => 'big',
-          'not null' => TRUE,
-        ),
-        'meta_data' => array(
-          'description' => '',
-          // Drupal does not support the json data type by default, we will use
-          // a placeholder for meta_data for now, and upon install we will
-          // change the type to json.
-          'type' => 'text',
         ),
       ),
       'foreign keys' => array(
-        'genotype_id' => array(
-          'table' => 'chado.genotype',
+        'gttn_profile_organization' => array(
+          'table' => 'gttn_profile_organization',
           'columns' => array(
-            'genotype_id' => 'genotype_id',
+            'organization_id' => 'organization_id',
           ),
         ),
-        'variant_id' => array(
-          'table' => 'chado.feature',
-          'columns' => array(
-            'variant_id' => 'feature_id',
-          ),
-        ),
-        'marker_id' => array(
-          'table' => 'chado.feature',
-          'columns' => array(
-            'marker_id' => 'feature_id',
-          ),
-        ),
-        'project_id' => array(
-          'table' => 'chado.project',
-          'columns' => array(
-            'project_id' => 'project_id',
-          ),
-        ),
-        'stock_id' => array(
+        'stock' => array(
           'table' => 'chado.stock',
           'columns' => array(
-            'stock_id' => 'stock_id',
+            'sample_id' => 'stock_id',
           ),
         ),
-      ),
-      'primary key' => array(
-        'genotype_call_id',
       ),
     );
   }
-
 
   return $schema;
 }
@@ -399,6 +347,20 @@ function gttn_tpps_alter_gttn_tpps_submission() {
     // Create foreign key for gttn_tpps_submission to reference users table.
     db_query('ALTER TABLE gttn_tpps_submission ADD CONSTRAINT gttn_tpps_submission_uid_fkey FOREIGN KEY (uid) REFERENCES users(uid) ON DELETE CASCADE;');
     db_query('ALTER TABLE gttn_tpps_submission ADD CONSTRAINT gttn_tpps_submission_dbxref_id_fkey FOREIGN KEY (dbxref_id) REFERENCES chado.dbxref(dbxref_id) ON DELETE CASCADE;');
+  }
+}
+
+/**
+ *
+ */
+function gttn_tpps_alter_gttn_tpps_organization_inventory() {
+  $results = db_query("SELECT contype "
+    . "FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
+    . "WHERE rel.relname = 'gttn_tpps_organization_inventory' AND contype like 'f';");
+  if (!$results->rowCount()) {
+    // Create foreign key for gttn_tpps_submission to reference users table.
+    db_query('ALTER TABLE gttn_tpps_organization_inventory ADD CONSTRAINT gttn_tpps_organization_inventory_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES gttn_profile_organization(organization_id) ON DELETE CASCADE;');
+    db_query('ALTER TABLE gttn_tpps_organization_inventory ADD CONSTRAINT gttn_tpps_organization_inventory_sample_id_fkey FOREIGN KEY (sample_id) REFERENCES chado.stock(stock_id) ON DELETE CASCADE;');
   }
 }
 
