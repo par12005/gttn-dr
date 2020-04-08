@@ -1168,17 +1168,14 @@ function gttn_tpps_process_accession($row, array &$options) {
 
     if (isset($geo_api_key)) {
       if (!array_key_exists($location, $options['locations'])) {
-        $query = urlencode($location);
-        $url = "https://api.opencagedata.com/geocode/v1/json?q=$query&key=$geo_api_key";
-        $response = json_decode(file_get_contents($url));
-
-        if ($response->total_results) {
-          $results = $response->results;
-          $result = $results[0]->geometry;
-          if ($response->total_results > 1 and !isset($cols['district']) and !isset($cols['county'])) {
+        $result = NULL;
+        $results = gttn_tpps_opencage_coords(urlencode($location));
+        if ($results) {
+          $result = $results[0];
+          if (count($results) > 1 and !isset($cols['district']) and !isset($cols['county'])) {
             foreach ($results as $item) {
-              if ($item->components->_type == 'state') {
-                $result = $item->geometry;
+              if ($item['type'] == 'state') {
+                $result = $item;
                 break;
               }
             }
@@ -1191,8 +1188,8 @@ function gttn_tpps_process_accession($row, array &$options) {
       }
 
       if (!empty($result)) {
-        $lat = $result->lat;
-        $lng = $result->lng;
+        $lat = $result['lat'];
+        $lng = $result['lng'];
       }
     }
   }
@@ -1218,10 +1215,9 @@ function gttn_tpps_process_accession($row, array &$options) {
 
       if (isset($geo_api_key)) {
         if (!array_key_exists($location, $options['locations'])) {
-          $query = urlencode($location);
-          $url = "https://api.opencagedata.com/geocode/v1/json?q=$query&key=$geo_api_key";
-          $response = json_decode(file_get_contents($url));
-          $result = ($response->total_results) ? $response->results[0]->geometry : NULL;
+          $result = NULL;
+          $results = gttn_tpps_opencage_coords(urlencode($location));
+          $result = $results[0] ?? NULL;
           $options['locations'][$location] = $result;
         }
         else {
@@ -1229,8 +1225,8 @@ function gttn_tpps_process_accession($row, array &$options) {
         }
 
         if (!empty($result)) {
-          $lat = $result->lat;
-          $lng = $result->lng;
+          $lat = $result['lat'];
+          $lng = $result['lng'];
         }
       }
     }
