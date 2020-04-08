@@ -432,10 +432,10 @@ function gttn_tpps_tab_create($user) {
     }
 
     $rows[] = array(
-      isset($acc) ? $acc : "",
-      isset($type_page['name']) ? $type_page['name'] : "",
-      isset($page_1['organism']['number']) ? $page_1['organism']['number'] : "",
-      isset($state['status']) ? $state['status'] : "",
+      $acc ?? "",
+      $type_page['project']['name'] ?? "",
+      $page_1['organism']['number'] ?? "",
+      $state['status'] ?? "",
     );
   }
 
