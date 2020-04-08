@@ -330,6 +330,12 @@ function gttn_tpps_schema() {
           ),
         ),
       ),
+      'unique keys' => array(
+        'c1' => array(
+          'organization_id',
+          'sample_id',
+        ),
+      ),
     );
   }
 
