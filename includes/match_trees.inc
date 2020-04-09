@@ -22,6 +22,13 @@ function gttn_tpps_matching_trees($project_id) {
   $query_trees_1->addExpression('substring(s.uniquename, 9)', 'uniquename');
   $query_trees_1->addExpression('cast(lat.value as float)', 'lat');
   $query_trees_1->addExpression('cast(lng.value as float)', 'lng');
+  $query_trees_1->condition('s.type_id', chado_get_cvterm(array(
+    'name' => 'organism',
+    'cv_id' => array(
+      'name' => 'obi',
+    ),
+    'is_obsolete' => 0,
+  ))->cvterm_id);
 
   $query_trees_2 = clone $query_trees_1;
 
