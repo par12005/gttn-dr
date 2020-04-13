@@ -914,7 +914,7 @@ function gttn_tpps_main_validate(&$form, &$form_state) {
   }
 
   if ($form_state['submitted']) {
-    require_once('forms/validate/validate.php');
+    module_load_include('php', 'gttn_tpps', 'forms/validate/validate');
     gttn_tpps_validate($form, $form_state);
     if (!form_get_errors()) {
       gttn_tpps_update_stats($form, $form_state);
