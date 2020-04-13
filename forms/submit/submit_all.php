@@ -24,6 +24,7 @@ function gttn_tpps_submit_all($accession) {
     gttn_tpps_submit_organism($form_state);
 
     gttn_tpps_submit_trees($form_state);
+    print_r($form_state['data']['trees']);
 
     if (!empty($form_state['saved_values'][GTTN_PAGE_4]['dart'])) {
       gttn_tpps_submit_dart($form_state);
@@ -217,11 +218,9 @@ function gttn_tpps_submit_organism(&$state) {
  */
 function gttn_tpps_submit_trees(&$state) {
   $accession = $state['accession'];
-  $firstpage = $state['saved_values'][GTTN_PAGE_1];
   $thirdpage = $state['saved_values'][GTTN_PAGE_3];
-  $organism_number = $state['stats']['species_count'];
   $stock_count = 0;
-  $loc_name = 'Location (latitude/longitude or country/state or population group)';
+  $record_group = variable_get('gttn_tpps_record_group', 10000);
 
   $cvterms = array(
     'org' => chado_get_cvterm(array(
@@ -329,69 +328,126 @@ function gttn_tpps_submit_trees(&$state) {
     ),
   );
 
-  $options = array(
-    'cvterms' => $cvterms,
-    'records' => $records,
-    'overrides' => $overrides,
-    'locations' => &$state['locations'],
-    'accession' => $state['accession'],
-    'single_file' => empty($thirdpage['tree-accession']['check']),
-    'org_names' => $firstpage['organism'],
-    'saved_ids' => &$state['ids'],
-    'stock_count' => &$stock_count,
-    'multi_insert' => $multi_insert_options,
-    'trees' => &$state['data']['trees'],
-  );
+  $project_id = $state['ids']['project_id'];
+  $org_ids = $state['ids']['organism_ids'];
+  $trees = &$state['data']['trees'];
 
-  for ($i = 1; $i <= $organism_number; $i++) {
-    $tree_accession = $thirdpage['tree-accession']["species-$i"];
+  foreach ($trees as $tree) {
+    $id = $tree['id'];
+    $org_id = $org_ids[$tree['organism_number']];
+    $records['stock'][$id] = array(
+      'uniquename' => "$accession-$id",
+      'type_id' => $cvterms['org'],
+      'organism_id' => $org_id,
+    );
+    $trees[$id]['organism_id'] = $org_id;
 
-    gttn_tpps_add_project_file($state, $tree_accession['file']);
-
-    $column_vals = $tree_accession['file-columns'];
-    $groups = $tree_accession['file-groups'];
-
-    $options['org_num'] = $i;
-    $options['no_header'] = !empty($tree_accession['file-no-header']);
-    $options['empty'] = $tree_accession['file-empty'];
-    $options['pop_group'] = $tree_accession['pop-group'];
-    $county = array_search('8', $column_vals);
-    $district = array_search('9', $column_vals);
-    $clone = array_search('13', $column_vals);
-    $options['column_ids'] = array(
-      'id' => $groups['Tree Id']['1'],
-      'lat' => $groups[$loc_name]['4'] ?? NULL,
-      'lng' => $groups[$loc_name]['5'] ?? NULL,
-      'country' => $groups[$loc_name]['2'] ?? NULL,
-      'state' => $groups[$loc_name]['3'] ?? NULL,
-      'county' => ($county !== FALSE) ? $county : NULL,
-      'district' => ($district !== FALSE) ? $district : NULL,
-      'clone' => ($clone !== FALSE) ? $clone : NULL,
-      'pop_group' => $groups[$loc_name]['12'] ?? NULL,
+    $records['project_stock'][$id] = array(
+      'project_id' => $project_id,
+      '#fk' => array(
+        'stock' => $id,
+      ),
     );
 
-    if ($organism_number != 1 and empty($thirdpage['tree-accession']['check'])) {
-      if ($groups['Genus and Species']['#type'] == 'separate') {
-        $options['column_ids']['genus'] = $groups['Genus and Species']['6'];
-        $options['column_ids']['species'] = $groups['Genus and Species']['7'];
-      }
-      else {
-        $options['column_ids']['org'] = $groups['Genus and Species']['10'];
-      }
+    if (!empty($tree['is_clone'])) {
+      $records['stock_relationship'][$id] = array(
+        'type_id' => $cvterms['has_part'],
+        '#fk' => array(
+          'subject' => $tree['clone_source'],
+          'object' => $id,
+        )
+      );
     }
 
-    gttn_tpps_file_iterator($tree_accession['file'], 'gttn_tpps_process_accession', $options);
+    if (!empty($tree['lat']) and !empty($tree['lng'])) {
+      $records['stockprop']["$id-lat"] = array(
+        'type_id' => $cvterms['lat'],
+        'value' => $tree['lat'],
+        '#fk' => array(
+          'stock' => $id,
+        ),
+      );
 
-    $new_ids = gttn_tpps_chado_insert_multi($options['records'], $multi_insert_options);
-    foreach ($new_ids as $t_id => $stock_id) {
-      $state['data']['trees'][$t_id]['stock_id'] = $stock_id;
+      $records['stockprop']["$id-long"] = array(
+        'type_id' => $cvterms['lng'],
+        'value' => $tree['lng'],
+        '#fk' => array(
+          'stock' => $id,
+        ),
+      );
     }
-    unset($options['records']);
-    $stock_count = 0;
-    if (empty($thirdpage['tree-accession']['check'])) {
-      break;
+
+    if (!empty($tree['state']) and !empty($tree['country'])) {
+      $records['stockprop']["$id-country"] = array(
+        'type_id' => $cvterms['country'],
+        'value' => $tree['country'],
+        '#fk' => array(
+          'stock' => $id,
+        ),
+      );
+
+      $records['stockprop']["$id-state"] = array(
+        'type_id' => $cvterms['state'],
+        'value' => $tree['state'],
+        '#fk' => array(
+          'stock' => $id,
+        ),
+      );
+
+      if (!empty($tree['county'])) {
+        $records['stockprop']["$id-county"] = array(
+          'type_id' => $cvterms['county'],
+          'value' => $tree['county'],
+          '#fk' => array(
+            'stock' => $id,
+          ),
+        );
+      }
+
+      if (!empty($tree['district'])) {
+        $records['stockprop']["$id-district"] = array(
+          'type_id' => $cvterms['district'],
+          'value' => $tree['district'],
+          '#fk' => array(
+            'stock' => $id,
+          ),
+        );
+      }
+    }
+    elseif (!empty($tree['location'])) {
+      $records['stockprop']["$id-location"] = array(
+        'type_id' => $cvterms['loc'],
+        'value' => $tree['location'],
+        '#fk' => array(
+          'stock' => $id,
+        ),
+      );
+    }
+
+    $stock_count++;
+    if ($stock_count >= $record_group) {
+      $new_ids = gttn_tpps_chado_insert_multi($records, $multi_insert_options);
+      foreach ($new_ids as $t_id => $stock_id) {
+        $trees[$t_id]['stock_id'] = $stock_id;
+      }
+
+      $records = array(
+        'stock' => array(),
+        'stockprop' => array(),
+        'stock_relationship' => array(),
+        'project_stock' => array(),
+      );
+      $stock_count = 0;
     }
   }
+
+  if ($stock_count) {
+    $new_ids = gttn_tpps_chado_insert_multi($records, $multi_insert_options);
+    foreach ($new_ids as $t_id => $stock_id) {
+      $trees[$t_id]['stock_id'] = $stock_id;
+    }
+  }
+  unset($records);
 
   if ($state['data']['project']['props']['type'] != 'New Trees') {
     gttn_tpps_matching_trees($state['ids']['project_id']);
@@ -605,10 +661,10 @@ function gttn_tpps_submit_trees(&$state) {
           'object' => $sample_id,
         ),
       );
-      if (!empty($state['data']['trees'][$sample['source']]['stock_id'])) {
+      if (!empty($trees[$sample['source']]['stock_id'])) {
         // Don't need to use #fk since the tree stock record has already been
         // created.
-        $records['stock_relationship'][$sample_id]['subject_id'] = $state['data']['trees'][$sample['source']]['stock_id'];
+        $records['stock_relationship'][$sample_id]['subject_id'] = $trees[$sample['source']]['stock_id'];
       }
       else {
         // Need to use #fk since the sample stock record doesn't exist yet.
@@ -1050,222 +1106,6 @@ function gttn_tpps_submit_page_4(&$form_state, $project_id, &$file_rank, $organi
         }
       }
     }
-  }
-}
-
-/**
- * 
- */
-function gttn_tpps_process_accession($row, array &$options) {
-  $cvterm = $options['cvterms'];
-  $records = &$options['records'];
-  $accession = $options['accession'];
-  $cols = $options['column_ids'];
-  $saved_ids = &$options['saved_ids'];
-  $stock_count = &$options['stock_count'];
-  $multi_insert_options = $options['multi_insert'];
-  $trees = &$options['trees'];
-  $record_group = variable_get('gttn_tpps_record_group', 10000);
-  $geo_api_key = variable_get('gttn_tpps_geocode_api_key', NULL);
-
-  $tree_id = $row[$cols['id']];
-  $id = $saved_ids['organism_ids'][$options['org_num']];
-  if ($options['org_names']['number'] != 1 and $options['single_file']) {
-    $org_full_name = $row[$cols['org']] ?? "{$row[$cols['genus']]} {$row[$cols['species']]}";
-    $id = $saved_ids['organism_ids'][array_search($org_full_name, $options['org_names'])];
-  }
-
-  $records['stock'][$tree_id] = array(
-    'uniquename' => "$accession-$tree_id",
-    'type_id' => $cvterm['org'],
-    'organism_id' => $id,
-  );
-  $trees[$tree_id]['organism_id'] = $id;
-
-  $records['project_stock'][$tree_id] = array(
-    'project_id' => $saved_ids['project_id'],
-    '#fk' => array(
-      'stock' => $tree_id,
-    ),
-  );
-
-  if (isset($row[$cols['clone']]) and $row[$cols['clone']] !== $options['empty']) {
-    $clone_name = $tree_id . '-' . $row[$cols['clone']];
-
-    $records['stock'][$clone_name] = array(
-      'uniquename' => $accession . '-' . $clone_name,
-      'type_id' => $cvterm['clone'],
-      'organism_id' => $id,
-    );
-    $trees[$clone_name]['organism_id'] = $id;
-
-    $records['project_stock'][$clone_name] = array(
-      'project_id' => $saved_ids['project_id'],
-      '#fk' => array(
-        'stock' => $clone_name,
-      ),
-    );
-
-    $records['stock_relationship'][$clone_name] = array(
-      'type_id' => $cvterm['has_part'],
-      '#fk' => array(
-        'subject' => $tree_id,
-        'object' => $clone_name,
-      ),
-    );
-
-    $tree_id = $clone_name;
-  }
-
-  if (!empty($row[$cols['lat']]) and !empty($row[$cols['lng']])) {
-    $raw_coord = $row[$cols['lat']] . ',' . $row[$cols['lng']];
-    $standard_coord = explode(',', gttn_tpps_standard_coord($raw_coord));
-    $lat = $standard_coord[0];
-    $lng = $standard_coord[1];
-  }
-  elseif (!empty($row[$cols['state']]) and !empty($row[$cols['country']])) {
-    $records['stockprop']["$tree_id-country"] = array(
-      'type_id' => $cvterm['country'],
-      'value' => $row[$cols['country']],
-      '#fk' => array(
-        'stock' => $tree_id,
-      ),
-    );
-
-    $records['stockprop']["$tree_id-state"] = array(
-      'type_id' => $cvterm['state'],
-      'value' => $row[$cols['state']],
-      '#fk' => array(
-        'stock' => $tree_id,
-      ),
-    );
-
-    $location = "{$row[$cols['state']]}, {$row[$cols['country']]}";
-
-    if (!empty($row[$cols['county']])) {
-      $records['stockprop']["$tree_id-county"] = array(
-        'type_id' => $cvterm['county'],
-        'value' => $row[$cols['county']],
-        '#fk' => array(
-          'stock' => $tree_id,
-        ),
-      );
-      $location = "{$row[$cols['county']]}, $location";
-    }
-
-    if (!empty($row[$cols['district']])) {
-      $records['stockprop']["$tree_id-district"] = array(
-        'type_id' => $cvterm['district'],
-        'value' => $row[$cols['district']],
-        '#fk' => array(
-          'stock' => $tree_id,
-        ),
-      );
-      $location = "{$row[$cols['district']]}, $location";
-    }
-
-    $trees[$tree_id]['location'] = $location;
-
-    if (isset($geo_api_key)) {
-      if (!array_key_exists($location, $options['locations'])) {
-        $result = NULL;
-        $results = gttn_tpps_opencage_coords(urlencode($location));
-        if ($results) {
-          $result = $results[0];
-          if (count($results) > 1 and !isset($cols['district']) and !isset($cols['county'])) {
-            foreach ($results as $item) {
-              if ($item['type'] == 'state') {
-                $result = $item;
-                break;
-              }
-            }
-          }
-        }
-        $options['locations'][$location] = $result ?? NULL;
-      }
-      else {
-        $result = $options['locations'][$location];
-      }
-
-      if (!empty($result)) {
-        $lat = $result['lat'];
-        $lng = $result['lng'];
-      }
-    }
-  }
-  else {
-    $location = $options['pop_group'][$row[$cols['pop_group']]];
-    $coord = gttn_tpps_standard_coord($location);
-
-    if ($coord) {
-      $parts = explode(',', $coord);
-      $lat = $parts[0];
-      $lng = $parts[1];
-    }
-    else {
-      $records['stockprop']["$tree_id-location"] = array(
-        'type_id' => $cvterm['loc'],
-        'value' => $location,
-        '#fk' => array(
-          'stock' => $tree_id,
-        ),
-      );
-
-      $trees[$tree_id]['location'] = $location;
-
-      if (isset($geo_api_key)) {
-        if (!array_key_exists($location, $options['locations'])) {
-          $result = NULL;
-          $results = gttn_tpps_opencage_coords(urlencode($location));
-          $result = $results[0] ?? NULL;
-          $options['locations'][$location] = $result;
-        }
-        else {
-          $result = $options['locations'][$location];
-        }
-
-        if (!empty($result)) {
-          $lat = $result['lat'];
-          $lng = $result['lng'];
-        }
-      }
-    }
-  }
-
-  if (!empty($lat) and !empty($lng)) {
-    $records['stockprop']["$tree_id-lat"] = array(
-      'type_id' => $cvterm['lat'],
-      'value' => $lat,
-      '#fk' => array(
-        'stock' => $tree_id,
-      ),
-    );
-
-    $records['stockprop']["$tree_id-long"] = array(
-      'type_id' => $cvterm['lng'],
-      'value' => $lng,
-      '#fk' => array(
-        'stock' => $tree_id,
-      ),
-    );
-    $trees[$tree_id]['lat'] = $lat;
-    $trees[$tree_id]['lng'] = $lng;
-  }
-
-  $stock_count++;
-  if ($stock_count >= $record_group) {
-    $new_ids = gttn_tpps_chado_insert_multi($records, $multi_insert_options);
-    foreach ($new_ids as $t_id => $stock_id) {
-      $trees[$t_id]['stock_id'] = $stock_id;
-    }
-
-    $records = array(
-      'stock' => array(),
-      'stockprop' => array(),
-      'stock_relationship' => array(),
-      'project_stock' => array(),
-    );
-    $stock_count = 0;
   }
 }
 

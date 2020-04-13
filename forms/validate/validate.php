@@ -364,34 +364,13 @@ function gttn_tpps_update_data(&$form, &$form_state) {
       break;
 
     case GTTN_PAGE_3:
-      $form_state['data']['trees'] = array();
-      $form_state['data']['samples'] = array();
       $form_state['file_info'][GTTN_PAGE_3] = array();
-      for ($i = 1; $i <= $form_state['saved_values'][GTTN_PAGE_1]['organism']['number']; $i++) {
-        $fid = $form_state['values']['tree-accession']["species-$i"]['file'] ?? NULL;
-        if (!empty($fid) and file_load($fid)) {
-          $current_field = $form_state['values']['tree-accession']["species-$i"];
-          $no_header = $current_field['file-no-header'];
-          $form_state['file_info'][GTTN_PAGE_3][] = array(
-            'fid' => $fid,
-            'name' => 'Tree_Accession',
-            'columns' => $current_field['file-columns'],
-            'groups' => $current_field['file-groups'],
-          );
 
-          $id_col = $current_field['file-groups']['Tree Id'][1];
-          $content = gttn_tpps_parse_file($fid, 0, $no_header, array($id_col));
-
-          for ($j = 0; $j < count($content) - 1; $j++) {
-            $form_state['data']['trees'][$content[$j][$id_col]] = array(
-              'id' => $content[$j][$id_col],
-            );
-          }
-        }
-      }
+      gttn_tpps_update_tree_data($form, $form_state);
 
       $fid = $form_state['values']['samples']['file'] ?? NULL;
       if (!empty($fid) and file_load($fid)) {
+        $form_state['data']['samples'] = array();
         $samples_type = $form_state['values']['samples']['type'];
         $columns = $form_state['values']['samples']['file-columns'];
         $groups = $form_state['values']['samples']['file-groups'];
@@ -503,5 +482,183 @@ function gttn_tpps_update_data(&$form, &$form_state) {
 
     default:
       break;
+  }
+}
+
+/**
+ *
+ */
+function gttn_tpps_update_tree_data(&$form, &$form_state) {
+  $loc_name = 'Location (latitude/longitude or country/state or population group)';
+  $form_state['data']['trees'] = array();
+  $form_state['locations'] = $form_state['locations'] ?? array();
+  $organism_number = $form_state['saved_values'][GTTN_PAGE_1]['organism']['number'];
+  for ($i = 1; $i <= $organism_number; $i++) {
+    $fid = $form_state['values']['tree-accession']["species-$i"]['file'] ?? NULL;
+    if (!empty($fid) and file_load($fid)) {
+      $current_field = $form_state['values']['tree-accession']["species-$i"];
+      $form_state['file_info'][GTTN_PAGE_3][] = array(
+        'fid' => $fid,
+        'name' => 'Tree_Accession',
+        'columns' => $current_field['file-columns'],
+        'groups' => $current_field['file-groups'],
+      );
+
+      $column_vals = $current_field['file-columns'];
+      $groups = $current_field['file-groups'];
+      $county = array_search('8', $column_vals);
+      $district = array_search('9', $column_vals);
+      $clone = array_search('13', $column_vals);
+      $options = array(
+        'cols' => array(
+          'id' => $groups['Tree Id'][1],
+          'lat' => $groups[$loc_name]['4'] ?? NULL,
+          'lng' => $groups[$loc_name]['5'] ?? NULL,
+          'country' => $groups[$loc_name]['2'] ?? NULL,
+          'state' => $groups[$loc_name]['3'] ?? NULL,
+          'county' => ($county !== FALSE) ? $county : NULL,
+          'district' => ($district !== FALSE) ? $district : NULL,
+          'clone' => ($clone !== FALSE) ? $clone : NULL,
+          'pop_group' => $groups[$loc_name]['12'] ?? NULL,
+        ),
+        'trees' => &$form_state['data']['trees'],
+        'locations' => &$form_state['locations'],
+        'pop_group' => $current_field['pop-group'] ?? NULL,
+        'org_num' => $i,
+        'no_header' => !empty($current_field['file-no-header']),
+        'empty' => $current_field['file-empty'],
+        'single_file' => empty($form_state['values']['tree-accession']['check']),
+        'organisms' => $form_state['saved_values'][GTTN_PAGE_1]['organism'],
+      );
+
+      if ($organism_number != 1 and empty($form_state['values']['tree-accession']['check'])) {
+        if ($groups['Genus and Species']['#type'] == 'separate') {
+          $options['cols']['genus'] = $groups['Genus and Species']['6'];
+          $options['cols']['species'] = $groups['Genus and Species']['7'];
+        }
+        else {
+          $options['cols']['org'] = $groups['Genus and Species']['10'];
+        }
+      }
+
+      gttn_tpps_file_iterator($fid, 'gttn_tpps_update_tree', $options);
+    }
+  }
+
+}
+
+/**
+ *
+ */
+function gttn_tpps_update_tree($row, array &$options) {
+  $trees = &$options['trees'];
+  $cols = $options['cols'];
+  $geo_api_key = variable_get('gttn_tpps_geocode_api_key', NULL);
+
+  $tree_id = $row[$cols['id']];
+  $org_num = $options['org_num'];
+  if ($options['organisms']['number'] != 1 and $options['single_file']) {
+    $org_full_name = $row[$cols['org']] ?? "{$row[$cols['genus']]} {$row[$cols['species']]}";
+    $org_num = array_search($org_full_name, $options['organsims']);
+  }
+  $trees[$tree_id] = $trees[$tree_id] ?? array(
+    'id' => $tree_id,
+    'organism_number' => $org_num,
+  );
+  if (isset($row[$cols['clone']]) and $row[$cols['clone']] !== $options['empty']) {
+    $clone_name = $tree_id . '-' . $row[$cols['clone']];
+    $trees[$clone_name] = array(
+      'id' => $clone_name,
+      'organism_number' => $org_num,
+      'is_clone' => TRUE,
+      'clone_source' => $tree_id,
+    );
+    $tree_id = $clone_name;
+  }
+
+  if (!empty($row[$cols['lat']]) and !empty($row[$cols['lng']])) {
+    $raw_coord = $row[$cols['lat']] . ',' . $row[$cols['lng']];
+    $standard_coord = explode(',', gttn_tpps_standard_coord($raw_coord));
+    $lat = $standard_coord[0];
+    $lng = $standard_coord[1];
+  }
+  elseif (!empty($row[$cols['state']]) and !empty($row[$cols['country']])) {
+    $location = "{$row[$cols['state']]}, {$row[$cols['country']]}";
+    $trees[$tree_id]['state'] = $row[$cols['state']];
+    $trees[$tree_id]['country'] = $row[$cols['country']];
+
+    if (!empty($row[$cols['county']])) {
+      $trees[$tree_id]['county'] = $row[$cols['county']];
+      $location = "{$row[$cols['county']]}, $location";
+    }
+
+    if (!empty($row[$cols['district']])) {
+      $trees[$tree_id]['district'] = $row[$cols['district']];
+      $location = "{$row[$cols['district']]}, $location";
+    }
+
+    $trees[$tree_id]['location'] = $location;
+
+    if (isset($geo_api_key)) {
+      if (!array_key_exists($location, $options['locations'])) {
+        $result = NULL;
+        $results = gttn_tpps_opencage_coords(urlencode($location));
+        if ($results) {
+          $result = $results[0];
+          if (count($results) > 1 and !isset($cols['district']) and !isset($cols['county'])) {
+            foreach ($results as $item) {
+              if ($item['type'] == 'state') {
+                $result = $item;
+                break;
+              }
+            }
+          }
+        }
+        $options['locations'][$location] = $result ?? NULL;
+      }
+      else {
+        $result = $options['locations'][$location];
+      }
+
+      if (!empty($result)) {
+        $lat = $result['lat'];
+        $lng = $result['lng'];
+      }
+    }
+  }
+  else {
+    $location = $options['pop_group'][$row[$cols['pop_group']]];
+    $coord = gttn_tpps_standard_coord($location);
+
+    if ($coord) {
+      $parts = explode(',', $coord);
+      $lat = $parts[0];
+      $lng = $parts[1];
+    }
+    else {
+      $trees[$tree_id]['location'] = $location;
+
+      if (isset($geo_api_key)) {
+        if (!array_key_exists($location, $options['locations'])) {
+          $result = NULL;
+          $results = gttn_tpps_opencage_coords(urlencode($location));
+          $result = $results[0] ?? NULL;
+          $options['locations'][$location] = $result;
+        }
+        else {
+          $result = $options['locations'][$location];
+        }
+
+        if (!empty($result)) {
+          $lat = $result['lat'];
+          $lng = $result['lng'];
+        }
+      }
+    }
+  }
+
+  if (!empty($lat) and !empty($lng)) {
+    $trees[$tree_id]['lat'] = $lat;
+    $trees[$tree_id]['lng'] = $lng;
   }
 }
