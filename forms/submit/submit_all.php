@@ -695,6 +695,15 @@ function gttn_tpps_submit_trees(&$state) {
       }
       $sample_count = 0;
     }
+
+    foreach ($state['data']['samples'] as $sample) {
+      db_insert('gttn_tpps_organization_inventory')
+        ->fields(array(
+          'sample_id' => $sample['stock_id'],
+          'organization_id' => $state['saved_values'][GTTN_TYPE_PAGE]['project']['props']['organization'],
+        ))
+        ->execute();
+    }
   }
 }
 
