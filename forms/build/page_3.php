@@ -256,13 +256,10 @@ function page_3_create_form(&$form, &$form_state) {
       6 => 'Sampling Method',
       7 => 'Dimensions',
       8 => 'Sample Source',
+      9 => 'Storage Location',
       10 => 'Remaining Volume of Sample',
       11 => 'Sample has been analyzed',
     );
-
-    if (!$type) {
-      $column_options[9] = 'DNA Storage Location';
-    }
 
     $required_groups = array(
       'Sample Id' => array(
@@ -377,17 +374,15 @@ function page_3_create_form(&$form, &$form_state) {
       );
     }
 
-    if (!$type) {
-      $storage_cols = gttn_tpps_get_file_columns($form_state, array(
-        'samples',
-        'file',
-      ), 9);
-      if (empty($storage_cols)) {
-        $form['samples']['storage'] = array(
-          '#type' => 'textfield',
-          '#title' => t('DNA Storage location: *'),
-        );
-      }
+    $storage_cols = gttn_tpps_get_file_columns($form_state, array(
+      'samples',
+      'file',
+    ), 9);
+    if (empty($storage_cols)) {
+      $form['samples']['storage'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Storage location: *'),
+      );
     }
 
     $form['samples']['legal'] = array(

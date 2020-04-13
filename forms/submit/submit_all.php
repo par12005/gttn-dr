@@ -645,15 +645,13 @@ function gttn_tpps_submit_trees(&$state) {
         ),
       );
 
-      if (isset($sample['storage'])) {
-        $records['stockprop']["$sample_id-storage"] = array(
-          'type_id' => $storage_cvt,
-          'value' => $sample['storage'],
-          '#fk' => array(
-            'stock' => $sample_id
-          ),
-        );
-      }
+      $records['stockprop']["$sample_id-storage"] = array(
+        'type_id' => $storage_cvt,
+        'value' => $sample['storage'],
+        '#fk' => array(
+          'stock' => $sample_id
+        ),
+      );
 
       $records['stock_relationship'][$sample_id] = array(
         'type_id' => $cvterms['has_part'],
