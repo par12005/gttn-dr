@@ -260,7 +260,7 @@ function gttn_tpps_generate_events($diff) {
         $results[] = array(
           'event_type' => 'dimension changed event',
           'timestamp' => date('c'),
-          'comment' => "Dimension of the sample was changd from {$info['start']} to {$info['end']}",
+          'comment' => "Dimension of the sample was changed from {$info['start']} to {$info['end']}",
         );
         break;
 
@@ -268,7 +268,7 @@ function gttn_tpps_generate_events($diff) {
         $results[] = array(
           'event_type' => 'remaining changed event',
           'timestamp' => date('c'),
-          'comment' => "Remaining amount of the sample was changd from {$info['start']} to {$info['end']}",
+          'comment' => "Remaining amount of the sample was changed from {$info['start']} to {$info['end']}",
         );
         break;
     }
