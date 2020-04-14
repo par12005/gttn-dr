@@ -12,29 +12,7 @@ function gttn_tpps_match_samples(&$state) {
   $org = $state['saved_values'][GTTN_TYPE_PAGE]['project']['props']['organization'];
   $results = array();
 
-  $has_part_cvt = chado_get_cvterm(array(
-    'cv_id' => array(
-      'name' => 'sequence',
-    ),
-    'name' => 'has_part',
-    'is_obsolete' => 0,
-  ))->cvterm_id;
-
-  $sample_cvt = chado_get_cvterm(array(
-    'name' => 'biological sample',
-    'cv_id' => array(
-      'name' => 'sep',
-    ),
-    'is_obsolete' => 0,
-  ))->cvterm_id;
-
-  $tissue_cvt = chado_get_cvterm(array(
-    'name' => 'Tissue',
-    'cv_id' => array(
-      'name' => 'ncit',
-    ),
-    'is_obsolete' => 0,
-  ))->cvterm_id;
+  $cvt = gttn_tpps_sample_cvterms();
 
   foreach ($samples as $id => $sample) {
     $query = db_select('chado.stock', 's1');
@@ -43,13 +21,13 @@ function gttn_tpps_match_samples(&$state) {
     $query->join('chado.stockprop', 'sp', 's2.stock_id = sp.stock_id');
     $query->join('gttn_tpps_organization_inventory', 'oi', 'oi.sample_id = s2.stock_id');
     $query->fields('s2', array('stock_id'));
-    $query->condition('sr.type_id', $has_part_cvt);
-    $query->condition('sp.type_id', $tissue_cvt);
+    $query->condition('sr.type_id', $cvt['has_part']);
+    $query->condition('sp.type_id', $cvt['tissue']);
     $query->condition('sp.value', $sample['tissue'], 'ilike');
     $query->condition('oi.organization_id', $org);
     $query->condition('s1.uniquename', '^GTTN-TGDR...-' . $sample['source'] . '$', '~*');
     $query->condition('s2.uniquename', '^GTTN-TGDR...-' . $id . '$', '~*');
-    $query->condition('s2.type_id', $sample_cvt);
+    $query->condition('s2.type_id', $cvt['sample']);
     $query = $query->execute();
     while (($result = $query->fetchObject())) {
       $results[] = $result->stock_id;
