@@ -465,207 +465,52 @@ function gttn_tpps_submit_trees(&$state) {
       'project_stock' => array(),
     );
 
-    $sample_cvt = chado_get_cvterm(array(
-      'name' => 'biological sample',
-      'cv_id' => array(
-        'name' => 'sep',
-      ),
-      'is_obsolete' => 0,
-    ))->cvterm_id;
-
-    $tissue_cvt = chado_get_cvterm(array(
-      'name' => 'Tissue',
-      'cv_id' => array(
-        'name' => 'ncit',
-      ),
-      'is_obsolete' => 0,
-    ))->cvterm_id;
-
-    $dim_cvt = chado_get_cvterm(array(
-      'name' => 'Dimension',
-      'cv_id' => array(
-        'name' => 'ncit',
-      ),
-      'is_obsolete' => 0,
-    ))->cvterm_id;
-
-    $date_cvt = chado_get_cvterm(array(
-      'name' => 'Collection Date',
-      'cv_id' => array(
-        'name' => 'ncit',
-      ),
-      'is_obsolete' => 0,
-    ))->cvterm_id;
-
-    $collector_cvt = chado_get_cvterm(array(
-      'name' => 'specimen collector',
-      'cv_id' => array(
-        'name' => 'obi',
-      ),
-      'is_obsolete' => 0,
-    ))->cvterm_id;
-
-    $method_cvt = chado_get_cvterm(array(
-      'name' => 'Biospecimen Collection Method',
-      'cv_id' => array(
-        'name' => 'ncit',
-      ),
-      'is_obsolete' => 0,
-    ))->cvterm_id;
-
-    $legal_cvt = chado_get_cvterm(array(
-      'name' => 'Legal',
-      'cv_id' => array(
-        'name' => 'ncit',
-      ),
-      'is_obsolete' => 0,
-    ))->cvterm_id;
-
-    $share_cvt = chado_get_cvterm(array(
-      'name' => 'shareable',
-      'is_obsolete' => 0,
-    ))->cvterm_id;
-
-    $remaining_cvt = chado_get_cvterm(array(
-      'name' => 'Volume',
-      'cv_id' => array(
-        'name' => 'ncit',
-      ),
-      'is_obsolete' => 0,
-    ))->cvterm_id;
-
-    $type_cvt = chado_get_cvterm(array(
-      'name' => 'sample type',
-      'is_obsolete' => 0,
-    ))->cvterm_id;
-
-    $analyzed_cvt = chado_get_cvterm(array(
-      'name' => 'sample analyzed',
-      'is_obsolete' => 0,
-    ))->cvterm_id;
-
-    $storage_cvt = chado_get_cvterm(array(
-      'name' => 'storage location',
-      'is_obsolete' => 0,
-    ))->cvterm_id;
+    $cvt = gttn_tpps_sample_cvterms();
 
     foreach ($state['data']['samples'] as $sample) {
       $sample_id = $sample['id'];
       $records['stock'][$sample_id] = array(
         'uniquename' => "$accession-$sample_id",
-        'type_id' => $sample_cvt,
+        'type_id' => $cvt['sample'],
         'organism_id' => gttn_tpps_source_get_organism($sample['source'], $state),
-      );
-
-      $records['stockprop']["$sample_id-tissue"] = array(
-        'type_id' => $tissue_cvt,
-        'value' => $sample['tissue'],
-        '#fk' => array(
-          'stock' => $sample_id,
-        ),
-      );
-
-      $records['stockprop']["$sample_id-dim"] = array(
-        'type_id' => $dim_cvt,
-        'value' => $sample['dimension'],
-        '#fk' => array(
-          'stock' => $sample_id,
-        ),
       );
 
       $date = $sample['date'];
       if (is_array($date)) {
-        $date = date("m/d/Y", strtotime($date['day'] . '-' . $date['month'] . '-' . $date['year']));
+        $sample['date'] = date("m/d/Y", strtotime($date['day'] . '-' . $date['month'] . '-' . $date['year']));
       }
       elseif (is_int($date)) {
-        $date = gttn_tpps_xlsx_translate_date($date);
+        $sample['date'] = gttn_tpps_xlsx_translate_date($date);
       }
-      $records['stockprop']["$sample_id-date"] = array(
-        'type_id' => $date_cvt,
-        'value' => $date,
-        '#fk' => array(
-          'stock' => $sample_id,
-        ),
-      );
+      $source = $sample['source'];
 
-      $records['stockprop']["$sample_id-collector"] = array(
-        'type_id' => $collector_cvt,
-        'value' => $sample['collector'],
-        '#fk' => array(
-          'stock' => $sample_id,
-        ),
-      );
-
-      $records['stockprop']["$sample_id-method"] = array(
-        'type_id' => $method_cvt,
-        'value' => $sample['method'],
-        '#fk' => array(
-          'stock' => $sample_id,
-        ),
-      );
-
-      $records['stockprop']["$sample_id-legal"] = array(
-        'type_id' => $legal_cvt,
-        'value' => $sample['legal'],
-        '#fk' => array(
-          'stock' => $sample_id,
-        ),
-      );
-
-      $records['stockprop']["$sample_id-share"] = array(
-        'type_id' => $share_cvt,
-        'value' => $sample['share'],
-        '#fk' => array(
-          'stock' => $sample_id,
-        ),
-      );
-
-      $records['stockprop']["$sample_id-remaining"] = array(
-        'type_id' => $remaining_cvt,
-        'value' => $sample['remaining'],
-        '#fk' => array(
-          'stock' => $sample_id
-        ),
-      );
-
-      $records['stockprop']["$sample_id-type"] = array(
-        'type_id' => $type_cvt,
-        'value' => $sample['type'],
-        '#fk' => array(
-          'stock' => $sample_id
-        ),
-      );
-
-      $records['stockprop']["$sample_id-analyzed"] = array(
-        'type_id' => $analyzed_cvt,
-        'value' => $sample['analyzed'],
-        '#fk' => array(
-          'stock' => $sample_id
-        ),
-      );
-
-      $records['stockprop']["$sample_id-storage"] = array(
-        'type_id' => $storage_cvt,
-        'value' => $sample['storage'],
-        '#fk' => array(
-          'stock' => $sample_id
-        ),
-      );
+      unset($sample['id']);
+      unset($sample['xylarium']);
+      unset($sample['source']);
+      foreach ($sample as $prop => $value) {
+        $records['stockprop']["$sample_id-$prop"] = array(
+          'type_id' => $cvt[$prop],
+          'value' => $value,
+          '#fk' => array(
+            'stock' => $sample_id,
+          ),
+        );
+      }
 
       $records['stock_relationship'][$sample_id] = array(
-        'type_id' => $cvterms['has_part'],
+        'type_id' => $cvt['has_part'],
         '#fk' => array(
           'object' => $sample_id,
         ),
       );
-      if (!empty($trees[$sample['source']]['stock_id'])) {
+      if (!empty($trees[$source]['stock_id'])) {
         // Don't need to use #fk since the tree stock record has already been
         // created.
-        $records['stock_relationship'][$sample_id]['subject_id'] = $trees[$sample['source']]['stock_id'];
+        $records['stock_relationship'][$sample_id]['subject_id'] = $trees[$source]['stock_id'];
       }
       else {
         // Need to use #fk since the sample stock record doesn't exist yet.
-        $records['stock_relationship'][$sample_id]['#fk']['subject'] = $state['data']['samples'][$sample['source']]['id'];
+        $records['stock_relationship'][$sample_id]['#fk']['subject'] = $state['data']['samples'][$source]['id'];
       }
 
       $sample_count++;
