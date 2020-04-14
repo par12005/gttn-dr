@@ -434,6 +434,18 @@ function gttn_tpps_update_data(&$form, &$form_state) {
             'storage' => $storage ?? ($content[$j][$storage_col] ?? NULL),
           );
         }
+
+        if (gttn_tpps_match_samples($form_state)) {
+          foreach ($form_state['data']['samples'] as $id => $sample) {
+            if (!empty($sample['matches'])) {
+              $existing_sample = gttn_tpps_load_sample(current($sample['matches']));
+              $diff = gttn_tpps_sample_diff($existing_sample, $sample);
+              if (!empty($diff)) {
+                $form_state['data']['samples'][$id]['new_events'] = gttn_tpps_generate_events($diff);
+              }
+            }
+          }
+        }
       }
       // TODO
       break;

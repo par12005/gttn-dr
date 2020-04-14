@@ -484,17 +484,16 @@ function gttn_tpps_submit_trees(&$state) {
       }
       $source = $sample['source'];
 
-      unset($sample['id']);
-      unset($sample['xylarium']);
-      unset($sample['source']);
       foreach ($sample as $prop => $value) {
-        $records['stockprop']["$sample_id-$prop"] = array(
-          'type_id' => $cvt[$prop],
-          'value' => $value,
-          '#fk' => array(
-            'stock' => $sample_id,
-          ),
-        );
+        if (isset($value) and !empty($cvt[$prop])) {
+          $records['stockprop']["$sample_id-$prop"] = array(
+            'type_id' => $cvt[$prop],
+            'value' => $value,
+            '#fk' => array(
+              'stock' => $sample_id,
+            ),
+          );
+        }
       }
 
       $records['stock_relationship'][$sample_id] = array(
@@ -539,12 +538,61 @@ function gttn_tpps_submit_trees(&$state) {
     }
 
     foreach ($state['data']['samples'] as $sample) {
+      db_insert('chado.project_stock')
+        ->fields(array(
+          'stock_id' => $sample['stock_id'],
+          'project_id' => $project_id,
+        ))
+        ->execute();
+
       db_insert('gttn_tpps_organization_inventory')
         ->fields(array(
           'sample_id' => $sample['stock_id'],
           'organization_id' => $state['saved_values'][GTTN_TYPE_PAGE]['project']['props']['organization'],
         ))
         ->execute();
+
+      if (empty($sample['new_events'])) {
+        db_insert('gttn_tpps_sample_event')
+          ->fields(array(
+            'sample_id' => $sample['stock_id'],
+            'event_type_id' => $cvt['recorded event'],
+            'timestamp' => date('c'),
+            'project_id' => $project_id,
+          ))
+          ->execute();
+
+        $date = $sample['date'];
+        if (is_array($date)) {
+          $date = date("m/d/Y", strtotime($date['day'] . '-' . $date['month'] . '-' . $date['year']));
+        }
+        elseif (is_int($date)) {
+          $date = gttn_tpps_xlsx_translate_date($date);
+        }
+
+        db_insert('gttn_tpps_sample_event')
+          ->fields(array(
+            'sample_id' => $sample['stock_id'],
+            'event_type_id' => $cvt['collected event'],
+            'timestamp' => date('c', strtotime($date)),
+            'project_id' => $project_id,
+          ))
+          ->execute();
+      }
+      else {
+        foreach ($sample['new_events'] as $event) {
+          $event['sample_id'] = $sample['stock_id'];
+          $event['project_id'] = $project_id;
+          $event['event_type_id'] = chado_get_cvterm(array(
+            'name' => $event['event_type'],
+            'is_obsolete' => 0,
+          ))->cvterm_id;
+          unset($event['event_type']);
+          db_insert('gttn_tpps_sample_event')
+            ->fields($event)
+            ->execute();
+        }
+      }
     }
   }
 }
@@ -663,7 +711,6 @@ function gttn_tpps_submit_dart(&$state) {
 
   if ($record_count > 0) {
     $fks = gttn_tpps_chado_insert_multi($records);
-    print_r($fks);
     $record_count = 0;
     unset($records);
   }

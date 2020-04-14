@@ -375,12 +375,30 @@ function gttn_tpps_schema() {
           'size' => 'normal',
           'not null' => TRUE,
         ),
+        'project_id' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
       ),
       'foreign keys' => array(
         'stock' => array(
           'table' => 'chado.stock',
           'columns' => array(
             'sample_id' => 'stock_id',
+          ),
+        ),
+        'cvterm' => array(
+          'table' => 'chado.cvterm',
+          'columns' => array(
+            'event_type_id' => 'cvterm_id',
+          ),
+        ),
+        'project' => array(
+          'table' => 'chado.project',
+          'columns' => array(
+            'project_id' => 'project_id',
           ),
         ),
       ),
@@ -429,6 +447,8 @@ function gttn_tpps_alter_gttn_tpps_sample_event() {
     . "WHERE rel.relname = 'gttn_tpps_sample_event' AND contype like 'f';");
   if (!$results->rowCount()) {
     db_query('ALTER TABLE gttn_tpps_sample_event ADD CONSTRAINT gttn_tpps_sample_event_sample_id_fkey FOREIGN KEY (sample_id) REFERENCES chado.stock(stock_id) ON DELETE CASCADE;');
+    db_query('ALTER TABLE gttn_tpps_sample_event ADD CONSTRAINT gttn_tpps_sample_event_event_type_id_fkey FOREIGN KEY (event_type_id) REFERENCES chado.cvterm(cvterm_id) ON DELETE CASCADE;');
+    db_query('ALTER TABLE gttn_tpps_sample_event ADD CONSTRAINT gttn_tpps_sample_event_project_id_fkey FOREIGN KEY (project_id) REFERENCES chado.project(project_id) ON DELETE CASCADE;');
   }
 }
 
@@ -528,6 +548,14 @@ function gttn_tpps_get_cvterms() {
       'SSR Machine' => 'The type of SSR machine used.',
       'DNA storage location' => 'The location where the DNA used for analysis is being stored.',
       'Assay source' => 'The source of genetic assay - MassArray, Illumina, or Thermo.',
+      // Sample event type terms.
+      'collected event' => 'Event when the sample was collected.',
+      'recorded event' => 'Event when the sample was first recorded in GTTN.',
+      'moved event' => 'Event when the sample was moved from one storage location to another.',
+      'split event' => 'Event when the sample was split into two or more parts.',
+      'analyzed event' => 'Event when the sample was analyzed.',
+      'dimension changed event' => 'Event when the dimension of the sample was changed.',
+      'remaining changed event' => 'Event when the remaining amount of the sample was changed.',
     ),
   );
 }
