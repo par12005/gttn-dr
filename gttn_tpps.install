@@ -369,6 +369,12 @@ function gttn_tpps_schema() {
           'type' => 'text',
           'size' => 'normal',
         ),
+        'timestamp' => array(
+          'description' => '',
+          'pgsql_type' => 'timestamp',
+          'size' => 'normal',
+          'not null' => TRUE,
+        ),
       ),
       'foreign keys' => array(
         'stock' => array(
