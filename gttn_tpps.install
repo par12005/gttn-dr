@@ -14,6 +14,8 @@ function gttn_tpps_install() {
 
   gttn_tpps_alter_gttn_tpps_organization_inventory();
 
+  gttn_tpps_alter_gttn_tpps_sample_event();
+
   chado_create_custom_table('genotype_call', array(
     'description' => '',
     'fields' => array(
@@ -339,6 +341,49 @@ function gttn_tpps_schema() {
     );
   }
 
+  if (!db_table_exists('gttn_tpps_sample_event')) {
+    $schema['gttn_tpps_sample_event'] = array(
+      'description' => '',
+      'fields' => array(
+        'gttn_tpps_sample_event_id' => array(
+          'description' => '',
+          'type' => 'serial',
+          'size' => 'normal',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'sample_id' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'event_type_id' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'comment' => array(
+          'description' => '',
+          'type' => 'text',
+          'size' => 'normal',
+        ),
+      ),
+      'foreign keys' => array(
+        'stock' => array(
+          'table' => 'chado.stock',
+          'columns' => array(
+            'sample_id' => 'stock_id',
+          ),
+        ),
+      ),
+      'primary key' => array(
+        'gttn_tpps_sample_event_id',
+      ),
+    );
+  }
+
   return $schema;
 }
 
@@ -364,9 +409,20 @@ function gttn_tpps_alter_gttn_tpps_organization_inventory() {
     . "FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
     . "WHERE rel.relname = 'gttn_tpps_organization_inventory' AND contype like 'f';");
   if (!$results->rowCount()) {
-    // Create foreign key for gttn_tpps_submission to reference users table.
     db_query('ALTER TABLE gttn_tpps_organization_inventory ADD CONSTRAINT gttn_tpps_organization_inventory_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES gttn_profile_organization(organization_id) ON DELETE CASCADE;');
     db_query('ALTER TABLE gttn_tpps_organization_inventory ADD CONSTRAINT gttn_tpps_organization_inventory_sample_id_fkey FOREIGN KEY (sample_id) REFERENCES chado.stock(stock_id) ON DELETE CASCADE;');
+  }
+}
+
+/**
+ *
+ */
+function gttn_tpps_alter_gttn_tpps_sample_event() {
+  $results = db_query("SELECT contype "
+    . "FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
+    . "WHERE rel.relname = 'gttn_tpps_sample_event' AND contype like 'f';");
+  if (!$results->rowCount()) {
+    db_query('ALTER TABLE gttn_tpps_sample_event ADD CONSTRAINT gttn_tpps_sample_event_sample_id_fkey FOREIGN KEY (sample_id) REFERENCES chado.stock(stock_id) ON DELETE CASCADE;');
   }
 }
 
