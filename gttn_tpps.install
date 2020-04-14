@@ -436,6 +436,9 @@ function gttn_tpps_get_cvterms() {
     'obi' => array(
       'specimen collector',
     ),
+    'sep' => array(
+      'biological sample',
+    ),
     'analysis_property' => array(
       'Analysis Type',
     ),
