@@ -24,7 +24,6 @@ function gttn_tpps_submit_all($accession) {
     gttn_tpps_submit_organism($form_state);
 
     gttn_tpps_submit_trees($form_state);
-    print_r($form_state['data']['trees']);
 
     if (!empty($form_state['saved_values'][GTTN_PAGE_4]['dart'])) {
       gttn_tpps_submit_dart($form_state);
@@ -161,7 +160,7 @@ function gttn_tpps_submit_organism(&$state) {
       ->fields('o', array('organism_id'))
       ->condition('genus', $genus)
       ->condition('species', $species)
-      ->condition('type_id', tripal_get_cvterm($org_type)->cvterm_id)
+      ->condition('type_id', chado_get_cvterm($org_type)->cvterm_id)
       ->range(0, 1)
       ->execute()->fetchObject()->organism_id ?? NULL;
 
@@ -466,7 +465,7 @@ function gttn_tpps_submit_trees(&$state) {
       'project_stock' => array(),
     );
 
-    $sample_cvt = tripal_get_cvterm(array(
+    $sample_cvt = chado_get_cvterm(array(
       'name' => 'biological sample',
       'cv_id' => array(
         'name' => 'sep',
@@ -474,7 +473,7 @@ function gttn_tpps_submit_trees(&$state) {
       'is_obsolete' => 0,
     ))->cvterm_id;
 
-    $tissue_cvt = tripal_get_cvterm(array(
+    $tissue_cvt = chado_get_cvterm(array(
       'name' => 'Tissue',
       'cv_id' => array(
         'name' => 'ncit',
@@ -482,7 +481,7 @@ function gttn_tpps_submit_trees(&$state) {
       'is_obsolete' => 0,
     ))->cvterm_id;
 
-    $dim_cvt = tripal_get_cvterm(array(
+    $dim_cvt = chado_get_cvterm(array(
       'name' => 'Dimension',
       'cv_id' => array(
         'name' => 'ncit',
@@ -490,7 +489,7 @@ function gttn_tpps_submit_trees(&$state) {
       'is_obsolete' => 0,
     ))->cvterm_id;
 
-    $date_cvt = tripal_get_cvterm(array(
+    $date_cvt = chado_get_cvterm(array(
       'name' => 'Collection Date',
       'cv_id' => array(
         'name' => 'ncit',
@@ -498,7 +497,7 @@ function gttn_tpps_submit_trees(&$state) {
       'is_obsolete' => 0,
     ))->cvterm_id;
 
-    $collector_cvt = tripal_get_cvterm(array(
+    $collector_cvt = chado_get_cvterm(array(
       'name' => 'specimen collector',
       'cv_id' => array(
         'name' => 'obi',
@@ -506,7 +505,7 @@ function gttn_tpps_submit_trees(&$state) {
       'is_obsolete' => 0,
     ))->cvterm_id;
 
-    $method_cvt = tripal_get_cvterm(array(
+    $method_cvt = chado_get_cvterm(array(
       'name' => 'Biospecimen Collection Method',
       'cv_id' => array(
         'name' => 'ncit',
@@ -514,7 +513,7 @@ function gttn_tpps_submit_trees(&$state) {
       'is_obsolete' => 0,
     ))->cvterm_id;
 
-    $legal_cvt = tripal_get_cvterm(array(
+    $legal_cvt = chado_get_cvterm(array(
       'name' => 'Legal',
       'cv_id' => array(
         'name' => 'ncit',
@@ -522,12 +521,12 @@ function gttn_tpps_submit_trees(&$state) {
       'is_obsolete' => 0,
     ))->cvterm_id;
 
-    $share_cvt = tripal_get_cvterm(array(
+    $share_cvt = chado_get_cvterm(array(
       'name' => 'shareable',
       'is_obsolete' => 0,
     ))->cvterm_id;
 
-    $remaining_cvt = tripal_get_cvterm(array(
+    $remaining_cvt = chado_get_cvterm(array(
       'name' => 'Volume',
       'cv_id' => array(
         'name' => 'ncit',
@@ -535,17 +534,17 @@ function gttn_tpps_submit_trees(&$state) {
       'is_obsolete' => 0,
     ))->cvterm_id;
 
-    $type_cvt = tripal_get_cvterm(array(
+    $type_cvt = chado_get_cvterm(array(
       'name' => 'sample type',
       'is_obsolete' => 0,
     ))->cvterm_id;
 
-    $analyzed_cvt = tripal_get_cvterm(array(
+    $analyzed_cvt = chado_get_cvterm(array(
       'name' => 'sample analyzed',
       'is_obsolete' => 0,
     ))->cvterm_id;
 
-    $storage_cvt = tripal_get_cvterm(array(
+    $storage_cvt = chado_get_cvterm(array(
       'name' => 'storage location',
       'is_obsolete' => 0,
     ))->cvterm_id;
@@ -722,39 +721,39 @@ function gttn_tpps_submit_dart(&$state) {
   );
 
   $cvterms = array(
-    'dart' => tripal_get_cvterm(array(
+    'dart' => chado_get_cvterm(array(
       'name' => 'direct analysis in real time',
       'cv_id' => array(
         'name' => 'chmo',
       ),
       'is_obsolete' => 0,
     ))->cvterm_id,
-    'collector' => tripal_get_cvterm(array(
+    'collector' => chado_get_cvterm(array(
       'name' => 'specimen collector',
       'cv_id' => array(
         'name' => 'obi',
       ),
       'is_obsolete' => 0,
     ))->cvterm_id,
-    'dart_type' => tripal_get_cvterm(array(
+    'dart_type' => chado_get_cvterm(array(
       'name' => 'type of DART',
       'is_obsolete' => 0,
     ))->cvterm_id,
-    'settings' => tripal_get_cvterm(array(
+    'settings' => chado_get_cvterm(array(
       'name' => 'Device Parameters',
       'cv_id' => array(
         'name' => 'ncit',
       ),
       'is_obsolete' => 0,
     ))->cvterm_id,
-    'lab' => tripal_get_cvterm(array(
+    'lab' => chado_get_cvterm(array(
       'name' => 'Laboratory Vendor Name',
       'cv_id' => array(
         'name' => 'ncit',
       ),
       'is_obsolete' => 0,
     ))->cvterm_id,
-    'cal_type' => tripal_get_cvterm(array(
+    'cal_type' => chado_get_cvterm(array(
       'name' => 'calibration type',
       'is_obsolete' => 0,
     ))->cvterm_id,
@@ -834,22 +833,22 @@ function gttn_tpps_submit_isotope(&$state) {
   gttn_tpps_add_project_file($state, $iso['file']);
 
   $cvterms = array(
-    'isotope' => tripal_get_cvterm(array(
+    'isotope' => chado_get_cvterm(array(
       'name' => 'Isotope',
       'cv_id' => array(
         'name' => 'ncit',
       ),
       'is_obsolete' => 0,
     ))->cvterm_id,
-    'std' => tripal_get_cvterm(array(
+    'std' => chado_get_cvterm(array(
       'name' => 'isotope standard',
       'is_obsolete' => 0,
     ))->cvterm_id,
-    'borer' => tripal_get_cvterm(array(
+    'borer' => chado_get_cvterm(array(
       'name' => 'increment borer',
       'is_obsolete' => 0,
     ))->cvterm_id,
-    'type' => tripal_get_cvterm(array(
+    'type' => chado_get_cvterm(array(
       'name' => 'isotope type',
       'is_obsolete' => 0,
     ))->cvterm_id,
