@@ -484,12 +484,6 @@ function page_4_create_form(&$form, &$form_state) {
       '#title' => t('DNA Quality'),
       '#gttn_tpps_val' => array(),
     );
-
-    $form['genetic']['location'] = array(
-      '#type' => 'textfield',
-      '#title' => t('DNA Storage Location'),
-      '#gttn_tpps_val' => array(),
-    );
   }
 
   if (!empty($types['Anatomical Reference Data'])) {

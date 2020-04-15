@@ -771,7 +771,7 @@ function gttn_tpps_submit_isotope(&$state) {
     'accession' => $state['accession'],
     'core_len' => $core_len,
     'standards' => $standards,
-    'type' => $types,
+    'types' => $types,
     'groups' => $iso['file-groups'],
     'record_count' => 0,
     'suffix' => 0,
@@ -890,6 +890,7 @@ function gttn_tpps_submit_genetic(&$state) {
       gttn_tpps_add_project_file($state, $genetic['assay_design_file']);
 
       gttn_tpps_add_project_file($state, $genetic['assay_genotype_table']);
+      // TODO.
     }
   }
 
@@ -929,8 +930,6 @@ function gttn_tpps_submit_genetic(&$state) {
   gttn_tpps_insert_prop('project', $project_id, 'quality_value', $genetic['quality'], array(
     'cv' => 'sequence',
   ));
-
-  gttn_tpps_insert_prop('project', $project_id, 'DNA storage location', $genetic['location']);
 }
 
 /**
