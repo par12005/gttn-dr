@@ -64,6 +64,13 @@ function gttn_tpps_submit_project(&$state) {
   $project['id'] = $project_id;
   $props = $project['props'];
 
+  db_insert('gttn_tpps_organization_project')
+    ->fields(array(
+      'project_id' => $project_id,
+      'organization_id' => $state['saved_values'][GTTN_TYPE_PAGE]['project']['props']['organization'],
+    ))
+    ->execute();
+
   gttn_tpps_insert_prop('project', $project_id, 'analysis_date', array(
     $project['props']['analysis_date'],
   ));

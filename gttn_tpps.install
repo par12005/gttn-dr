@@ -10,11 +10,7 @@
  * This function checks if Ultimate Cron is installed, and installs it if necessary.
  */
 function gttn_tpps_install() {
-  gttn_tpps_alter_gttn_tpps_submission();
-
-  gttn_tpps_alter_gttn_tpps_organization_inventory();
-
-  gttn_tpps_alter_gttn_tpps_sample_event();
+  gttn_tpps_alter_tables();
 
   chado_create_custom_table('genotype_call', array(
     'description' => '',
@@ -408,13 +404,54 @@ function gttn_tpps_schema() {
     );
   }
 
+  if (!db_table_exists('gttn_tpps_organization_project')) {
+    $schema['gttn_tpps_organization_project'] = array(
+      'description' => '',
+      'fields' => array(
+        'organization_id' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'project_id' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+      ),
+      'foreign keys' => array(
+        'gttn_profile_organization' => array(
+          'table' => 'gttn_profile_organization',
+          'columns' => array(
+            'organization_id' => 'organization_id',
+          ),
+        ),
+        'project' => array(
+          'table' => 'chado.project',
+          'columns' => array(
+            'project_id' => 'project_id',
+          ),
+        ),
+      ),
+      'unique keys' => array(
+        'c1' => array(
+          'organization_id',
+          'project_id',
+        ),
+      ),
+    );
+  }
+
   return $schema;
 }
 
 /**
  * 
  */
-function gttn_tpps_alter_gttn_tpps_submission() {
+function gttn_tpps_alter_tables() {
+  // gttn_tpps_submission
   $results = db_query("SELECT contype "
     . "FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
     . "WHERE rel.relname = 'gttn_tpps_submission' AND contype like 'f';");
@@ -423,12 +460,8 @@ function gttn_tpps_alter_gttn_tpps_submission() {
     db_query('ALTER TABLE gttn_tpps_submission ADD CONSTRAINT gttn_tpps_submission_uid_fkey FOREIGN KEY (uid) REFERENCES users(uid) ON DELETE CASCADE;');
     db_query('ALTER TABLE gttn_tpps_submission ADD CONSTRAINT gttn_tpps_submission_dbxref_id_fkey FOREIGN KEY (dbxref_id) REFERENCES chado.dbxref(dbxref_id) ON DELETE CASCADE;');
   }
-}
 
-/**
- *
- */
-function gttn_tpps_alter_gttn_tpps_organization_inventory() {
+  // gttn_tpps_organization_inventory
   $results = db_query("SELECT contype "
     . "FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
     . "WHERE rel.relname = 'gttn_tpps_organization_inventory' AND contype like 'f';");
@@ -436,12 +469,17 @@ function gttn_tpps_alter_gttn_tpps_organization_inventory() {
     db_query('ALTER TABLE gttn_tpps_organization_inventory ADD CONSTRAINT gttn_tpps_organization_inventory_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES gttn_profile_organization(organization_id) ON DELETE CASCADE;');
     db_query('ALTER TABLE gttn_tpps_organization_inventory ADD CONSTRAINT gttn_tpps_organization_inventory_sample_id_fkey FOREIGN KEY (sample_id) REFERENCES chado.stock(stock_id) ON DELETE CASCADE;');
   }
-}
 
-/**
- *
- */
-function gttn_tpps_alter_gttn_tpps_sample_event() {
+  // gttn_tpps_organization_project
+  $results = db_query("SELECT contype "
+    . "FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
+    . "WHERE rel.relname = 'gttn_tpps_organization_project' AND contype like 'f';");
+  if (!$results->rowCount()) {
+    db_query('ALTER TABLE gttn_tpps_organization_project ADD CONSTRAINT gttn_tpps_organization_project_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES gttn_profile_organization(organization_id) ON DELETE CASCADE;');
+    db_query('ALTER TABLE gttn_tpps_organization_project ADD CONSTRAINT gttn_tpps_organization_project_project_id_fkey FOREIGN KEY (project_id) REFERENCES chado.project(project_id) ON DELETE CASCADE;');
+  }
+
+  // gttn_tpps_sample_event
   $results = db_query("SELECT contype "
     . "FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
     . "WHERE rel.relname = 'gttn_tpps_sample_event' AND contype like 'f';");
