@@ -27,6 +27,8 @@ function page_3_create_form(&$form, &$form_state) {
     '#tree' => TRUE,
     '#prefix' => '<div id="gttn_tpps_accession">',
     '#suffix' => '</div>',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
   );
 
   $species_number = $form_state['stats']['species_count'];

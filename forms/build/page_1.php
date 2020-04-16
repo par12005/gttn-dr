@@ -63,6 +63,8 @@ function gttn_tpps_page_1_create_form(&$form, $form_state) {
       'Genetic Reference Data' => 'Genetic Reference Data',
       'Anatomical Reference Data' => 'Anatomical Reference Data',
     ),
+    '#prefix' => '<div class="gttn-fieldset"><span class="fieldset-legend"><span class="fieldset-legend-prefix element-invisible">Show</span> Data Types<span class="summary"></span></span><div class="gttn-fieldset-wrapper">',
+    '#suffix' => '</div></div>',
   );
 
   // Create the back button.

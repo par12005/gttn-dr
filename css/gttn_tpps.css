@@ -59,7 +59,7 @@ th > div.form-type-select > .ajax-progress {
 }
 .form-type-managed-file,
 .form-type-radios {
-  border-top: 1px solid #b5e0ba;
+  /* border-top: 1px solid #b5e0ba; */
   border-bottom: 1px solid #b5e0ba;
 }
 .form-type-managed-file {
@@ -67,6 +67,9 @@ th > div.form-type-select > .ajax-progress {
 }
 .form-managed-file {
   text-align: right;
+}
+.form-managed-file legend {
+  text-align: left;
 }
 .form-managed-file > fieldset {
   margin-top: 20px;
@@ -85,4 +88,59 @@ th > div.form-type-select > .ajax-progress {
 }
 #gttn_tpps_table_display td {
   padding: 10px;
+}
+
+#gttn-tpps-main fieldset,
+#gttn-tpps-main .gttn-fieldset {
+  margin-top: 25px !important;
+  margin-bottom: 35px !important;
+}
+
+#gttn-tpps-main fieldset input[id*='map_button'] {
+  margin-bottom: 10px;
+}
+
+#gttn-tpps-main .gttn-fieldset .fieldset-legend,
+#edit-group-welcome .fieldset-legend,
+#edit-project-props .fieldset-legend,
+#edit-data-type-fieldset .fieldset-legend,
+#edit-organism .fieldset-legend,
+#gttn_tpps_accession .fieldset-legend,
+#gttn_tpps_samples .fieldset-legend,
+#edit-dart .fieldset-legend,
+#edit-isotope .fieldset-legend,
+#edit-genetic .fieldset-legend,
+#edit-anatomy .fieldset-legend
+{
+  font-size: 20px;
+  font-weight: bold;
+  text-transform: uppercase;
+  display: inline-block;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-right: 20px;
+  padding-left: 20px;
+  background-color: #ffffff;
+  border-left: 20px solid #19b697;
+  border-right: 1px solid #1abc9c;
+  border-top: 1px solid #1abc9c;
+  border-bottom: 1px solid #1abc9c;
+  margin-bottom: 15px;
+}
+
+#gttn-tpps-main .gttn-fieldset .gttn-fieldset-wrapper,
+#edit-group-welcome .fieldset-wrapper,
+#edit-project-props .fieldset-wrapper,
+#edit-data-type-fieldset .fieldset-wrapper,
+#edit-organism .fieldset-wrapper,
+#gttn_tpps_accession > fieldset > .fieldset-wrapper,
+#gttn_tpps_samples > fieldset > .fieldset-wrapper,
+#edit-dart .fieldset-wrapper,
+#edit-isotope .fieldset-wrapper,
+#edit-genetic .fieldset-wrapper,
+#edit-anatomy .fieldset-wrapper
+{
+  border: 1px solid #1abc9c2e;
+  padding: 10px;
+  border-radius: 2px;
 }

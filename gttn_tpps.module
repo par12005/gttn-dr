@@ -486,7 +486,7 @@ function gttn_tpps_managed_file_process($element, &$form_state, $form) {
       $saved_vals = $form_state['saved_values'][$form_state['stage']];
       // Add types and data to columns element.
       $element['columns']['#type'] = 'fieldset';
-      $element['columns']['#title'] = t('<div class="fieldset-title">Define Data</div>');
+      $element['columns']['#title'] = t('<div style="font-size:16px">Define Data</div>');
       $element['columns']['#collapsible'] = TRUE;
 
       // Stop using the file so it can be deleted if the user clicks 'remove'.
@@ -773,6 +773,7 @@ function gttn_tpps_main($form, &$form_state, $accession = NULL) {
       gttn_tpps_front_create_form($form, $form_state);
 
       drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
+      drupal_add_css(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_CSS_PATH);
 
       return $form;
 

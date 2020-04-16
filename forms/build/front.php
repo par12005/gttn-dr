@@ -49,11 +49,19 @@ function gttn_tpps_front_create_form(&$form, $form_state) {
       }
     }
 
+  //Create a fieldset/fieldgroup
+  $form['group_welcome'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Welcome'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
     // If the options array has more than one option, then that means that
     // the user has incomplete submissions that they can choose from, so we
     // should provide them with a drop-down menu.
     if (count($options_arr) > 1) {
-      $form['accession'] = array(
+      $form['group_welcome']['accession'] = array(
         '#type' => 'select',
         '#title' => t('Would you like to load an old GTTN-TPPS submission, or create a new one?'),
         '#options' => $options_arr,
@@ -66,7 +74,7 @@ function gttn_tpps_front_create_form(&$form, $form_state) {
   }
 
   // Create Continue to GTTN-TPPS button.
-  $form['Next'] = array(
+  $form['group_welcome']['Next'] = array(
     '#type' => 'submit',
     '#value' => t('Continue to GTTN-TPPS'),
   );
@@ -76,10 +84,10 @@ function gttn_tpps_front_create_form(&$form, $form_state) {
 
   // Add the introductory text to the first form element.
   if (isset($form['accession'])) {
-    $form['accession']['#prefix'] = $prefix_text;
+    $form['group_welcome']['accession']['#prefix'] = $prefix_text;
   }
   else {
-    $form['Next']['#prefix'] = $prefix_text;
+    $form['group_welcome']['Next']['#prefix'] = $prefix_text;
   }
 
   return $form;

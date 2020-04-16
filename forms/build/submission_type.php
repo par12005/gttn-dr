@@ -20,16 +20,21 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
   $form['project']['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Submission Name: *'),
+    '#prefix' => '<div class="gttn-fieldset"><span class="fieldset-legend"><span class="fieldset-legend-prefix element-invisible">Show</span> Project basic information<span class="summary"></span></span><div class="gttn-fieldset-wrapper">',
   );
 
   $form['project']['description'] = array(
     '#type' => 'textarea',
     '#title' => t('Data Collection Purpose: *'),
     '#description' => t('Please provide a brief description of why this data was collected.'),
+    '#suffix' => '</div></div>',
   );
 
   $form['project']['props'] = array(
     '#type' => 'fieldset',
+    '#title' => t('Project background'),
+    '#collapsible' => FALSE,
+    '#collapsed' => TRUE,
   );
 
   if (count($user->organizations) > 1) {
