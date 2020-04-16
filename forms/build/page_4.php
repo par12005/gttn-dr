@@ -57,6 +57,7 @@ function page_4_create_form(&$form, &$form_state) {
 
     $form['dart'] = array(
       '#type' => 'fieldset',
+      '#title' => t('DART Reference Data'),
       'file' => array(
         '#type' => 'managed_file',
         '#title' => t('DART Reference Metadata File: *'),
@@ -487,11 +488,42 @@ function page_4_create_form(&$form, &$form_state) {
   }
 
   if (!empty($types['Anatomical Reference Data'])) {
-    $form['anatomic'] = array(
+    $slides_upload_location = 'public://' . variable_get('gttn_tpps_anatomy_files_dir', 'gttn_tpps_anatomy');
+    $form['anatomy'] = array(
       '#type' => 'fieldset',
       '#title' => t('Anatomical Reference Data information'),
       // TODO
     );
+
+    $field = array(
+      '#type' => 'fieldset',
+      '#title' => 'Microscope slide image !num',
+      'image' => array(
+        '#type' => 'managed_file',
+        '#upload_validators' => array(
+          'file_validate_extensions' => array('img jpg jpeg png svg'),
+        ),
+        '#upload_location' => array($slides_upload_location),
+        '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: img jpg jpeg png svg</span>',
+        '#standard_name' => 'Slide_Image_!num',
+      ),
+      'description' => array(
+        '#type' => 'textfield',
+        '#title' => 'Slide image !num description:',
+        '#description' => t('Please provide a brief description of the provided image'),
+      ),
+    );
+    gttn_tpps_dynamic_list($form, $form_state, 'slides', $field, array(
+      'parents' => array('anatomy'),
+      'title' => t('Microscope slides:'),
+      'label' => t('Image'),
+      'default' => 1,
+      'substitute_fields' => array(
+        '#title',
+        array('image', '#standard_name'),
+        array('description', '#title'),
+      ),
+    ));
   }
 
   // Create the back button.

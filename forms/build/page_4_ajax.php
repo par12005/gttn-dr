@@ -65,3 +65,10 @@ function snps_file_callback($form, $form_state) {
   // Return the ajax commands.
   return array('#type' => 'ajax', '#commands' => $commands);
 }
+
+/**
+ *
+ */
+function gttn_tpps_slides_callback($form, $form_state) {
+  return $form['anatomy']['slides'];
+}
