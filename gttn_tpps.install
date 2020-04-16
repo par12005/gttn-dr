@@ -535,7 +535,6 @@ function gttn_tpps_get_cvterms() {
       'Collection Date',
       'Biospecimen Collection Method',
       'Volume|NCIT:C25335',
-      'Legal',
       'Device Parameters',
       'Laboratory Vendor Name',
       'Isotope',

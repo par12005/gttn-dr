@@ -385,11 +385,6 @@ function page_3_create_form(&$form, &$form_state) {
       );
     }
 
-    $form['samples']['legal'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('These samples were obtained legally'),
-    );
-
     $form['samples']['sharable'] = array(
       '#type' => 'checkbox',
       '#title' => t('These samples can be shared'),

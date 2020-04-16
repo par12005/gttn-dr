@@ -82,7 +82,6 @@ function gttn_tpps_load_sample($stock_id) {
   $query->leftJoin('chado.stockprop', 'sp6', 'sp6.stock_id = s.stock_id and sp6.type_id = ' . $cvt['remaining']);
   $query->leftJoin('chado.stockprop', 'sp7', 'sp7.stock_id = s.stock_id and sp7.type_id = ' . $cvt['type']);
   $query->leftJoin('chado.stockprop', 'sp8', 'sp8.stock_id = s.stock_id and sp8.type_id = ' . $cvt['analyzed']);
-  $query->leftJoin('chado.stockprop', 'sp9', 'sp9.stock_id = s.stock_id and sp9.type_id = ' . $cvt['legal']);
   $query->leftJoin('chado.stockprop', 'sp10', 'sp10.stock_id = s.stock_id and sp10.type_id = ' . $cvt['share']);
   $query->leftJoin('chado.stockprop', 'sp11', 'sp11.stock_id = s.stock_id and sp11.type_id = ' . $cvt['storage']);
   $query->addExpression('s.stock_id', 'stock_id');
@@ -97,7 +96,6 @@ function gttn_tpps_load_sample($stock_id) {
   $query->addExpression('sp6.value', 'remaining');
   $query->addExpression('sp7.value', 'type');
   $query->addExpression('sp8.value', 'analyzed');
-  $query->addExpression('sp9.value', 'legal');
   $query->addExpression('sp10.value', 'share');
   $query->addExpression('sp11.value', 'storage');
   $query->condition('s.stock_id', $stock_id);
@@ -120,7 +118,6 @@ function gttn_tpps_load_sample($stock_id) {
       'remaining' => $result->remaining,
       'type' => $result->type,
       'analyzed' => $result->analyzed,
-      'legal' => $result->legal,
       'share' => $result->share,
       'storage' => $result->storage,
       'matches' => gttn_tpps_match_sample($result->id, $result->org, $result->tissue, $result->source, $result->stock_id)
@@ -236,6 +233,9 @@ function gttn_tpps_sample_diff($s1, $s2) {
   return $result;
 }
 
+/**
+ *
+ */
 function gttn_tpps_generate_events($diff) {
   $results = array();
   foreach ($diff as $type => $info) {
@@ -343,13 +343,6 @@ function gttn_tpps_sample_cvterms() {
     ))->cvterm_id,
     'analyzed' => chado_get_cvterm(array(
       'name' => 'sample analyzed',
-      'is_obsolete' => 0,
-    ))->cvterm_id,
-    'legal' => chado_get_cvterm(array(
-      'name' => 'Legal',
-      'cv_id' => array(
-        'name' => 'ncit',
-      ),
       'is_obsolete' => 0,
     ))->cvterm_id,
     'share' => chado_get_cvterm(array(

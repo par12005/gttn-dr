@@ -413,7 +413,6 @@ function gttn_tpps_update_data(&$form, &$form_state) {
           $analyzed_col = array_search(11, $columns);
         }
 
-        $legal = $form_state['values']['samples']['legal'] ? TRUE : FALSE;
         $share = $form_state['values']['samples']['sharable'] ? TRUE : FALSE;
 
         for ($j = 0; $j < count($content) - 1; $j++) {
@@ -429,7 +428,6 @@ function gttn_tpps_update_data(&$form, &$form_state) {
             'remaining' => $content[$j][$remaining_col],
             'type' => $samples_type ? 'Physical' : 'DNA',
             'analyzed' => $analyzed ?? ($content[$j][$analyzed_col] ?? NULL),
-            'legal' => $legal ?? NULL,
             'share' => $share ?? NULL,
             'storage' => $storage ?? ($content[$j][$storage_col] ?? NULL),
           );
