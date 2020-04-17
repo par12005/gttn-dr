@@ -90,6 +90,19 @@ th > div.form-type-select > .ajax-progress {
   padding: 10px;
 }
 
+#gttn-tpps-reference-search {
+  margin-bottom: 10px;
+}
+#gttn-tpps-reference-search select {
+  height: 28px;
+}
+#gttn-tpps-reference-search-wrapper  {
+  margin: 10px 0px;
+}
+#gttn-tpps-reference-search-wrapper > div {
+  display: inline-block;
+}
+
 #gttn-tpps-main fieldset,
 #gttn-tpps-main .gttn-fieldset {
   margin-top: 25px !important;
