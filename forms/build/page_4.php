@@ -492,18 +492,16 @@ function page_4_create_form(&$form, &$form_state) {
     $form['anatomy'] = array(
       '#type' => 'fieldset',
       '#title' => t('Anatomical Reference Data information'),
-      // TODO
     );
 
     $field = array(
       '#type' => 'fieldset',
-      '#title' => 'Microscope slide image !num',
       'image' => array(
         '#type' => 'managed_file',
         '#upload_validators' => array(
           'file_validate_extensions' => array('img jpg jpeg png svg'),
         ),
-        '#upload_location' => array($slides_upload_location),
+        '#upload_location' => $slides_upload_location,
         '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: img jpg jpeg png svg</span>',
         '#standard_name' => 'Slide_Image_!num',
       ),
@@ -519,7 +517,6 @@ function page_4_create_form(&$form, &$form_state) {
       'label' => t('Image'),
       'default' => 1,
       'substitute_fields' => array(
-        '#title',
         array('image', '#standard_name'),
         array('description', '#title'),
       ),
