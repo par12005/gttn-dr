@@ -21,9 +21,11 @@ function gttn_tpps_match_samples(&$state) {
 /**
  *
  */
-function gttn_tpps_match_sample($sample, $org, $stock_id = NULL) {
+function gttn_tpps_match_sample($sample, $org = NULL, $stock_id = NULL) {
   $results = array();
   $cvt = gttn_tpps_sample_cvterms();
+  $org = $org ?? $sample['org'];
+  $stock_id = $stock_id ?? ($sample['stock_id'] ?? NULL);
 
   $date = $sample['date'];
   if (is_array($date)) {
@@ -120,8 +122,8 @@ function gttn_tpps_load_sample($stock_id) {
       'analyzed' => $result->analyzed,
       'share' => $result->share,
       'storage' => $result->storage,
-      'matches' => gttn_tpps_match_sample($result->id, $result->org, $result->tissue, $result->source, $result->stock_id)
     );
+    $sample['matches'] = gttn_tpps_match_sample($sample);
     $sample['events'] = gttn_tpps_sample_events($sample);
     foreach ($sample['events'] as $event) {
       gttn_tpps_sample_update($sample, $event);
