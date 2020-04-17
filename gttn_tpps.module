@@ -27,6 +27,7 @@ require_once 'includes/chado_utils.inc';
 require_once 'includes/opencage_utils.inc';
 require_once 'includes/match_trees.inc';
 require_once 'includes/sample.inc';
+require_once 'includes/reference.inc';
 
 /**
  * Implements hook_menu().
@@ -157,6 +158,27 @@ function gttn_tpps_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  $items['reference'] = array(
+    'title' => 'Browse Reference Data',
+    'page callback' => 'gttn_tpps_reference',
+    'access callback' => 'gttn_tpps_access',
+    'access arguments' => array('browse_reference'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['reference/top'] = $items['reference'];
+  $items['reference/top']['page callback'] = 'gttn_tpps_reference_top_callback';
+  $items['reference/top']['type'] = MENU_CALLBACK;
+
+  $items['reference/%/%'] = array(
+    'title' => 'Reference Data Details',
+    'page callback' => 'gttn_tpps_reference',
+    'page arguments' => array(1, 2),
+    'access callback' => 'gttn_tpps_access',
+    'access arguments' => array('browse_reference'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
   return $items;
 }
 
@@ -194,6 +216,11 @@ function gttn_tpps_permission() {
   $perms['view own gttn-tpps submission'] = array(
     'title' => t('View own GTTN-TPPS submissions'),
     'description' => t('View GTTN-TPPS submissions as a particular user.'),
+  );
+
+  $perms['browse_reference'] = array(
+    'title' => t('Browse Reference Database'),
+    'description' => t('Enables users to browse the reference database. This permission will only allow users to browse reference data which they have the necessary permissions to see.'),
   );
 
   return $perms;
@@ -287,6 +314,9 @@ function gttn_tpps_access($permission, array $args = array()) {
           }
         }
         return FALSE;
+
+      case 'browse_reference':
+        return TRUE;
 
       default:
         return TRUE;
@@ -776,7 +806,6 @@ function gttn_tpps_main($form, &$form_state, $accession = NULL) {
       drupal_add_css(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_CSS_PATH);
 
       return $form;
-
     }
     else {
       // First access, and with accession in link.

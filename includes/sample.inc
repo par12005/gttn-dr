@@ -110,7 +110,7 @@ function gttn_tpps_load_sample($stock_id) {
     $sample = array(
       'id' => $result->id,
       'stock_id' => $result->stock_id,
-      'org' => $result->stock_id,
+      'org' => $result->org,
       'tissue' => $result->tissue,
       'source' => $result->source,
       'dimension' => $result->dimension,

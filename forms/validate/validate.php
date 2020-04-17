@@ -565,7 +565,7 @@ function gttn_tpps_update_tree($row, array &$options) {
   $org_num = $options['org_num'];
   if ($options['organisms']['number'] != 1 and $options['single_file']) {
     $org_full_name = $row[$cols['org']] ?? "{$row[$cols['genus']]} {$row[$cols['species']]}";
-    $org_num = array_search($org_full_name, $options['organsims']);
+    $org_num = array_search($org_full_name, $options['organisms']);
   }
   $trees[$tree_id] = $trees[$tree_id] ?? array(
     'id' => $tree_id,
