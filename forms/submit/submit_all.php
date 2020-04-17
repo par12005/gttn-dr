@@ -783,6 +783,7 @@ function gttn_tpps_submit_isotope(&$state) {
     'record_count' => 0,
     'suffix' => 0,
     'cvterms' => $cvterms,
+    'samples' => $state['data']['samples'],
   );
 
   gttn_tpps_file_iterator($iso['file'], 'gttn_tpps_process_isotope', $options);
@@ -1335,6 +1336,7 @@ function gttn_tpps_process_isotope($row, array &$options) {
   $records = &$options['records'];
   $accession = $options['accession'];
   $groups = $options['groups'];
+  $samples = $options['samples'];
   $standards = $options['standards'];
   $types = $options['types'];
   $suffix = &$options['suffix'];
@@ -1354,6 +1356,13 @@ function gttn_tpps_process_isotope($row, array &$options) {
       'name' => $name,
       'value' => $row[$col_id],
       'attr_id' => $cvterms['isotope'],
+    );
+
+    $records['stock_phenotype'][$isotope_name] = array(
+      'stock_id' => $samples[$sample_id]['stock_id'],
+      '#fk' => array(
+        'phenotype' => $isotope_name,
+      ),
     );
 
     if ($options['core_len'] !== FALSE) {
