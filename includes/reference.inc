@@ -248,7 +248,7 @@ function gttn_tpps_reference_filter_submission(&$item, $params) {
       $parts = explode(' ', $value);
       foreach ($item['data']['organism'] as $info) {
         foreach ($parts as $part) {
-          if (!empty($parts) and (preg_match("/$part/i", $info['genus']) or preg_match("/$part/i", $info['species']))) {
+          if (!empty($part) and (preg_match("/$part/i", $info['genus']) or preg_match("/$part/i", $info['species']))) {
             return TRUE;
           }
         }
@@ -273,7 +273,36 @@ function gttn_tpps_reference_filter_submission(&$item, $params) {
  *
  */
 function gttn_tpps_reference_filter_sample(&$item, $params) {
-  // TODO
+  $value = $params['value'] ?? NULL;
+  switch ($params['attribute']) {
+    case 'sample_id':
+      $id = substr($item->uniquename, 13);
+      if (!empty($value) and !preg_match("/$value/i", $id)) {
+        return FALSE;
+      }
+      break;
+
+    case 'species':
+      if (empty($value)) {
+        break;
+      }
+      $parts = explode(' ', $value);
+      $organism = db_select('chado.organism', 'o')
+        ->fields('o', array('genus', 'species'))
+        ->condition('o.organism_id', $item->organism_id)
+        ->range(0, 1)
+        ->execute()->fetchObject();
+
+      foreach ($parts as $part) {
+        if (!empty($part) and (preg_match("/$part/i", $organism->genus) or preg_match("/$part/i", $organism->species))) {
+          return TRUE;
+        }
+      }
+      return FALSE;
+
+    default:
+      break;
+  }
   return TRUE;
 }
 
@@ -373,7 +402,7 @@ function gttn_tpps_reference_build_row($item, $params) {
         $source,
       );
       return array(
-        'key' => $id,
+        'key' => $item->stock_id,
         'row' => $row,
       );
 
@@ -404,8 +433,6 @@ function gttn_tpps_reference_search(array $form, array $form_state) {
   );
 
   $data_type = $form_state['values']['data_type'] ?? ($params['data_type'] ?? 'submission');
-  dpm($params);
-  dpm(($form_state ?? ''));
 
   if (!empty($data_type)) {
     switch($data_type) {
@@ -422,6 +449,7 @@ function gttn_tpps_reference_search(array $form, array $form_state) {
       case 'sample':
         $options = array(
           'sample_id' => 'Internal Sample ID',
+          'species' => 'Species',
           // TODO
         );
         break;
