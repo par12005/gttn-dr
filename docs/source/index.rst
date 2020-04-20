@@ -15,4 +15,5 @@ Welcome to GTTN-DR's documentation!
    intro
    overview
    features
-   example
+   user
+   admin
