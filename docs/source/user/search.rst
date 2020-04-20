@@ -25,7 +25,7 @@ Sample Data
 
 Similar to the Reference Data Submissions, you can browse all samples by selecting "Sample" from the first drop-down menu, then clicking "Search":
 
-.. image:: ../../../images/data_samples.png
+.. image:: ../../../images/data_sample.png
 
 We can currently filter by Sample ID and species. To search by species, simply select "Species" from the second drop-down menu, and enter something like "Entan" to the textfield and click search, the form will return only the samples which are from a species whose name contains "Entan":
 
