@@ -1,5 +1,5 @@
 # GTTN-DR Demo
-[![Documentation Status](https://readthedocs.org/projects/gttn-dr/badge/?version=latest)](https://gttn-dr.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/gttn-tpps/badge/?version=latest)](https://gttn-tpps.readthedocs.io/en/latest/?badge=latest)
 
 A collaboration between University of Connecticut's Plant Computational Genomics
 lab and the Global Timber Tracking Network. Allows for secure and convenient 
