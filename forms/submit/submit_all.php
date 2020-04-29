@@ -76,8 +76,10 @@ function gttn_tpps_submit_project(&$state) {
   ));
 
   $dois = array();
-  if (!empty($props['pub_doi'])) {
-    $dois[] = $props['pub_doi'];
+  foreach ($props['pub_doi'] as $doi) {
+    if (!empty($doi)) {
+      $dois[] = $doi;
+    }
   }
   if (!empty($props['data_doi'])) {
     $dois[] = $props['data_doi'];

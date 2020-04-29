@@ -66,8 +66,9 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
 
   $form['project']['props']['pub_doi'] = array(
     '#type' => 'textfield',
-    '#title' => t('Publication DOI:'),
+    '#title' => t('Publication DOI(s):'),
     '#gttn_tpps_val' => array(),
+    '#description' => t('If you have multiple publication DOIs, please include a comma in between each.'),
   );
 
   $form['project']['props']['data_doi'] = array(

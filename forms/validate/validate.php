@@ -341,6 +341,7 @@ function gttn_tpps_update_data(&$form, &$form_state) {
       $form_state['data']['project'] = $form_state['values']['project'];
       $date = $form_state['data']['project']['props']['analysis_date'];
       $form_state['data']['project']['props']['analysis_date'] = "{$date['day']}-{$date['month']}-{$date['year']}";
+      $form_state['data']['project']['props']['pub_doi'] = array_map('trim', explode(',', $form_state['data']['project']['props']['pub_doi']));
       break;
 
     case GTTN_PAGE_1:
