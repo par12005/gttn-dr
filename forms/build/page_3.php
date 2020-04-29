@@ -342,6 +342,7 @@ function page_3_create_form(&$form, &$form_state) {
           'Wood' => 'Wood',
           'Bark' => 'Bark',
           'Leaf' => 'Leaf',
+          'Cambium' => 'Cambium',
           'DNA' => 'DNA',
         ),
       );
