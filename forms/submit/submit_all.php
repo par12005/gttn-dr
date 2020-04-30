@@ -120,9 +120,6 @@ function gttn_tpps_submit_project(&$state) {
   $user_name = gttn_profile_load_user($state['owner_uid'])->chado_record->name;
   $pyear = $state['saved_values'][GTTN_TYPE_PAGE]['project']['props']['analysis_date']['year'];
   $pub_uniquename = "{$project['name']}, $user_name, $pyear";
-  if (!empty($props['pub_doi'])) {
-    $pub_uniquename .= " {$props['pub_doi']}";
-  }
 
   $pub_id = gttn_tpps_chado_insert_record('pub', array(
     'title' => $project['name'],
@@ -145,6 +142,8 @@ function gttn_tpps_submit_project(&$state) {
     'surname' => $surname,
     'givennames' => $givennames,
   ));
+
+  // TODO: permissions should go in a db table.
 }
 
 /**

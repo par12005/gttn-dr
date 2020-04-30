@@ -155,3 +155,42 @@ function gttn_tpps_submission_clear_db($accession) {
     return FALSE;
   }
 }
+
+/**
+ *
+ */
+function gttn_tpps_submission_permissions($state) {
+  if (!is_array($state) and is_string($state)) {
+    $state = gttn_tpps_load_submission($state);
+  }
+
+  $perms = $state['data']['project']['props']['permissions'] ?? array();
+  $result = array();
+  foreach ($perms as $perm) {
+    if (!empty($perm)) {
+      $result[] = $perm;
+    }
+  }
+  return $result;
+}
+
+/**
+ *
+ */
+function gttn_tpps_submission_access($state, $uid = NULL) {
+  global $user;
+  if (isset($uid) and is_int($uid)) {
+    $user = user_load($uid);
+  }
+
+  $permissions = gttn_tpps_submission_permissions($state);
+  foreach ($permissions as $org_id) {
+    $members = gttn_profile_organization_get_members($org_id);
+    foreach ($members as $member) {
+      if ($user->uid == $member->uid) {
+        return TRUE;
+      }
+    }
+  }
+  return FALSE;
+}

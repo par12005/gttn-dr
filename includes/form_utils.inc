@@ -91,8 +91,6 @@ function gttn_tpps_dynamic_list(array &$form, array &$form_state, $id, array $re
  * 
  */
 function gttn_tpps_get_ajax_number(&$state, $parents, $up, $down, $default = 0, $minimum = 0) {
-  // Get page number.
-  $page = $state['stage'];
 
   // Check form_state values, update if necessary.
   $value_parents = $parents;
@@ -111,10 +109,14 @@ function gttn_tpps_get_ajax_number(&$state, $parents, $up, $down, $default = 0, 
 
   // Check saved values.
   $saved_value_parents = $parents;
-  array_unshift($saved_value_parents, 'saved_values', $page);
-  $saved_val = drupal_array_get_nested_value($state, $saved_value_parents);
-  if (isset($saved_val)) {
-    return $saved_val;
+  // Get page number.
+  $page = $state['stage'] ?? NULL;
+  if (isset($page)) {
+    array_unshift($saved_value_parents, 'saved_values', $page);
+    $saved_val = drupal_array_get_nested_value($state, $saved_value_parents);
+    if (isset($saved_val)) {
+      return $saved_val;
+    }
   }
 
   // Found nothing, return default.
