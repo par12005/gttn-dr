@@ -385,3 +385,16 @@ function gttn_tpps_sample_cvterms() {
     ))->cvterm_id,
   );
 }
+
+/**
+ *
+ */
+function gttn_tpps_source_get_organism($id, $state) {
+  if (!empty($state['data']['trees'][$id]['organism_id'])) {
+    return $state['data']['trees'][$id]['organism_id'];
+  }
+  if (!empty($state['data']['samples'][$id]['source'])) {
+    return gttn_tpps_source_get_organism($state['data']['samples'][$id]['source'], $state);
+  }
+  return NULL;
+}
