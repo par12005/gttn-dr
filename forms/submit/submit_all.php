@@ -117,7 +117,7 @@ function gttn_tpps_submit_project(&$state) {
     'dbxref_id' => $state['dbxref_id'],
   ));
 
-  $user_name = gttn_profile_load_user($state['owner_uid'])->chado_record->name;
+  $user_name = user_load($state['owner_uid'])->chado_record->name;
   $pyear = $state['saved_values'][GTTN_TYPE_PAGE]['project']['props']['analysis_date']['year'];
   $pub_uniquename = "{$project['name']}, $user_name, $pyear";
 

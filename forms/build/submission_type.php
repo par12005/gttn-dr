@@ -10,7 +10,7 @@
 function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
 
   global $user;
-  $user = gttn_profile_load_user($user->uid);
+  $user = user_load($user->uid);
 
   $form['project'] = array(
     '#type' => 'fieldset',
