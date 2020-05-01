@@ -463,6 +463,10 @@ function gttn_tpps_update_data(&$form, &$form_state) {
           'columns' => $columns,
           'groups' => $groups,
         );
+        $form_state['file_info'][GTTN_PAGE_4][] = array(
+          'fid' => $form_state['values']['dart']['raw'],
+          'name' => 'DART_Raw_Archive',
+        );
       }
 
       if (!empty($types['Isotope Reference Data'])) {

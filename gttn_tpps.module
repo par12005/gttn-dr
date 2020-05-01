@@ -189,6 +189,11 @@ function gttn_tpps_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
 
+  $items['reference/%/%/%'] = $items['reference/%/%'];
+  $items['reference/%/%/%']['page arguments'] = array(1, 2, 3);
+  $items['reference/%/%/%']['page callback'] = 'gttn_tpps_reference_tab';
+  $items['reference/%/%/%']['type'] = MENU_CALLBACK;
+
   return $items;
 }
 
@@ -849,6 +854,7 @@ function gttn_tpps_main($form, &$form_state, $accession = NULL) {
       $form_state['data'] = $old_form_state['data'] ?? NULL;
       $form_state['file_info'] = $old_form_state['file_info'] ?? NULL;
       $form_state['owner_uid'] = $old_form_state['owner_uid'] ?? NULL;
+      $form_state['ids'] = $old_form_state['ids'] ?? NULL;
     }
   }
   else {
@@ -866,6 +872,7 @@ function gttn_tpps_main($form, &$form_state, $accession = NULL) {
     $form_state['data'] = $old_form_state['data'] ?? NULL;
     $form_state['file_info'] = $old_form_state['file_info'] ?? NULL;
     $form_state['owner_uid'] = $old_form_state['owner_uid'] ?? NULL;
+    $form_state['ids'] = $old_form_state['ids'] ?? NULL;
   }
 
   // Hidden form step (AKA stage) element.

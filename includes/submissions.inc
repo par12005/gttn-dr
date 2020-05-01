@@ -112,7 +112,9 @@ function gttn_tpps_delete_submission($accession, $redirect = TRUE) {
 function gttn_tpps_submission_rename_files($accession) {
   $state = gttn_tpps_load_submission($accession);
   foreach ($state['file_info'] as $page_files) {
-    foreach ($page_files as $fid => $name) {
+    foreach ($page_files as $info) {
+      $fid = $info['fid'];
+      $name = $info['name'];
       $file = gttn_tpps_rename_file($fid, "{$accession}_{$name}");
       $file->status = FILE_STATUS_PERMANENT;
       file_save($file);

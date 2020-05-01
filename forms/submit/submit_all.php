@@ -546,12 +546,10 @@ function gttn_tpps_submit_trees(&$state) {
     }
 
     foreach ($state['data']['samples'] as $sample) {
-      db_insert('chado.project_stock')
-        ->fields(array(
-          'stock_id' => $sample['stock_id'],
-          'project_id' => $project_id,
-        ))
-        ->execute();
+      gttn_tpps_chado_insert_record('project_stock', array(
+        'stock_id' => $sample['stock_id'],
+        'project_id' => $project_id,
+      ));
 
       db_insert('gttn_tpps_organization_inventory')
         ->fields(array(
