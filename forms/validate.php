@@ -380,6 +380,9 @@ function gttn_tpps_update_data(&$form, &$form_state) {
         if (empty($storage)) {
           $storage_col = array_search(9, $columns);
         }
+        elseif (gttn_profile_organization_load($storage)) {
+          $storage = gttn_profile_organization_load($storage)->name;
+        }
         $analyzed = $form_state['values']['samples']['analyzed'] ?? NULL;
         if (empty($analyzed)) {
           $analyzed_col = array_search(11, $columns);

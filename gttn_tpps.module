@@ -276,7 +276,7 @@ function gttn_tpps_access($permission, $arg = array()) {
   }
   $params = drupal_get_query_parameters(NULL, array());
   $accession = NULL;
-  if (!empty($arg['accession'])) {
+  if (is_array($arg) and !empty($arg['accession'])) {
     $accession = $arg['accession'];
   }
   elseif (preg_match('/gttn-tpps\/(GTTN-TGDR.*)/', $params['q'], $matches) or preg_match('/gttn-tpps\/edit\/(GTTN-TGDR.*)/', $params['q'], $matches) or preg_match('/gttn-tpps\/(GTTN-TGDR.*)\/files/', $params['q'], $matches)) {

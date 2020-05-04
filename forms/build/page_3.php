@@ -382,10 +382,32 @@ function page_3_create_form(&$form, &$form_state) {
       'file',
     ), 9);
     if (empty($storage_cols)) {
+      $options = array();
+      $query = db_select('gttn_profile_organization', 'o')
+        ->fields('o', array('organization_id', 'name'))
+        ->execute();
+      while (($result = $query->fetchObject())) {
+        $options[$result->organization_id] = $result->name;
+      }
+      $options['other'] = 'Other';
       $form['samples']['storage'] = array(
-        '#type' => 'textfield',
+        '#type' => 'select',
         '#title' => t('Storage location: *'),
+        '#options' => $options,
+        '#default_value' => $form_state['data']['project']['props']['organization'],
+        '#ajax' => array(
+          'callback' => 'gttn_tpps_samples_callback',
+          'wrapper' => 'gttn_tpps_samples'
+        ),
       );
+
+      $storage = gttn_tpps_get_ajax_value($form_state, array('samples', 'storage'), NULL);
+      if ($storage == 'other') {
+        $form['samples']['storage-other'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Other storage location'),
+        );
+      }
     }
 
     $form['samples']['sharable'] = array(
