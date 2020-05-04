@@ -497,3 +497,439 @@ function gttn_tpps_preview_file() {
     return;
   }
 }
+
+/**
+ *
+ */
+function gttn_tpps_display_submission($accession = NULL) {
+  $output = '';
+
+  global $user;
+  global $base_url;
+  $user = user_load($user->uid);
+
+  $state = gttn_tpps_load_submission($accession);
+  if (!empty($state)) {
+    $map_api_key = variable_get('gttn_tpps_maps_api_key', '');
+    $map_api_tools = "<script src=\"https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js\"></script><script src=\"https://maps.googleapis.com/maps/api/js?key=$map_api_key&callback=initMap\"
+      async defer></script>"
+      . "<div id=\"map_wrapper\"></div>";
+
+    if (!empty($state['data']['trees'])) {
+      $tree_info = array();
+      foreach ($state['data']['trees'] as $id => $info) {
+        $tree_info[] = array(
+          $id,
+          $info['lat'],
+          $info['lng'],
+        );
+      }
+      drupal_add_js(array('gttn_tpps' => array('tree_info' => $tree_info)), 'setting');
+    }
+    $output .= $map_api_tools;
+    $title = $state['data']['project']['name'];
+    $output .= "<h2>$title</h2>";
+    $org = gttn_profile_organization_load($state['data']['project']['props']['organization']);
+    $output .= "<h4>Submitted by {$user->chado_record->name} for {$org->name}</h4>";
+    $output .= "<div id=\"reason\"><a href=\"#reason\">Click to show data collection reason</a></div>"
+      . "<script>jQuery(document).ready(jQuery('#reason').on('click', function() {
+          jQuery('#reason')[0].innerHTML = \"{$state['data']['project']['description']}\";
+        }));</script>";
+
+    // TODO: compressed files download.
+    $output .= "<a href=\"$base_url/gttn-tpps/$accession/files\">Download compressed raw files</a><br>";
+
+    $output .= gttn_tpps_display_submission_tabs($state);
+
+  }
+
+  return $output;
+}
+
+/**
+ *
+ */
+function gttn_tpps_display_submission_tabs(array &$state) {
+  $output = '<ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item"><a class="nav-link active" role="tab" data-toggle="tab" href="#species">Species</a></li>
+    <li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#study">Study Details</a></li>
+    <li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#trees">Trees</a></li>
+    <li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#samples">Samples</a></li>';
+  $dart_exist = !empty($state['saved_values'][GTTN_PAGE_4]['dart']);
+  $isotope_exist = !empty($state['saved_values'][GTTN_PAGE_4]['isotope']);
+  $genetic_exist = !empty($state['saved_values'][GTTN_PAGE_4]['genetic']);
+  $anatomy_exist = !empty($state['saved_values'][GTTN_PAGE_4]['anatomy']);
+
+  $output .= $dart_exist ? '<li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#dart">DART</a></li>' : "";
+  $output .= $isotope_exist ? '<li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#isotope">Isotope</a></li>' : "";
+  $output .= $genetic_exist ? '<li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#genetic">Genetic</a></li>' : "";
+  $output .= $anatomy_exist ? '<li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#anatomy">Anatomy</a></li>' : "";
+
+  $output .= '</ul><div id="tab-content" class="tab-content">';
+
+  $output .= "<div id=\"species\" role=\"tabpanel\" class=\"tab-pane fade in active\"></div>";
+  $output .= "<div id=\"study\" role=\"tabpanel\" class=\"tab-pane fade\"></div>";
+  $output .= "<div id=\"trees\" role=\"tabpanel\" class=\"tab-pane fade\"></div>";
+  $output .= "<div id=\"samples\" role=\"tabpanel\" class=\"tab-pane fade\"></div>";
+
+  $output .= $dart_exist ? "<div id=\"dart\" role=\"tabpanel\" class=\"tab-pane fade\"></div>" : "";
+  $output .= $isotope_exist ? "<div id=\"isotope\" role=\"tabpanel\" class=\"tab-pane fade\"></div>" : "";
+  $output .= $genetic_exist ? "<div id=\"genetic\" role=\"tabpanel\" class=\"tab-pane fade\"></div>" : "";
+  $output .= $anatomy_exist ? "<div id=\"anatomy\" role=\"tabpanel\" class=\"tab-pane fade\"></div>" : "";
+
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Prints a display tab for a GTTN-TPPS submission.
+ *
+ * Relies on the existence of a helper function called
+ * "gttn_tpps_display_submission_<tab>" where <tab> is the type of tab we want
+ * to print.
+ *
+ * @param string $accession
+ *   The accession of the GTTN-TPPS submission.
+ * @param string $tab
+ *   The type of tab to print.
+ */
+function gttn_tpps_display_submission_tab($accession, $tab) {
+  $function = "gttn_tpps_display_submission_$tab";
+  $state = gttn_tpps_load_submission($accession);
+  if (function_exists($function)) {
+    print($function($state));
+  }
+  else {
+    print '';
+  }
+  return;
+}
+
+/**
+ *
+ */
+function gttn_tpps_display_submission_species(array &$state) {
+  $query = db_select('chado.organism', 'o')
+    ->fields('o', array('organism_id', 'genus', 'species', 'common_name'))
+    ->condition('o.organism_id', $state['ids']['organism_ids'], 'IN')
+    ->execute();
+  $rows = array();
+
+  while (($result = $query->fetchObject())) {
+    $id = $result->organism_id;
+    $family = $order = "";
+
+    if (gttn_tpps_chado_prop_exists('organism', $id, 'family')) {
+      $family = db_select('chado.organismprop', 'o')
+        ->fields('o', array('value'))
+        ->condition('organism_id', $id)
+        ->condition('type_id', chado_get_cvterm(array(
+          'name' => 'family',
+          'cv_id' => array(
+            'name' => 'taxonomic_rank',
+          ),
+        ))->cvterm_id)
+        ->execute()->fetchObject()->value;
+    }
+
+    if (gttn_tpps_chado_prop_exists('organism', $id, 'order')) {
+      $order = db_select('chado.organismprop', 'o')
+        ->fields('o', array('value'))
+        ->condition('organism_id', $id)
+        ->condition('type_id', chado_get_cvterm(array(
+          'name' => 'order',
+          'cv_id' => array(
+            'name' => 'taxonomic_rank',
+          ),
+        ))->cvterm_id)
+        ->execute()->fetchObject()->value;
+    }
+
+    $name = "{$result->genus} {$result->species}";
+    $link = gttn_tpps_entity_link($id, $name, 'Organism');
+    $rows[] = array(
+      $order,
+      $family,
+      $link,
+      $result->common_name ?? '',
+    );
+  }
+
+  $vars = array(
+    'header' => array(
+      'Order',
+      'Family',
+      'Species',
+      'Common Name',
+    ),
+    'rows' => $rows,
+    'attributes' => array('class' => array('view'), 'id' => 'gttn_tpps_table_display'),
+    'caption' => '',
+    'colgroups' => NULL,
+    'sticky' => FALSE,
+    'empty' => '',
+  );
+  return theme_table($vars);
+
+}
+
+/**
+ *
+ */
+function gttn_tpps_display_submission_study(array &$state) {
+  $rows = array();
+
+  $species = array();
+  foreach ($state['data']['organism'] as $key => $info) {
+    $species_name = "{$info['genus']} {$info['species']}";
+    $species[] = gttn_tpps_entity_link($state['ids']['organism_ids'][$key], $species_name, 'Organism');
+  }
+
+  $files = array();
+  foreach ($state['file_info'] as $page => $page_files) {
+    foreach ($page_files as $info) {
+      $file = file_load($info['fid']);
+      $file_url = check_plain(file_create_url($file->uri));
+      $files[] = "<a href='$file_url' target='blank'>$file->filename</a>";
+    }
+  }
+
+  $data_types = array();
+  foreach ($state['saved_values'][GTTN_PAGE_1]['data_type'] as $type) {
+    if (!empty($type)) {
+      $data_types[] = $type;
+    }
+  }
+
+  $rows[] = array('Accession', $state['accession']);
+  $rows[] = array('Project Name', $state['data']['project']['name']);
+  $rows[] = array('Submitter', user_load($state['owner_uid'])->chado_record->name);
+  $rows[] = array('Species', implode('<br>', $species));
+  $rows[] = array('Data Type', implode('<br>', $data_types));
+  $rows[] = array('File Downloads', implode('<br>', $files));
+  $rows[] = array('Number of Trees', count($state['data']['trees']));
+  $rows[] = array('Number of Samples', count($state['data']['samples']));
+
+  if (!empty($state['data']['dart'])) {
+    $rows[] = array('Number of DART Reads', count($state['data']['dart']));
+  }
+  if (!empty($state['data']['isotope'])) {
+    $rows[] = array('Number of Isotope Reads', count($state['data']['isotope']));
+  }
+  if (!empty($state['data']['genetic'])) {
+    $rows[] = array('Number of Genotypes', count($state['data']['genetic']));
+  }
+  if (!empty($state['data']['anatomy'])) {
+    $rows[] = array('Number of Microscope Slides', count($state['data']['anatomy']));
+  }
+
+  $vars = array(
+    'header' => array(),
+    'rows' => $rows,
+    'attributes' => array('class' => array('view'), 'id' => 'gttn_tpps_table_display'),
+    'caption' => '',
+    'colgroups' => NULL,
+    'sticky' => FALSE,
+    'empty' => '',
+  );
+  return theme_table($vars);
+
+}
+
+/**
+ *
+ */
+function gttn_tpps_display_submission_trees(array &$state) {
+  $params = drupal_get_query_parameters($_POST);
+  $page = 0;
+  if (!empty($params['page'])) {
+    $page = $params['page'];
+  }
+  $rows = array();
+  $per_page = 20;
+
+  $tree_info = $state['data']['trees'];
+
+  $_GET['page'] = $page;
+  pager_default_initialize(count($tree_info), $per_page);
+  $chunks = array_chunk($tree_info, $per_page, TRUE);
+
+  foreach ($chunks[$page] as $name => $info) {
+    $org_id = $info['organism_id'];
+    $species_name = $state['saved_values'][GTTN_PAGE_1]['organism'][$info['organism_number']];
+
+    $rows[] = array(
+      gttn_tpps_entity_link($info['stock_id'], $name, 'Stock'),
+      gttn_tpps_entity_link($org_id, $species_name, 'Organism'),
+      $info['lat'],
+      $info['lng'],
+    );
+  }
+
+  $vars = array(
+    'header' => array(
+      'Identifier',
+      'Species',
+      'Latitude',
+      'Longitude',
+    ),
+    'rows' => $rows,
+    'attributes' => array('class' => array('view'), 'id' => 'gttn_tpps_table_display'),
+    'caption' => '',
+    'colgroups' => NULL,
+    'sticky' => FALSE,
+    'empty' => '',
+  );
+  $table = theme_table($vars);
+  $pager = theme('pager', array('quantity', count($tree_info)));
+  return $pager . $table;
+}
+
+/**
+ *
+ */
+function gttn_tpps_display_submission_samples(array &$state) {
+  $params = drupal_get_query_parameters($_POST);
+  $page = 0;
+  if (!empty($params['page'])) {
+    $page = $params['page'];
+  }
+  $rows = array();
+  $per_page = 20;
+
+  $tree_info = $state['data']['trees'];
+  $sample_info = $state['data']['samples'];
+
+  $_GET['page'] = $page;
+  pager_default_initialize(count($sample_info), $per_page);
+  $chunks = array_chunk($sample_info, $per_page, TRUE);
+
+  foreach ($chunks[$page] as $id => $info) {
+    $org_id = gttn_tpps_source_get_organism($info['source'], $state);
+    $org_number = array_search($org_id, $state['ids']['organism_ids']);
+    $species_name = $state['saved_values'][GTTN_PAGE_1]['organism'][$org_number];
+    $source = $tree_info[$info['source']] ?? ($sample_info[$info['source']] ?? NULL);
+
+    $rows[] = array(
+      gttn_tpps_entity_link($info['stock_id'], $id, 'Stock'),
+      !empty($source) ? gttn_tpps_entity_link($source['stock_id'], $source['id'], 'Stock') : '',
+      gttn_tpps_entity_link($org_id, $species_name, 'Organism'),
+      $info['tissue'],
+      $info['dimension'],
+      "{$info['date']['month']}-{$info['date']['day']}-{$info['date']['year']}",
+      $info['collector'],
+      $info['remaining'],
+      $info['storage'],
+    );
+  }
+
+  $vars = array(
+    'header' => array(
+      'Identifier',
+      'Source',
+      'Species',
+      'Tissue',
+      'Dimensions',
+      'Collection Date',
+      'Collector',
+      'Volume Remaining',
+      'Storage Location',
+    ),
+    'rows' => $rows,
+    'attributes' => array('class' => array('view'), 'id' => 'gttn_tpps_table_display'),
+    'caption' => '',
+    'colgroups' => NULL,
+    'sticky' => FALSE,
+    'empty' => '',
+  );
+  $table = theme_table($vars);
+  $pager = theme('pager', array('quantity', count($sample_info)));
+  return $pager . $table;
+}
+
+/**
+ *
+ */
+function gttn_tpps_display_submission_dart(array &$state) {
+  global $base_url;
+  $params = drupal_get_query_parameters($_POST);
+  $rows = array();
+
+  $dart_zip = file_load($state['saved_values'][GTTN_PAGE_4]['dart']['raw']);
+  $files = gttn_tpps_get_archive_files($dart_zip);
+  $dir = dirname($files[0]);
+  gttn_tpps_rmdir($dir);
+  foreach ($files as $file) {
+    $file_name = basename($file);
+    if ($file_name[0] != '.') {
+      $sample_id = basename($file, ".txt");
+      $file_link = "<a href=\"$base_url/gttn-tpps/{$state['accession']}/files/dart:$file_name\">$file_name</a>";
+      $rows[] = array(
+        $sample_id,
+        $file_link,
+      );
+    }
+  }
+
+  $vars = array(
+    'header' => array(
+      'Sample ID',
+      'DART Raw Data File',
+    ),
+    'rows' => $rows,
+    'attributes' => array('class' => array('view'), 'id' => 'gttn_tpps_table_display'),
+    'caption' => '',
+    'colgroups' => NULL,
+    'sticky' => FALSE,
+    'empty' => '',
+  );
+  $table = theme_table($vars);
+  return $table;
+}
+
+/**
+ *
+ */
+function gttn_tpps_display_submission_isotope(array &$state) {
+  // TODO
+}
+
+/**
+ *
+ */
+function gttn_tpps_display_submission_genetic(array &$state) {
+  // TODO
+}
+
+/**
+ *
+ */
+function gttn_tpps_display_submission_anatomy(array &$state) {
+  // TODO
+}
+
+/**
+ * Returns an entity link based on an id and a name.
+ *
+ * @param int $id
+ *   The record id in CHADO.
+ * @param string $name
+ *   The display text of the link.
+ * @param string $label
+ *   The label of the bundle.
+ *
+ * @return string
+ *   The constructed link, or the provided name if no entity is found.
+ */
+function gttn_tpps_entity_link(int $id, $name, $label) {
+  global $base_url;
+  $bundle = tripal_load_bundle_entity(array('label' => $label));
+  if (empty($bundle)) {
+    return $name;
+  }
+  $entity_id = chado_get_record_entity_by_bundle($bundle, $id);
+  if (!empty($entity_id)) {
+    return "<a href=\"$base_url/bio_data/$entity_id\">$name</a>";
+  }
+  return $name;
+}

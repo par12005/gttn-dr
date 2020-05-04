@@ -13,6 +13,7 @@ define("GTTN_PAGE_3", 3);
 define("GTTN_PAGE_4", 4);
 define("GTTN_TPPS_OLS_BASE", "http://www.ebi.ac.uk/ols/api/");
 define("GTTN_TPPS_TEMP_XLSX", "temporary://gttn_tpps_xlsx");
+define("GTTN_TPPS_TEMP_ZIP", "temporary://gttn_tpps_zip");
 require_once 'includes/file_utils.inc';
 require_once 'includes/init_project.inc';
 require_once 'includes/display.inc';
@@ -68,6 +69,18 @@ function gttn_tpps_menu() {
     'access arguments' => array('edit gttn-tpps submission'),
     'type' => MENU_NORMAL_ITEM,
   );
+
+  $items['gttn-tpps/%/files'] = array(
+    'title' => 'GTTN-TPPS Submission Files Download',
+    'page callback' => 'gttn_tpps_submission_files_download',
+    'page arguments' => array(1),
+    'access callback' => 'gttn_tpps_access',
+    'access arguments' => array('access submission data'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['gttn-tpps/%/files/%'] = $items['gttn-tpps/%/files'];
+  $items['gttn-tpps/%/files/%']['page arguments'] = array(1, 3);
 
   /*
    * GTTN Tab on user profile.
@@ -208,6 +221,11 @@ function gttn_tpps_permission() {
     'description' => t('Access GTTN-TPPS Submission form and create submissions.'),
   );
 
+  $perms['access submission data'] = array(
+    'title' => t('Access GTTN-TPPS Submission Data'),
+    'description' => t('Access to browse detailed data for a GTTN-TPPS submission.'),
+  );
+
   $perms['edit gttn-tpps submission'] = array(
     'title' => t('Edit GTTN-TPPS Submission'),
     'description' => t('Access to the GTTN-TPPS Submission Edit form and make edits to existing submissions.'),
@@ -257,7 +275,7 @@ function gttn_tpps_access($permission, $args = array()) {
     return TRUE;
   }
   $params = drupal_get_query_parameters(NULL, array());
-  if (preg_match('/gttn-tpps\/(GTTN-TGDR.*)/', $params['q'], $matches) or preg_match('/gttn-tpps\/edit\/(GTTN-TGDR.*)/', $params['q'], $matches)) {
+  if (preg_match('/gttn-tpps\/(GTTN-TGDR.*)/', $params['q'], $matches) or preg_match('/gttn-tpps\/edit\/(GTTN-TGDR.*)/', $params['q'], $matches) or preg_match('/gttn-tpps\/(GTTN-TGDR.*)\/files/', $params['q'], $matches)) {
     $accession = $matches[1];
   }
   elseif ($params['q'] == 'gttn-tpps' and !empty($params['accession'])) {
@@ -299,6 +317,7 @@ function gttn_tpps_access($permission, $args = array()) {
         return FALSE;
 
       case 'edit gttn-tpps submission':
+      case 'access submission data':
         if (gttn_tpps_access('administer gttn-tpps module')) {
           return TRUE;
         }

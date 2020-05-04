@@ -196,3 +196,66 @@ function gttn_tpps_submission_access($state, $uid = NULL) {
   }
   return FALSE;
 }
+
+/**
+ *
+ */
+function gttn_tpps_submission_files_download($accession = NULL, $file = NULL) {
+  $state = gttn_tpps_load_submission($accession);
+  if (empty($state)) {
+    throw new Exception('Invalid state accession number');
+  }
+  ob_end_clean();
+
+  if (empty($file)) {
+    $zip_name = "{$accession}_files.zip";
+    if (!file_exists(drupal_realpath(GTTN_TPPS_TEMP_ZIP))) {
+      mkdir(drupal_realpath(GTTN_TPPS_TEMP_ZIP));
+    }
+    $zip_loc = drupal_realpath(GTTN_TPPS_TEMP_ZIP) . '/' . $zip_name;
+
+    foreach ($state['file_info'] as $files) {
+      foreach ($files as $info) {
+        $fid = $info['fid'];
+        $file_str[] = str_replace(' ', '\\ ', drupal_realpath(file_load($fid)->uri));
+      }
+    }
+
+    if (file_exists(drupal_realpath($zip_loc))) {
+      unlink($zip_loc);
+    }
+
+    $file_str = implode(" ", $file_str);
+    $cmd = "zip -j $zip_loc $file_str";
+    exec($cmd);
+    drupal_add_http_header('Content-Type', 'application/zip');
+    drupal_add_http_header('Content-Disposition', 'attachment; filename="' . $zip_name . '"');
+    drupal_add_http_header('Content-length', filesize($zip_loc));
+    drupal_add_http_header('Pragma', "no-cache");
+    drupal_add_http_header('Expires', '0');
+    readfile("$zip_loc");
+    exit;
+  }
+
+  if (preg_match('/^dart:(.*)$/', $file, $matches)) {
+    $file_name = $matches[1];
+    $dart_zip = file_load($state['saved_values'][GTTN_PAGE_4]['dart']['raw']);
+    if ($dart_zip) {
+      $files = gttn_tpps_get_archive_files($dart_zip);
+      $dir = dirname($files[0]);
+      foreach ($files as $file) {
+        if (preg_match('/.*' . $file_name . '$/', $file)) {
+          drupal_add_http_header('Content-Type', 'text/plain');
+          drupal_add_http_header('Content-Disposition', 'attachment; filename="' . $file_name . '"');
+          drupal_add_http_header('Content-length', filesize($file));
+          drupal_add_http_header('Pragma', "no-cache");
+          drupal_add_http_header('Expires', '0');
+          readfile("$file");
+          gttn_tpps_rmdir($dir);
+          exit;
+        }
+      }
+    }
+  }
+
+}

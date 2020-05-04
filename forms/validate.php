@@ -238,47 +238,17 @@ function gttn_tpps_validate_dart(&$form, &$form_state, $value, $parents) {
     return;
   }
 
-  $loc = drupal_realpath($file->uri);
-  $ext = gttn_tpps_get_path_extension($loc);
-  $unzip_dir = dirname($loc) . '/tmp';
-  if (is_dir($unzip_dir) or mkdir($unzip_dir)) {
-    switch ($ext) {
-      case 'zip':
-        $zip = new \ZipArchive();
-        $zip->open($loc);
-        break;
-
-      case 'gz':
-        $zip = new \PharData($loc);
-        $zip->decompress();
-        break;
-
-      case 'tar':
-        $zip = new \PharData($loc);
-        break;
-
-      default:
-        return;
-    }
-    $zip->extractTo($unzip_dir);
-
-    $dir = $unzip_dir;
-    $files = scandir($dir);
-    if ($files and count($files) == 3 and is_dir($dir . '/' . $files[2])) {
-      $dir .= '/' . $files[2];
-      $files = scandir($dir);
-    }
-
-    if ($files) {
-      $form_state['data']['dart'] = gttn_tpps_parse_dart_dir($dir, $files);
-      foreach ($form_state['data']['dart'] as $sample => $info) {
-        if (empty($form_state['data']['samples'][$sample])) {
-          form_set_error('dart][raw', "DART Raw Data File: Sample data is missing for the DART file you provided: $sample.txt. We expected to see a sample called '$sample'.");
-        }
+  $files = gttn_tpps_get_archive_files($file);
+  $dir = dirname($files[0]);
+  if ($files) {
+    $form_state['data']['dart'] = gttn_tpps_parse_dart_dir($dir, $files);
+    foreach ($form_state['data']['dart'] as $sample => $info) {
+      if (empty($form_state['data']['samples'][$sample])) {
+        form_set_error('dart][raw', "DART Raw Data File: Sample data is missing for the DART file you provided: $sample.txt. We expected to see a sample called '$sample'.");
       }
     }
   }
-  gttn_tpps_rmdir($unzip_dir);
+  gttn_tpps_rmdir($dir);
 }
 
 /**

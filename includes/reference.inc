@@ -20,97 +20,20 @@ function gttn_tpps_reference($type = NULL, $id = NULL) {
     return $output;
   }
 
-  dpm($type);
-  dpm($id);
-  $output = 'Coming Soon!';
+  global $base_url;
 
-  /*
-    function gttn_profile_reference_display() {
-      global $user;
+  $output = "<a href=\"$base_url/reference\">Return to Browse Reference Data</a>$output";
+  $function = 'gttn_tpps_display_' . $type;
+  if (function_exists($function)) {
+    $output .= $function($id);
+  }
+  else {
+    $output .= 'Coming Soon!';
+  }
 
-      $per_page = 20;
-
-      $subs = db_select('variable', 'v')
-        ->fields('v', array('name'))
-        ->condition('name', db_like('gttn_tpps_complete_') . '%', 'LIKE')
-        ->execute();
-
-      $rows = array();
-      while (($sub = $subs->fetchObject())) {
-        preg_match('/gttn_tpps_complete_(.*)GTTN-TGDR[0-9]{3}/', $sub->name, $matches);
-        $submit_user = user_load_by_mail($matches[1]);
-
-        $state = variable_get($sub->name);
-        $perms = $state['saved_values'][GTTN_TYPE_PAGE]['permissions'];
-        $access = FALSE;
-        foreach ($perms as $org_id => $val) {
-          if (!empty($val)) {
-            $and = db_and()
-              ->condition('organization_id', $org_id)
-              ->condition('uid', $user->uid)
-              ->condition('status', 1);
-            $query = db_select('gttn_profile_organization_members', 'm')
-              ->fields('m', array('organization_id'))
-              ->condition($and)
-              ->execute();
-            if (!empty($query->fetchObject()->organization_id)) {
-              $access = TRUE;
-              break;
-            }
-          }
-        }
-
-        if ($access) {
-          $accession = $state['accession'];
-          $type = $state['saved_values'][GTTN_TYPE_PAGE]['type'];
-          $status = $state['status'];
-          $perms = array();
-          $species = array();
-          foreach ($state['saved_values'][GTTN_TYPE_PAGE]['permissions'] as $org_id => $val) {
-            if (!empty($val)) {
-              $org_name = db_select('gttn_profile_organization', 'o')
-                ->fields('o', array('name'))
-                ->condition('organization_id', $org_id)
-                ->execute()->fetchObject()->name;
-              $perms[] = $org_name;
-            }
-          }
-          $perms = implode(', ', $perms);
-          $organism_number = $state['saved_values'][GTTN_PAGE_1]['organism']['number'];
-          for ($i = 1; $i <= $organism_number; $i++) {
-            $species[] = $state['saved_values'][GTTN_PAGE_1]['organism'][$i];
-          }
-          $species = implode(', ', $species);
-          $data_type = $state['saved_values'][GTTN_PAGE_1]['dataType'];
-
-          $row = array($accession, $type, $perms, $organism_number, $species, $data_type, $status);
-          $rows[$accession] = $row;
-        }
-      }
-      ksort($rows);
-
-      $current_page = pager_default_initialize(count($rows), $per_page);
-      $chunks = array_chunk($rows, $per_page, TRUE);
-      $vars = array(
-        'header' => array(
-          'Accession number', 'Submission type', 'Organizations with access privileges', 'Number of species', 'Species studied', 'Data type', 'Approval status',
-        ),
-        'rows' => isset($chunks[$current_page]) ? $chunks[$current_page] : NULL,
-        'attributes' => array(),
-        'caption' => '',
-        'colgroups' => NULL,
-        'sticky' => FALSE,
-        'empty' => '',
-      );
-
-      $output = theme_table($vars);
-
-      $output = theme('pager', array('quantity', count($rows))) . $output;
-      drupal_add_js(drupal_get_path('module', 'gttn_profile') . '/js/gttn_profile.js');
-      drupal_add_js(drupal_get_path('module', 'gttn_profile') . '/js/block_elastic.js');
-      return $output;
-    }
-  //*/
+  drupal_add_css(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_CSS_PATH);
+  drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
+  drupal_add_js(drupal_get_path('module', 'gttn_tpps') . '/js/reference.js');
 
   return $output;
 }
@@ -136,7 +59,6 @@ function gttn_tpps_reference_top() {
     $page = $params['page'];
   }
   $per_page = 20;
-  //dpm($params);
   $params['data_type'] = $params['data_type'] ?? 'submission';
 
   $items = gttn_tpps_get_reference_items($params);
@@ -169,7 +91,6 @@ function gttn_tpps_reference_top() {
       $rows[] = $info['row'];
     }
   }
-  //dpm($rows);
 
   ksort($rows);
 
@@ -186,6 +107,20 @@ function gttn_tpps_reference_top() {
   $output = theme_table($vars);
   $pager = theme('pager', array('quantity', $total));
   return $pager . $output;
+}
+
+/**
+ *
+ */
+function gttn_tpps_reference_tab($type, $accession, $tab) {
+  $function = "gttn_tpps_display_{$type}_tab";
+  if (function_exists($function)) {
+    $function($accession, $tab);
+  }
+  else {
+    print '';
+  }
+  return;
 }
 
 /**

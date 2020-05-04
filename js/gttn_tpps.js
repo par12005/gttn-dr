@@ -62,6 +62,11 @@ function initMap() {
     maps[species_name + 'total_lat'];
     maps[species_name + 'total_long'];
   });
+
+  var display_regex = /reference\/submission\/GTTN-TGDR.*/g;
+  if (window.location.pathname.match(display_regex)) {
+    jQuery.fn.updateMap(Drupal.settings.gttn_tpps.tree_info);
+  }
 }
 
 function clearMarkers(prefix) {
@@ -140,6 +145,7 @@ function getCoordinates(){
 
 jQuery.fn.updateMap = function(locations, prefix = "") {
   jQuery("#" + prefix + "map_wrapper").show();
+  var display_regex = /reference\/submission\/GTTN-TGDR.*/g;
   if (jQuery('input[name="step"]').length > 0 && jQuery('input[name="step"]')[0].value == 3){
     jQuery("#" + prefix + "map_wrapper").css({"height": "450px"});
     jQuery("#" + prefix + "map_wrapper").css({"max-width": "800px"});
@@ -147,6 +153,10 @@ jQuery.fn.updateMap = function(locations, prefix = "") {
   else if(jQuery("#gttn_tpps_table_display").length > 0) {
     jQuery("#" + prefix + "map_wrapper").css({"height": "450px"});
   }
+  else if (window.location.pathname.match(display_regex)) {
+    jQuery("#" + prefix + "map_wrapper").css({"height": "450px"});
+  }
+
   else {
     jQuery("#" + prefix + "map_wrapper").css({"height": "100px"});
   }
