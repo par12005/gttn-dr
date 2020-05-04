@@ -90,7 +90,7 @@ function gttn_tpps_menu() {
     'page callback' => 'gttn_tpps_tab_create',
     'page arguments' => array(1),
     'access callback' => 'gttn_tpps_access',
-    'access arguments' => array('user gttn-tpps submissions', array(1)),
+    'access arguments' => array('user gttn-tpps submissions', 1),
     'type' => MENU_LOCAL_TASK,
   );
 
@@ -102,7 +102,7 @@ function gttn_tpps_menu() {
     'page callback' => 'gttn_tpps_delete_submission',
     'page arguments' => array(1),
     'access callback' => 'gttn_tpps_access',
-    'access arguments' => array('gttn-tpps delete submission', array(1)),
+    'access arguments' => array('gttn-tpps delete submission', 1),
     'type' => MENU_CALLBACK,
   );
 
@@ -267,7 +267,7 @@ function gttn_tpps_permission() {
 /**
  * 
  */
-function gttn_tpps_access($permission, $args = array()) {
+function gttn_tpps_access($permission, $arg = array()) {
 
   global $user;
 
@@ -275,6 +275,7 @@ function gttn_tpps_access($permission, $args = array()) {
     return TRUE;
   }
   $params = drupal_get_query_parameters(NULL, array());
+  $accession = '';
   if (preg_match('/gttn-tpps\/(GTTN-TGDR.*)/', $params['q'], $matches) or preg_match('/gttn-tpps\/edit\/(GTTN-TGDR.*)/', $params['q'], $matches) or preg_match('/gttn-tpps\/(GTTN-TGDR.*)\/files/', $params['q'], $matches)) {
     $accession = $matches[1];
   }
@@ -335,7 +336,7 @@ function gttn_tpps_access($permission, $args = array()) {
           return TRUE;
         }
 
-        if (!empty($args[0]) and $args[0] == $user->uid) {
+        if (!empty($arg) and $arg->uid == $user->uid) {
           return TRUE;
         }
 
