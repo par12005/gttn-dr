@@ -35,7 +35,7 @@ function gttn_tpps_admin_panel($form, &$form_state, $accession = NULL) {
     $approved = array();
     foreach ($states as $state) {
       if (!empty($state)) {
-        dpm($state);
+        //dpm($state);
         $row = array(
           l($state['accession'], "$base_url/gttn-admin-panel/{$state['accession']}"),
           $state['data']['project']['name'],

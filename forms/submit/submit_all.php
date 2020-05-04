@@ -38,7 +38,7 @@ function gttn_tpps_submit_all($accession) {
     }
 
     // TODO.
-    throw new Exception('Submission Completed');
+    //throw new Exception('Submission Completed');
     $form_state['status'] = 'Approved';
     gttn_tpps_update_submission($form_state);
   }

@@ -256,11 +256,12 @@ function gttn_tpps_validate_dart(&$form, &$form_state, $value, $parents) {
  */
 function gttn_tpps_parse_dart_dir($dir, $files) {
   $results = array();
-  foreach ($files as $file_name) {
+  foreach ($files as $file) {
+    $file_name = basename($file);
     if ($file_name[0] != '.') {
       $sample = basename($file_name, '.txt');
       $results[$sample] = array();
-      $handle = fopen($dir . '/' . $file_name, 'r');
+      $handle = fopen($file, 'r');
 
       while (!feof($handle)) {
         $line = preg_split('/\s+/', fgets($handle));
