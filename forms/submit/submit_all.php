@@ -810,8 +810,9 @@ function gttn_tpps_submit_genetic(&$state) {
     'is_obsolete' => 0,
   ))->cvterm_id;
 
-  foreach ($state['data']['organism'] as $id => $info) {
+  foreach ($state['data']['organism'] as $num => $info) {
     // Get species codes.
+    $id = $state['ids']['organism_ids'][$num];
     $species_codes[$id] = current(chado_select_record('organismprop', array('value'), array(
       'type_id' => chado_get_cvterm(array(
         'name' => 'organism 4 letter code',
