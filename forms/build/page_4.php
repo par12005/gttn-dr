@@ -6,7 +6,6 @@
  */
 
 require_once 'page_4_ajax.php';
-// Load the page 4 helper functions.
 
 /**
  * Populates the form element for the fourth page of the form.
@@ -493,6 +492,41 @@ function page_4_create_form(&$form, &$form_state) {
       '#type' => 'fieldset',
       '#title' => t('Anatomical Reference Data information'),
     );
+
+    $form['anatomy']['metadata'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Anatomical Characteristics'),
+      '#tree' => TRUE,
+      '#collapsible' => TRUE,
+    );
+
+    $anatomy_types = array(
+      'nomenclature' => t('Nomenclature'),
+      'general' => t('General'),
+      'vessels' => t('Vessels'),
+      'tracheids_fibres' => t('Tracheids and Fibres'),
+      'axial_parenchyma' => t('Axial Parenchyma'),
+      'rays' => t('Rays'),
+      'storied_structures' => t('Storied Structures'),
+      'mineral_inclusions' => t('Mineral Inclusions'),
+      'physical_chemical' => t('Physical and Chemical Tests'),
+    );
+
+    foreach ($form_state['data']['organism'] as $info) {
+      $species_name = "{$info['genus']} {$info['species']}";
+      $form['anatomy']['metadata'][$species_name] = array(
+        '#type' => 'fieldset',
+        '#title' => t("$species_name Anatomy Information"),
+        '#tree' => TRUE,
+        '#collapsible' => TRUE,
+      );
+      foreach ($anatomy_types as $id => $type) {
+        $form['anatomy']['metadata'][$species_name][$id] = array(
+          '#type' => 'textarea',
+          '#title' => $type . ':',
+        );
+      }
+    }
 
     $field = array(
       '#type' => 'fieldset',
