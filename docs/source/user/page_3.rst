@@ -78,7 +78,7 @@ For SNP data, you will first need to identify the source of your SNPs, either GB
 If you selected GBS as your source, you will need to provide the following:
 
  * GBS Type (ddRad, RAD, NextRad, etc)
- * GBS Sequencer Machine name
+ * GBS Sequencing Instrument name
  * GBS Intermediate reference file: either select a reference file from the list of existing reference files on the GTTN Server, or upload your own reference file.
  * GBS Alignment file
  * VCF File
@@ -92,7 +92,7 @@ If you selected Assay as your source, you will need to provide the following:
 SSRs/cpSSRs
 ###########
 
-For microsatellite data, you will need to provide the name of the SSR Machine you used for your analysis, as well as the ploidy of the organism you are analyzing and an SSR spreadsheet containing all of the raw SSR data.
+For microsatellite data, you will need to provide the name of the Sequencing Instrument you used for your analysis, as well as the ploidy of the organism you are analyzing and an SSR spreadsheet containing all of the raw SSR data.
 
 Wood Anatomy
 ************
