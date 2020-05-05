@@ -95,8 +95,8 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
     '#options' => array(
       '- Select -',
       'New Trees' => 'New Trees',
-      'Old Trees' => 'Old Trees',
-      'Mixed new/old Trees' => 'Mixed new/old Trees',
+      'Existing Trees' => 'Existing Trees',
+      'Mixed new/existing Trees' => 'Mixed new/existing Trees',
     ),
   );
 
