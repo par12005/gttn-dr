@@ -71,6 +71,7 @@ function page_3_create_form(&$form, &$form_state) {
       'approx' => array(2, 3),
       'gps' => array(4, 5),
       'pop_group' => array(12),
+      'forest_id' => array(13),
     ),
   );
 
@@ -88,6 +89,8 @@ function page_3_create_form(&$form, &$form_state) {
       '8' => 'County',
       '9' => 'District',
       '12' => 'Population Group',
+      '13' => 'Forest ID',
+      '14' => 'Bar code',
     );
 
     $title = t("@name Accession File: *", array('@name' => $name)) . "<br>$file_description";
@@ -179,13 +182,13 @@ function page_3_create_form(&$form, &$form_state) {
         if ($col_name[0] == '#') {
           continue;
         }
-        if (!empty($data['#value']) and $data['#value'] == '12') {
+        if (!empty($data['#value']) and ($data['#value'] == '12' or $data['#value'] == '13')) {
           $pop_group_show = TRUE;
           $pop_col = $col_name;
           $fid = $form_state['complete form']['tree-accession']["species-$i"]['file']['#value']['fid'];
           break;
         }
-        if ($data == '12') {
+        if ($data == '12' or $data == '13') {
           $pop_group_show = TRUE;
           $pop_col = $col_name;
           $fid = $form_state['saved_values'][GTTN_PAGE_3]['tree-accession']["species-$i"]['file'];

@@ -293,6 +293,13 @@ function gttn_tpps_submit_trees(&$state) {
       'name' => 'Location',
       'is_obsolete' => 0,
     ))->cvterm_id,
+    'bar_code' => chado_get_cvterm(array(
+      'cv_id' => array(
+        'name' => 'ncit',
+      ),
+      'name' => 'Barcode',
+      'is_obsolete' => 0,
+    ))->cvterm_id,
   );
 
   $records = array(
@@ -408,6 +415,16 @@ function gttn_tpps_submit_trees(&$state) {
       $records['stockprop']["$id-location"] = array(
         'type_id' => $cvterms['loc'],
         'value' => $tree['location'],
+        '#fk' => array(
+          'stock' => $id,
+        ),
+      );
+    }
+
+    if (!empty($tree['bar_code'])) {
+      $records['stockprop']["$id-bar_code"] = array(
+        'type_id' => $cvterms['bar_code'],
+        'value' => $tree['bar_code'],
         '#fk' => array(
           'stock' => $id,
         ),
