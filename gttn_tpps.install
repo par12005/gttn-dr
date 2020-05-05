@@ -777,7 +777,7 @@ function gttn_tpps_create_plusgeno_view() {
 }
 
 /**
- *
+ * Implements hook_update_N();
  */
 function gttn_tpps_update_7001() {
   $transaction = db_transaction();

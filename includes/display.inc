@@ -36,21 +36,31 @@ function gttn_tpps_flatten($state) {
   $data["Database URL"] = $props['db_url'] ?? NULL;
   $data["Project Name"] = $props['projecet_name'] ?? NULL;
   $data["Submission Type"] = $props['type'] ?? NULL;
-  $access = array();
-  foreach ($props['permissions'] as $org_id) {
-    if (!empty($org_id)) {
-      $name = db_select('gttn_profile_organization', 'o')
-        ->fields('o', array('name'))
-        ->condition('organization_id', $org_id)
-        ->range(0, 1)
-        ->execute()->fetchObject()->name;
-      if (!empty($name)) {
-        $access[] = $name;
+  $access_options = array(
+    'public' => t('Public'),
+    'gttn' => t('All registered GTTN organizations'),
+    'law' => t('Law enforcement members only'),
+    'org' => t('Select organizations'),
+    'current' => t('Current organization only'),
+  );
+  $data["Data Access"] = $access_options[$props['permissions']] ?? NULL;
+  if (!empty($props['permissions']) and $props['permissions'] == 'org') {
+    $access = array();
+    foreach ($props['permission-orgs'] as $org_id) {
+      if (!empty($org_id)) {
+        $name = db_select('gttn_profile_organization', 'o')
+          ->fields('o', array('name'))
+          ->condition('organization_id', $org_id)
+          ->range(0, 1)
+          ->execute()->fetchObject()->name;
+        if (!empty($name)) {
+          $access[] = $name;
+        }
       }
     }
-  }
-  if (!empty($access)) {
-    $data["Labs with Access Permissions"] = implode(', ', $access);
+    if (!empty($access)) {
+      $data["Labs with Access Permissions"] = implode(', ', $access);
+    }
   }
   unset($data[GTTN_TYPE_PAGE]);
 
