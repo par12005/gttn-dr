@@ -88,7 +88,6 @@ function page_3_create_form(&$form, &$form_state) {
       '8' => 'County',
       '9' => 'District',
       '12' => 'Population Group',
-      '13' => 'Clone Number',
     );
 
     $title = t("@name Accession File: *", array('@name' => $name)) . "<br>$file_description";

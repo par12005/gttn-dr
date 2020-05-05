@@ -493,7 +493,6 @@ function gttn_tpps_update_tree_data(&$form, &$form_state) {
       $groups = $current_field['file-groups'];
       $county = array_search('8', $column_vals);
       $district = array_search('9', $column_vals);
-      $clone = array_search('13', $column_vals);
       $options = array(
         'cols' => array(
           'id' => $groups['Tree Id'][1],
@@ -503,7 +502,6 @@ function gttn_tpps_update_tree_data(&$form, &$form_state) {
           'state' => $groups[$loc_name]['3'] ?? NULL,
           'county' => ($county !== FALSE) ? $county : NULL,
           'district' => ($district !== FALSE) ? $district : NULL,
-          'clone' => ($clone !== FALSE) ? $clone : NULL,
           'pop_group' => $groups[$loc_name]['12'] ?? NULL,
         ),
         'trees' => &$form_state['data']['trees'],
@@ -550,16 +548,6 @@ function gttn_tpps_update_tree($row, array &$options) {
     'id' => $tree_id,
     'organism_number' => $org_num,
   );
-  if (isset($row[$cols['clone']]) and $row[$cols['clone']] !== $options['empty']) {
-    $clone_name = $tree_id . '-' . $row[$cols['clone']];
-    $trees[$clone_name] = array(
-      'id' => $clone_name,
-      'organism_number' => $org_num,
-      'is_clone' => TRUE,
-      'clone_source' => $tree_id,
-    );
-    $tree_id = $clone_name;
-  }
 
   if (!empty($row[$cols['lat']]) and !empty($row[$cols['lng']])) {
     $raw_coord = $row[$cols['lat']] . ',' . $row[$cols['lng']];

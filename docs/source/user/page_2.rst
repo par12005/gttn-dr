@@ -12,7 +12,7 @@ This section will require one or more tree accession files:
 
 .. image:: ../../../images/tree_accession.png
 
-The simplest tree accession file will simply require a tree identifier column, and location columns such as latitude/longitude, or country/state. However, if your accession file contains trees from multiple species, you will also need columns that indicate which species a tree is from. If some of your trees are clones, then you will need a column indicating the clone number. If you do not have the exact locations for your trees and instead have population groups, you can indicate a population group column, and you will be prompted to indicate the location of each population group below the file field.
+The simplest tree accession file will simply require a tree identifier column, and location columns such as latitude/longitude, or country/state. However, if your accession file contains trees from multiple species, you will also need columns that indicate which species a tree is from. If you do not have the exact locations for your trees and instead have population groups, you can indicate a population group column, and you will be prompted to indicate the location of each population group below the file field.
 
 If you have properly filled out the column types for tree identifier and location, you will be able to view your data in a thumbnail map by clicking "Click here to view trees on map!". This is useful for verifying that the locations you have uploaded are being interpreted correctly by GTTN-TPPS.
 

@@ -237,13 +237,6 @@ function gttn_tpps_submit_trees(&$state) {
       'name' => 'organism',
       'is_obsolete' => 0,
     ))->cvterm_id,
-    'clone' => chado_get_cvterm(array(
-      'cv_id' => array(
-        'name' => 'sequence',
-      ),
-      'name' => 'clone',
-      'is_obsolete' => 0,
-    ))->cvterm_id,
     'has_part' => chado_get_cvterm(array(
       'cv_id' => array(
         'name' => 'sequence',
@@ -355,16 +348,6 @@ function gttn_tpps_submit_trees(&$state) {
         'stock' => $id,
       ),
     );
-
-    if (!empty($tree['is_clone'])) {
-      $records['stock_relationship'][$id] = array(
-        'type_id' => $cvterms['has_part'],
-        '#fk' => array(
-          'subject' => $tree['clone_source'],
-          'object' => $id,
-        )
-      );
-    }
 
     if (!empty($tree['lat']) and !empty($tree['lng'])) {
       $records['stockprop']["$id-lat"] = array(
