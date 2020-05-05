@@ -20,6 +20,10 @@ We can currently filter submissions by project name, species, data type, or subm
 
 .. image:: ../../../images/filter_submissions.png
 
+You can also view details about submissions (as long as you have adequate permissions) from this page by clicking the accession number or the project name. You will then be able to browse the fine details of the submission such as information about individual samples and trees, as well as raw data downloads:
+
+.. image:: ../../../images/submission_details.png
+
 Sample Data
 -----------
 
