@@ -261,7 +261,7 @@ function page_3_create_form(&$form, &$form_state) {
       7 => 'Dimensions',
       8 => 'Sample Source',
       9 => 'Storage Location',
-      10 => 'Remaining Volume of Sample',
+      10 => 'Remaining Dimensions/Volume of Sample',
       11 => 'Sample has been analyzed',
     );
 
