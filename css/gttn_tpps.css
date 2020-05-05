@@ -16,8 +16,21 @@ label figure {
   margin-top: 20px;
   text-align: center;
 }
-#edit-tree-accession figure {
+#edit-tree-accession figure,
+#edit-samples figure,
+#edit-dart-top,
+#edit-isotope figure {
   width: 100%;
+}
+#gttn-tpps-dart-raw img {
+  max-height: 300px;
+}
+#gttn-tpps-dart-raw,
+#gttn-tpps-dart-folder {
+  padding-left: 0px;
+  padding-right: 0px;
+  margin-left: auto;
+  margin-right: auto;
 }
 div#autocomplete {
   width: max-content !important;

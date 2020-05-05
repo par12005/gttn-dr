@@ -65,6 +65,7 @@ function gttn_tpps_page_1_create_form(&$form, $form_state) {
     ),
     '#prefix' => '<div class="gttn-fieldset"><span class="fieldset-legend"><span class="fieldset-legend-prefix element-invisible">Show</span> Data Types<span class="summary"></span></span><div class="gttn-fieldset-wrapper">',
     '#suffix' => '</div></div>',
+    '#description' => t('Please select the type(s) of data you would like to upload in addition to your tree data.'),
   );
 
   // Create the back button.

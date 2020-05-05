@@ -49,12 +49,19 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
       '#type' => 'radios',
       '#title' => t('Which of your organization are you submitting for?*'),
       '#options' => $options,
+      '#description' => t('This option will determine which organization your data and metadata belongs to.'),
+    );
+  }
+  elseif (count($user->organizations) == 1) {
+    $form['project']['props']['organization'] = array(
+      '#type' => 'hidden',
+      '#value' => current($user->organizations),
     );
   }
   else {
     $form['project']['props']['organization'] = array(
       '#type' => 'hidden',
-      '#value' => current($user->organizations),
+      '#value' => 0,
     );
   }
 
@@ -64,6 +71,7 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
     '#gttn_tpps_data' => array(
       'cv' => 'tripal_analysis',
     ),
+    '#description' => t('The date that the analysis data was collected'),
   );
 
   $form['project']['props']['pub_doi'] = array(
@@ -83,12 +91,14 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Original Database URL:'),
     '#gttn_tpps_val' => array(),
+    '#description' => t('If this data came from another database originally, please provide the URL here.'),
   );
 
   $form['project']['props']['project_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Project Name (Funding Agency/Grant Number):'),
     '#gttn_tpps_val' => array(),
+    '#description' => t('This is the name of the higher-level project or grant number that the data and metadata are part of.'),
   );
 
   $form['project']['props']['type'] = array(
@@ -100,6 +110,7 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
       'Existing Trees' => 'Existing Trees',
       'Mixed new/existing Trees' => 'Mixed new/existing Trees',
     ),
+    '#description' => t('The type of trees. This option allows GTTN-TPPS to search for matching trees within your organization in order to update information where applicable.'),
   );
 
   $form['project']['props']['permissions'] = array(
