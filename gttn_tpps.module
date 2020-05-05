@@ -1075,6 +1075,27 @@ function gttn_tpps_main_submit($form, &$form_state) {
       $form_state['stage'] = GTTN_TYPE_PAGE;
       break;
 
+    case GTTN_PAGE_3:
+      if ($form_state['triggering_element']['#value'] == 'Back') {
+        $form_state['stage'] = GTTN_PAGE_1;
+      }
+      else {
+        $form_state['stage'] = GTTN_PAGE_4;
+        $data_types = $form_state['saved_values'][GTTN_PAGE_1]['data_type'];
+        unset($data_types['Sample Data']);
+        $skip = TRUE;
+        foreach ($data_types as $data_type) {
+          if ($data_type) {
+            $skip = FALSE;
+            break;
+          }
+        }
+        if ($skip) {
+          $form_state['stage'] = 'summarypage';
+        }
+      }
+      break;
+
     case GTTN_PAGE_4:
       if ($form_state['triggering_element']['#value'] == 'Back') {
         $form_state['stage'] = GTTN_PAGE_3;
@@ -1087,6 +1108,18 @@ function gttn_tpps_main_submit($form, &$form_state) {
     case 'summarypage':
       if ($form_state['triggering_element']['#value'] == 'Back') {
         $form_state['stage'] = GTTN_PAGE_4;
+        $data_types = $form_state['saved_values'][GTTN_PAGE_1]['data_type'];
+        unset($data_types['Sample Data']);
+        $skip = TRUE;
+        foreach ($data_types as $data_type) {
+          if ($data_type) {
+            $skip = FALSE;
+            break;
+          }
+        }
+        if ($skip) {
+          $form_state['stage'] = GTTN_PAGE_3;
+        }
       }
       else {
         $form_state['status'] = 'Pending Approval';
