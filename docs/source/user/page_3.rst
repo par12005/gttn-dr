@@ -99,6 +99,10 @@ Wood Anatomy
 
 This section collects information about a Wood Anatomy analysis:
 
-.. image:: ../../../images/anatomy_information.png
+.. image:: ../../../images/anatomy_information_1.png
+
+We collect metadata for each species based on the IAWA standards: Nomenclature, General, Vessels, Tracheids and fibres, Axial parenchyma, Rays, Storied structures, Mineral inclusions, Physical and chemical tests.
+
+.. image:: ../../../images/anatomy_information_2.png
 
 You can upload any number of microscope slide images and provide brief descriptions for each.
