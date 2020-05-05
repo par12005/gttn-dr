@@ -573,6 +573,23 @@ function page_4_create_form(&$form, &$form_state) {
         array('description', '#title'),
       ),
     ));
+    for ($i = 1; $i <= 10; $i++) {
+      if (empty($form['anatomy']['slides'][$i])) {
+        $form['anatomy']['slides'][$i] = array(
+          '#type' => 'fieldset',
+          '#prefix' => '<div class="hide-me">',
+          '#suffix' => '</div>',
+          'image' => array(
+            '#type' => 'managed_file',
+            '#upload_validators' => array(
+              'file_validate_extensions' => array('img jpg jpeg png svg'),
+            ),
+            '#upload_location' => $slides_upload_location,
+            '#gttn_tpps_val' => array(),
+          ),
+        );
+      }
+    }
   }
 
   // Create the back button.
