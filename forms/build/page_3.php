@@ -58,6 +58,9 @@ function page_3_create_form(&$form, &$form_state) {
     $file_description .= " If you are uploading a single file with multiple species, your file must also specify the genus and species of each tree.";
   }
 
+  $image_path = drupal_get_path('module', 'gttn_tpps') . '/images/';
+  $file_description .= "Please find an example of an accession file below.<figure><img src=\"/{$image_path}accession_example.png\"><figcaption>Example Accession File</figcaption></figure>";
+
   $check = $form_state['complete form']['tree-accession']['check']['#value'] ?? NULL;
   if (!isset($check)) {
     $check = $form_state['saved_values'][GTTN_PAGE_3]['tree-accession']['check'] ?? FALSE;
@@ -71,6 +74,7 @@ function page_3_create_form(&$form, &$form_state) {
       'approx' => array(2, 3),
       'gps' => array(4, 5),
       'pop_group' => array(12),
+      'forest_id' => array(13),
     ),
   );
 
@@ -88,7 +92,8 @@ function page_3_create_form(&$form, &$form_state) {
       '8' => 'County',
       '9' => 'District',
       '12' => 'Population Group',
-      '13' => 'Clone Number',
+      '13' => 'Forest ID',
+      '14' => 'Bar code',
     );
 
     $title = t("@name Accession File: *", array('@name' => $name)) . "<br>$file_description";
@@ -134,7 +139,7 @@ function page_3_create_form(&$form, &$form_state) {
         '#default_value' => $values['tree-accession']["species-$i"]['file']['empty'] ?? 'NA',
       ),
       'columns' => array(
-        '#description' => 'Please define which columns hold the required data: Tree Identifier and Location. If your trees are located based on a population group, you can provide the population group column and a mapping of population group to location below.',
+        '#description' => 'Please define which columns hold the required data: Tree Identifier and Location. If your trees are located based on a population group or a forest id, you can provide the population group column and a mapping of population group to location below.',
       ),
       'no-header' => array(),
       'columns-options' => array(
@@ -180,13 +185,13 @@ function page_3_create_form(&$form, &$form_state) {
         if ($col_name[0] == '#') {
           continue;
         }
-        if (!empty($data['#value']) and $data['#value'] == '12') {
+        if (!empty($data['#value']) and ($data['#value'] == '12' or $data['#value'] == '13')) {
           $pop_group_show = TRUE;
           $pop_col = $col_name;
           $fid = $form_state['complete form']['tree-accession']["species-$i"]['file']['#value']['fid'];
           break;
         }
-        if ($data == '12') {
+        if ($data == '12' or $data == '13') {
           $pop_group_show = TRUE;
           $pop_col = $col_name;
           $fid = $form_state['saved_values'][GTTN_PAGE_3]['tree-accession']["species-$i"]['file'];
@@ -259,7 +264,7 @@ function page_3_create_form(&$form, &$form_state) {
       7 => 'Dimensions',
       8 => 'Sample Source',
       9 => 'Storage Location',
-      10 => 'Remaining Volume of Sample',
+      10 => 'Remaining Dimensions/Volume of Sample',
       11 => 'Sample has been analyzed',
     );
 
@@ -279,9 +284,12 @@ function page_3_create_form(&$form, &$form_state) {
       ),
     );
 
+    $sample_file_description = "Please upload a spreadsheet file containing sample data. When your file is uploaded, you will be shown a table with your column header names, several drop-downs, and the first few rows of your file. You will be asked to define the data type for each column, using the drop-downs provided to you. If a column data type does not fit any of the options in the drop-down menu, you may omit that drop-down menu. Your file must contain columns with information about at least the Sample ID, Source, remaining volume, and dimensions. If your sample file does not contain information about the sample tissue type, collection date, field collector, sampling method, analysis state, and storage location, then you will be required to enter those manually below the file.";
+    $sample_file_description .= "Please find an example of an accession file below.<figure><img width=\"100%\" src=\"/{$image_path}sample_example.png\"><figcaption>Example Sample Information File</figcaption></figure>";
+
     $form['samples']['file'] = array(
       '#type' => 'managed_file',
-      '#title' => t('Sample File: *'),
+      '#title' => t("Sample Information File: *") . "<br>$sample_file_description",
       '#upload_location' => $sample_file_upload_location,
       '#upload_validators' => array(
         'file_validate_extensions' => array('txt csv xlsx'),

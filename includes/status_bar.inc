@@ -67,7 +67,7 @@ function gttn_tpps_status_bar(&$form, $form_state) {
   $form['#prefix'] .= "<div><img src='$base_url/misc/$image_fname'> Tree Accession</div>";
 
   /**** Page 4 ****/
-  if (!empty($form_state['saved_values'][GTTN_PAGE_4]['#cleared']) and $form_state['stage'] !== GTTN_PAGE_4) {
+  if ((!empty($form_state['saved_values'][GTTN_PAGE_4]['#cleared']) and $form_state['stage'] !== GTTN_PAGE_4) or $form_state['stage'] === 'summarypage') {
     $image_fname = 'message-16-ok.png';
   }
   elseif ($form_state['stage'] == GTTN_PAGE_4) {

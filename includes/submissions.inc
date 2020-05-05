@@ -181,18 +181,54 @@ function gttn_tpps_submission_permissions($state) {
  */
 function gttn_tpps_submission_access($state, $uid = NULL) {
   global $user;
+  if (!is_array($state) and is_string($state)) {
+    $state = gttn_tpps_load_submission($state) ?? NULL;
+  }
   if (isset($uid) and is_int($uid)) {
     $user = user_load($uid);
   }
 
-  $permissions = gttn_tpps_submission_permissions($state);
-  foreach ($permissions as $org_id) {
-    $members = gttn_profile_organization_get_members($org_id);
-    foreach ($members as $member) {
-      if ($user->uid == $member->uid) {
-        return TRUE;
+  if (empty($user) or empty($state)) {
+    return FALSE;
+  }
+
+  $permissions = $state['data']['project']['props']['permissions'] ?? NULL;
+  switch ($permissions) {
+    case 'public':
+      return TRUE;
+
+    case 'gttn':
+      return (bool) $uid;
+
+    case 'law':
+      $law = array_search('law enforcement', $user->roles);
+      return !($law === FALSE);
+
+    case 'org':
+      $orgs = $state['data']['project']['props']['permission-orgs'] ?? array();
+      foreach ($orgs as $org) {
+        if (!empty($org)) {
+          $members = gttn_profile_organization_get_members($org);
+          foreach ($members as $member) {
+            if ($user->uid == $member->uid) {
+              return TRUE;
+            }
+          }
+        }
       }
-    }
+      return FALSE;
+
+    case 'current':
+      $members = gttn_profile_organization_get_members($state['data']['project']['props']['organization']);
+      foreach ($members as $member) {
+        if ($user->uid == $member->uid) {
+          return TRUE;
+        }
+      }
+      return FALSE;
+
+    default:
+      return FALSE;
   }
   return FALSE;
 }

@@ -251,8 +251,10 @@ function gttn_tpps_get_reference_headers($params) {
         'Accession',
         'Project Name',
         'Species',
+        'Tissue Types',
         'Data Types',
-        'Submitting Organization'
+        'Submitting Organization',
+        'Analysis Date',
       );
 
     case 'sample':
@@ -287,18 +289,30 @@ function gttn_tpps_reference_build_row($item, $params) {
           $data_types[] = $type;
         }
       }
+      $tissues = array();
+      foreach ($state['data']['samples'] as $info) {
+        $tissues[$info['tissue']] = $info['tissue'];
+      }
+      $tissues = implode('<br>', $tissues);
       $query = db_select('gttn_profile_organization', 'o')
         ->fields('o', array('name'))
         ->condition('o.organization_id', $state['data']['project']['props']['organization'])
         ->range(0, 1)
         ->execute();
       $organization = $query->fetchObject()->name ?? NULL;
+      $date = current($state['data']['samples'])['date'] ?? '';
+      if (is_array($date)) {
+        $date = date("jS F, Y", strtotime("{$date['day']}-{$date['month']}-{$date['year']}"));
+      }
+
       $row = array(
         "<a href=\"$base_url/reference/submission/{$state['accession']}\">{$state['accession']}</a>",
         "<a href=\"$base_url/reference/submission/{$state['accession']}\">{$state['data']['project']['name']}</a>",
         implode('<br>', $species),
+        $tissues,
         implode('<br>', $data_types),
         $organization,
+        $date,
       );
       return array(
         'key' => $state['accession'],

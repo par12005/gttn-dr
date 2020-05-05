@@ -54,12 +54,21 @@ function page_4_create_form(&$form, &$form_state) {
       ),
     );
 
+    $file_description = "Please upload a spreadsheet file containing DART Reference metadata. When your file is uploaded, you will be shown a table with your column header names, several drop-downs, and the first few rows of your file. You will be asked to define the data type for each column, using the drop-downs provided to you. If a column data type does not fit any of the options in the drop-down menu, you may omit that drop-down menu. Your file must contain columns with information about at least the lab that performed the DART analysis, the lab spectra ID, the sample ID, and the parameter settings of the DART machine.";
+    $raw_file_description = "Please upload a .zip, .gz, or .tar archive of your DART Reference Raw Data. This should be a compressed archive containing text files with names that match sample id's that you have provided on the previous page. Each text file should contain the raw DART measurements for the sample it is named after.";
+
+    $image_path = drupal_get_path('module', 'gttn_tpps') . '/images/';
+    $file_description .= " Please find an example of a DART Reference metadata file below.<figure id=\"edit-dart-top\"><img width=\"100%\" src=\"/{$image_path}example_dart_top.png\"><figcaption>Example DART Reference Metadata File</figcaption></figure>";
+    $raw_file_description .= " Please find an example of a DART Raw Data archive structure and a DART Reference Raw Data file below. If you need more information, please consult the <a target=\"blank\" href=\"https://gttn-tpps.readthedocs.io/en/latest/user/page_3.html#top-level-dart-data-file\">user documentation</a>.<br><figure id=\"gttn-tpps-dart-folder\"><img src=\"/{$image_path}example_dart_folder.png\"><figcaption>Example DART Raw Data Archive</figcaption></figure><figure id=\"gttn-tpps-dart-raw\"><img src=\"/{$image_path}example_dart_raw.png\"><figcaption>Example DART Reference Raw Data File</figcaption></figure>";
+
+    $title = t("DART Reference Metadata File: *") . "<br>$file_description";
+    $raw_title = t("DART Reference Raw Data File: *") . "<br>$raw_file_description";
     $form['dart'] = array(
       '#type' => 'fieldset',
       '#title' => t('DART Reference Data'),
       'file' => array(
         '#type' => 'managed_file',
-        '#title' => t('DART Reference Metadata File: *'),
+        '#title' => $title,
         '#upload_location' => $dart_file_upload_location,
         '#upload_validators' => array(
           'file_validate_extensions' => array('txt csv xlsx'),
@@ -85,7 +94,7 @@ function page_4_create_form(&$form, &$form_state) {
       ),
       'raw' => array(
         '#type' => 'managed_file',
-        '#title' => t('DART Reference Raw Data File: *'),
+        '#title' => $raw_title,
         '#upload_location' => $dart_raw_upload_location,
         '#upload_validators' => array(
           'file_validate_extensions' => array('zip gz tar'),
@@ -102,6 +111,13 @@ function page_4_create_form(&$form, &$form_state) {
 
   if (!empty($types['Isotope Reference Data'])) {
     $isotope_file_upload_location = 'public://' . variable_get('gttn_tpps_iso_files_dir', 'gttn_tpps_isotope');
+
+    $file_description = "Please upload a spreadsheet file containing Isotope Reference data. When your file is uploaded, you will be shown a table with your column header names, several drop-downs, and the first few rows of your file. You will be asked to define the data type for each column, using the drop-downs provided to you. If a column data type does not fit any of the options in the drop-down menu, you may omit that drop-down menu. Your file must contain columns with information about at least the sample ID each Isotope you indicated above.";
+
+    $image_path = drupal_get_path('module', 'gttn_tpps') . '/images/';
+    $file_description .= " Please find an example of an Isotope Reference Data file below.<figure><img src=\"/{$image_path}example_isotope.png\"><figcaption>Example Isotope Reference Data File</figcaption></figure>";
+
+    $title = t("Isotope Reference Data File: *") . "<br>$file_description";
 
     $form['isotope'] = array(
       '#type' => 'fieldset',
@@ -192,7 +208,7 @@ function page_4_create_form(&$form, &$form_state) {
 
     $form['isotope']['file'] = array(
       '#type' => 'managed_file',
-      '#title' => t('Isotope Reference Data File: *'),
+      '#title' => $title,
       '#upload_location' => $isotope_file_upload_location,
       '#upload_validators' => array(
         'file_validate_extensions' => array('txt csv xlsx'),
@@ -243,6 +259,7 @@ function page_4_create_form(&$form, &$form_state) {
         'callback' => 'gttn_tpps_genetic_callback',
         'wrapper' => 'gttn-tpps-genetic',
       ),
+      '#description' => t('Please indicate the genetic marker types that your analysis used'),
     );
 
     $markers = gttn_tpps_get_ajax_value($form_state, array('genetic', 'marker'));
@@ -300,7 +317,7 @@ function page_4_create_form(&$form, &$form_state) {
 
         $form['genetic']['gbs_machine'] = array(
           '#type' => 'textfield',
-          '#title' => t('GBS Sequencer Machine: *'),
+          '#title' => t('GBS Sequencing Instrument: *'),
         );
 
         $options = array(
@@ -427,7 +444,7 @@ function page_4_create_form(&$form, &$form_state) {
     if (!empty($markers['SSRs/cpSSRs'])) {
       $form['genetic']['ssr_machine'] = array(
         '#type' => 'textfield',
-        '#title' => t('SSR Machine: *'),
+        '#title' => t('SSR Sequencing Instrument: *'),
       );
 
       $form['genetic']['ploidy'] = array(
@@ -498,6 +515,7 @@ function page_4_create_form(&$form, &$form_state) {
       '#title' => t('Anatomical Characteristics'),
       '#tree' => TRUE,
       '#collapsible' => TRUE,
+      '#description' => t('Please provide descriptions of the anatomical characteristics of each of the species you have indicated.'),
     );
 
     $anatomy_types = array(
