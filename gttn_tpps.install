@@ -775,3 +775,24 @@ function gttn_tpps_create_plusgeno_view() {
     variable_set('gttn_tpps_local_db', chado_get_db(array('db_id' => (int) $matches[1])));
   }
 }
+
+/**
+ *
+ */
+function gttn_tpps_update_7001() {
+  $transaction = db_transaction();
+  try {
+    $submissions = gttn_tpps_load_submission_multiple();
+    foreach ($submissions as $state) {
+      $state['saved_values'][GTTN_TYPE_PAGE]['project']['props']['permission-orgs'] = $state['data']['project']['props']['permissions'];
+      $state['data']['project']['props']['permission-orgs'] = $state['data']['project']['props']['permissions'];
+      $state['saved_values'][GTTN_TYPE_PAGE]['project']['props']['permissions'] = 'org';
+      $state['data']['project']['props']['permissions'] = 'org';
+      gttn_tpps_update_submission($state);
+    }
+  }
+  catch (\Exception $e) {
+    $transaction->rollback();
+    throw $e;
+  }
+}
