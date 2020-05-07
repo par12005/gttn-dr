@@ -164,19 +164,19 @@ function gttn_tpps_submit_organism(&$state) {
     $genus = $info['genus'];
     $species = $info['species'];
     //we promised to add species on First page, if we do not have it
-	//now it's time to do ;)
-	$spec_id = db_select('chado.organism', 'o')
+    //now it's time to do ;)
+    $spec_id = db_select('chado.organism', 'o')
       ->fields('o', array('organism_id'))
       ->condition('genus', $genus)
       ->condition('species', $species)
       ->execute()->fetchObject()->organism_id ?? NULL;
-	if (is_null($spec_id)) {
-		gttn_tpps_chado_insert_record('organism', array(
-			'genus' => $genus,
-			'species' => $species,
-			'type_id' => chado_get_cvterm($org_type)->cvterm_id,
-		));
-	}
+    if (is_null($spec_id)) {
+      gttn_tpps_chado_insert_record('organism', array(
+      'genus' => $genus,
+      'species' => $species,
+      'type_id' => chado_get_cvterm($org_type)->cvterm_id,
+      ));
+    }
     $state['ids']['organism_ids'][$id] = db_select('chado.organism', 'o')
       ->fields('o', array('organism_id'))
       ->condition('genus', $genus)
