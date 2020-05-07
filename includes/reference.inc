@@ -290,8 +290,10 @@ function gttn_tpps_reference_build_row($item, $params) {
         }
       }
       $tissues = array();
-      foreach ($state['data']['samples'] as $info) {
-        $tissues[$info['tissue']] = $info['tissue'];
+      if (!empty($state['data']['samples'])) {
+        foreach ($state['data']['samples'] as $info) {
+          $tissues[$info['tissue']] = $info['tissue'];
+        }
       }
       $tissues = implode('<br>', $tissues);
       $query = db_select('gttn_profile_organization', 'o')
@@ -300,9 +302,12 @@ function gttn_tpps_reference_build_row($item, $params) {
         ->range(0, 1)
         ->execute();
       $organization = $query->fetchObject()->name ?? NULL;
-      $date = current($state['data']['samples'])['date'] ?? '';
-      if (is_array($date)) {
-        $date = date("jS F, Y", strtotime("{$date['day']}-{$date['month']}-{$date['year']}"));
+      $date = '';
+      if (!empty($state['data']['samples'])) {
+        $date = current($state['data']['samples'])['date'] ?? '';
+        if (is_array($date)) {
+          $date = date("jS F, Y", strtotime("{$date['day']}-{$date['month']}-{$date['year']}"));
+        }
       }
 
       $row = array(
