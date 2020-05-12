@@ -560,8 +560,13 @@ function page_4_create_form(&$form, &$form_state) {
       ),
       'description' => array(
         '#type' => 'textfield',
-        '#title' => 'Slide image !num description:',
+        '#title' => 'Slide image !num description: *',
         '#description' => t('Please provide a brief description of the provided image'),
+      ),
+      'credit' => array(
+        '#type' => 'textfield',
+        '#title' => 'Slide image !num photo credit:',
+        '#gttn_tpps_val' => array(),
       ),
     );
     gttn_tpps_dynamic_list($form, $form_state, 'slides', $field, array(
@@ -572,6 +577,7 @@ function page_4_create_form(&$form, &$form_state) {
       'substitute_fields' => array(
         array('image', '#standard_name'),
         array('description', '#title'),
+        array('credit', '#title'),
       ),
     ));
     for ($i = 1; $i <= 10; $i++) {
