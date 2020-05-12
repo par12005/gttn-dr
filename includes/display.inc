@@ -986,6 +986,7 @@ function gttn_tpps_display_submission_anatomy(array &$state) {
       $rows[] = array(
         $image,
         $info['description'],
+        $info['credit'],
       );
     }
   }
@@ -994,6 +995,7 @@ function gttn_tpps_display_submission_anatomy(array &$state) {
     'header' => array(
       'Image',
       'Description',
+      'Photo Credit',
     ),
     'rows' => $rows,
     'attributes' => array('class' => array('view'), 'id' => 'gttn_tpps_table_display'),
