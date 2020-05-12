@@ -52,7 +52,7 @@ function gttn_tpps_flatten($state) {
           ->fields('o', array('name'))
           ->condition('organization_id', $org_id)
           ->range(0, 1)
-          ->execute()->fetchObject()->name;
+          ->execute()->fetchObject()->name ?? NULL;
         if (!empty($name)) {
           $access[] = $name;
         }
