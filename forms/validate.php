@@ -356,9 +356,9 @@ function gttn_tpps_update_data(&$form, &$form_state) {
         $content = gttn_tpps_parse_file($fid, 0, $form_state['values']['samples']['file-no-header']);
         $id_col = $groups['Sample Id'][1] ?? $groups['Sample Id'][2];
         $source_col = $groups['Sample Source'][8];
-        $dim_col = $groups['Sample Dimensions'][7];
+        $dim_col = $groups['Sample Dimensions'][7] ?? FALSE;
         $xylarium_col = $groups['Sample Id'][2] ?? FALSE;
-        $remaining_col = $groups['Remaining Volume of Sample'][10];
+        $remaining_col = $groups['Remaining Volume of Sample'][10] ?? FALSE;
 
         $date = $form_state['values']['samples']['date'] ?? NULL;
         if (empty($date)) {
@@ -391,21 +391,23 @@ function gttn_tpps_update_data(&$form, &$form_state) {
         $share = $form_state['values']['samples']['sharable'] ? TRUE : FALSE;
 
         for ($j = 0; $j < count($content) - 1; $j++) {
-          $form_state['data']['samples'][$content[$j][$id_col]] = array(
-            'id' => $content[$j][$id_col],
-            'xylarium' => $xylarium_col ? $content[$j][$xylarium_col] : NULL,
-            'source' => $content[$j][$source_col],
-            'tissue' => $tissue ?? ($content[$j][$tissue_col] ?? NULL),
-            'dimension' => $content[$j][$dim_col],
-            'date' => $date ?? ($content[$j][$date_col] ?? NULL),
-            'collector' => $collector ?? ($content[$j][$collector_col] ?? NULL),
-            'method' => $method ?? ($content[$j][$method_col] ?? NULL),
-            'remaining' => $content[$j][$remaining_col],
-            'type' => $samples_type ? 'Physical' : 'DNA',
-            'analyzed' => $analyzed ?? ($content[$j][$analyzed_col] ?? NULL),
-            'share' => $share ?? NULL,
-            'storage' => $storage ?? ($content[$j][$storage_col] ?? NULL),
-          );
+          if (!empty($content[$j][$id_col])) {
+            $form_state['data']['samples'][$content[$j][$id_col]] = array(
+              'id' => $content[$j][$id_col],
+              'xylarium' => $xylarium_col ? $content[$j][$xylarium_col] : NULL,
+              'source' => $content[$j][$source_col],
+              'tissue' => $tissue ?? ($content[$j][$tissue_col] ?? NULL),
+              'dimension' => $dim_col ? $content[$j][$dim_col] : NULL,
+              'date' => $date ?? ($content[$j][$date_col] ?? NULL),
+              'collector' => $collector ?? ($content[$j][$collector_col] ?? NULL),
+              'method' => $method ?? ($content[$j][$method_col] ?? NULL),
+              'remaining' => $remaining_col ? $content[$j][$remaining_col] : NULL,
+              'type' => $samples_type ? 'Physical' : 'DNA',
+              'analyzed' => $analyzed ?? ($content[$j][$analyzed_col] ?? NULL),
+              'share' => $share ?? NULL,
+              'storage' => $storage ?? ($content[$j][$storage_col] ?? NULL),
+            );
+          }
         }
 
         if (gttn_tpps_match_samples($form_state)) {

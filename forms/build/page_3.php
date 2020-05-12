@@ -276,13 +276,19 @@ function page_3_create_form(&$form, &$form_state) {
       'Sample Source' => array(
         'source' => array(8),
       ),
-      'Sample Dimensions' => array(
-        'dimension' => array(7),
-      ),
-      'Remaining Volume of Sample' => array(
-        'volume' => array(10),
-      ),
     );
+
+    $share = gttn_tpps_get_ajax_value($form_state, array('samples', 'sharable'), NULL);
+    if ($share) {
+      if ($type) {
+        $required_groups['Sample Dimensions'] = array(
+          'dimension' => array(7),
+        );
+      }
+      $required_groups['Remaining Volume of Sample'] = array(
+        'volume' => array(10),
+      );
+    }
 
     $sample_file_description = "Please upload a spreadsheet file containing sample data. When your file is uploaded, you will be shown a table with your column header names, several drop-downs, and the first few rows of your file. You will be asked to define the data type for each column, using the drop-downs provided to you. If a column data type does not fit any of the options in the drop-down menu, you may omit that drop-down menu. Your file must contain columns with information about at least the Sample ID, Source, remaining volume, and dimensions. If your sample file does not contain information about the sample tissue type, collection date, field collector, sampling method, analysis state, and storage location, then you will be required to enter those manually below the file.";
     $sample_file_description .= "Please find an example of an accession file below.<figure><img width=\"100%\" src=\"/{$image_path}sample_example.png\"><figcaption>Example Sample Information File</figcaption></figure>";
@@ -421,6 +427,10 @@ function page_3_create_form(&$form, &$form_state) {
     $form['samples']['sharable'] = array(
       '#type' => 'checkbox',
       '#title' => t('These samples can be shared'),
+      '#ajax' => array(
+        'callback' => 'gttn_tpps_samples_callback',
+        'wrapper' => 'gttn_tpps_samples'
+      ),
     );
   }
 
