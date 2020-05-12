@@ -541,6 +541,9 @@ function gttn_tpps_update_tree($row, array &$options) {
   $geo_api_key = variable_get('gttn_tpps_geocode_api_key', NULL);
 
   $tree_id = $row[$cols['id']];
+  if (empty($tree_id)) {
+    return;
+  }
   $org_num = $options['org_num'];
   if ($options['organisms']['number'] != 1 and $options['single_file']) {
     $org_full_name = $row[$cols['org']] ?? "{$row[$cols['genus']]} {$row[$cols['species']]}";

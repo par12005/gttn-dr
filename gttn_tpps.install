@@ -796,3 +796,23 @@ function gttn_tpps_update_7001() {
     throw $e;
   }
 }
+
+/**
+ * Implements hook_update_N();
+ */
+function gttn_tpps_update_7002() {
+  $transaction = db_transaction();
+  try {
+    $submissions = gttn_tpps_load_submission_multiple();
+    foreach ($submissions as $state) {
+      if (!empty($state['data']['trees'][NULL])) {
+        unset($state['data']['trees'][NULL]);
+        gttn_tpps_update_submission($state);
+      }
+    }
+  }
+  catch (\Exception $e) {
+    $transaction->rollback();
+    throw $e;
+  }
+}

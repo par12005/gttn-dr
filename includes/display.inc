@@ -528,11 +528,13 @@ function gttn_tpps_display_submission($accession = NULL) {
     if (!empty($state['data']['trees'])) {
       $tree_info = array();
       foreach ($state['data']['trees'] as $id => $info) {
-        $tree_info[] = array(
-          $id,
-          $info['lat'],
-          $info['lng'],
-        );
+        if (!empty($info['lat']) and !empty($info['lng'])) {
+          $tree_info[] = array(
+            $id,
+            $info['lat'],
+            $info['lng'],
+          );
+        }
       }
       drupal_add_js(array('gttn_tpps' => array('tree_info' => $tree_info)), 'setting');
     }
