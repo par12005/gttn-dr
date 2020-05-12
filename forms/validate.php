@@ -419,6 +419,13 @@ function gttn_tpps_update_data(&$form, &$form_state) {
             }
           }
         }
+
+        foreach ($form_state['data']['samples'] as $id => $sample) {
+          $tree = gttn_tpps_source_tree($sample['source'], $form_state);
+          if (empty($tree)) {
+            form_set_error('samples][file', t("The sample $id had source {$sample['source']} which is invalid - The source field must match either the id of a tree or the id of another sample with a valid source."));
+          }
+        }
       }
       // TODO
       break;

@@ -390,11 +390,22 @@ function gttn_tpps_sample_cvterms() {
  *
  */
 function gttn_tpps_source_get_organism($id, $state) {
-  if (!empty($state['data']['trees'][$id]['organism_id'])) {
-    return $state['data']['trees'][$id]['organism_id'];
+  $tree = gttn_tpps_source_tree($id, $state);
+  return $state['data']['trees'][$tree]['organism_id'] ?? NULL;
+}
+
+/**
+ *
+ */
+function gttn_tpps_source_tree($id, $state, $already_visited = array()) {
+  if (array_search($id, $already_visited) !== FALSE) {
+    return NULL;
+  }
+  if (!empty($state['data']['trees'][$id]['id'])) {
+    return $state['data']['trees'][$id]['id'];
   }
   if (!empty($state['data']['samples'][$id]['source'])) {
-    return gttn_tpps_source_get_organism($state['data']['samples'][$id]['source'], $state);
+    return gttn_tpps_source_tree($state['data']['samples'][$id]['source'], $state, $already_visited);
   }
   return NULL;
 }
