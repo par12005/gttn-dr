@@ -372,6 +372,10 @@ function gttn_tpps_access($permission, $arg = array()) {
         return FALSE;
 
       case 'browse_reference':
+        if (gttn_tpps_access('administer gttn-tpps module')) {
+          return TRUE;
+        }
+
         if (preg_match('/reference\/([^\/]+)\/([^\/]+).?$/', $params['q'], $matches)) {
           $type = $matches[1];
           $id = $matches[2];
