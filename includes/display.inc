@@ -349,7 +349,7 @@ function gttn_tpps_completed_display(string $accession = '') {
   if (empty($old_form_state)) {
     throw new \Exception("Invalid submission accession: '$accession'");
   }
-  $link = "$base_url/gttn_tpps_details/accession/$accession";
+  $link = "$base_url/reference/submission/$accession";
   $title = $old_form_state['data']['project']['name'];
 
   $css = "
