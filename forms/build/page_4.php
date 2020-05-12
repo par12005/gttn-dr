@@ -542,6 +542,7 @@ function page_4_create_form(&$form, &$form_state) {
         $form['anatomy']['metadata'][$species_name][$id] = array(
           '#type' => 'textarea',
           '#title' => $type . ':',
+          '#gttn_tpps_val' => array(),
         );
       }
     }
