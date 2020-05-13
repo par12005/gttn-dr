@@ -175,7 +175,7 @@ function gttn_tpps_submit_organism(&$state) {
     // We promised to add species on First page, if we do not have it
     // now it's time to do ;)
     if (empty($state['ids']['organism_ids'][$id])) {
-      gttn_tpps_chado_insert_record('organism', array(
+      $state['ids']['organism_ids'][$id] = gttn_tpps_chado_insert_record('organism', array(
         'genus' => $genus,
         'species' => $species,
         'type_id' => chado_get_cvterm($org_type)->cvterm_id,
@@ -793,6 +793,7 @@ function gttn_tpps_submit_isotope(&$state) {
     'suffix' => 0,
     'cvterms' => $cvterms,
     'samples' => $state['data']['samples'],
+    'format' => $iso['format'],
   );
 
   gttn_tpps_file_iterator($iso['file'], 'gttn_tpps_process_isotope', $options);
@@ -1355,7 +1356,20 @@ function gttn_tpps_process_isotope($row, array &$options) {
   $record_group = variable_get('gttn_tpps_record_group', 10000);
 
   $sample_id = $row[$groups['Sample ID']['1']];
-  unset($groups['Sample ID']);
+  if ($options['format'] == 'type_1') {
+    unset($groups['Sample ID']);
+  }
+  if ($options['format'] == 'type_2') {
+    $iso_col = $groups['Isotope']['2'];
+    $val_col = $groups['Value']['3'];
+    $iso_name = $row[$iso_col];
+    $groups = array(
+      $iso_name => array(
+        '#type' => $iso_name,
+        $val_col,
+      ),
+    );
+  }
   foreach ($groups as $name => $col_info) {
     $isotope = $col_info['#type'];
     unset($col_info['#type']);
@@ -1414,5 +1428,4 @@ function gttn_tpps_process_isotope($row, array &$options) {
     }
     $suffix++;
   }
-  // TODO.
 }
