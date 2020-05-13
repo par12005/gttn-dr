@@ -112,11 +112,11 @@ function getCoordinates(){
       });
     }
     else {
-      fid = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_fid')); })[0].innerHTML;
-      no_header = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_no_header')); })[0].innerHTML;
-      id_col = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_id_col')); })[0].innerHTML;
-      lat_col = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_lat_col')); })[0].innerHTML;
-      long_col = jQuery('div').filter(function() { return this.id.match(new RegExp(species_name + 'accession_long_col')); })[0].innerHTML;
+      fid = this.id.match(/(.*)_map_button/)[1];
+      no_header = Drupal.settings.tpps.accession_settings[fid].no_header;
+      id_col = Drupal.settings.tpps.accession_settings[fid].id_col;
+      lat_col = Drupal.settings.tpps.accession_settings[fid].lat_col;
+      long_col = Drupal.settings.tpps.accession_settings[fid].lng_col;
     }
     
   }

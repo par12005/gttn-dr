@@ -103,15 +103,30 @@ function gttn_tpps_flatten($state) {
   $page_3 = &$data[GTTN_PAGE_3];
   $tree_acc = $page_3['tree-accession'] ?? NULL;
   $samples = $page_3['samples'] ?? NULL;
+  $loc_name = 'Location (latitude/longitude or country/state or population group)';
   for ($i = 1; $i <= $data['#number_organisms']; $i++) {
     if (!empty($tree_acc["species-$i"]['file'])) {
+      $fid = $tree_acc["species-$i"]['file'];
+      $groups = $tree_acc["species-$i"]['file-groups'];
       $organism_name = $data["Species $i"];
-      $data["$organism_name Accession File"] = $tree_acc["species-$i"]['file'];
-      if (!empty($tree_acc["species-$i"]['file-groups']['Location (latitude/longitude or country/state)']['#type']) and $tree_acc["species-$i"]['file-groups']['Location (latitude/longitude or country/state)']['#type'] == "gps") {
-        $data["#{$organism_name}_accession_no_header"] = $tree_acc["species-$i"]['file-no-header'] ?? '0';
-        $data["#{$organism_name}_accession_id_col"] = $tree_acc["species-$i"]['file-groups']['Tree Id'][1];
-        $data["#{$organism_name}_accession_lat_col"] = $tree_acc["species-$i"]['file-groups']['Location (latitude/longitude or country/state)'][4];
-        $data["#{$organism_name}_accession_long_col"] = $tree_acc["species-$i"]['file-groups']['Location (latitude/longitude or country/state)'][5];
+      $organism_selector = $data["Species $i"] . '_';
+      if ($data['#number_organisms'] > 1 and empty($page_3['check'])) {
+        $organism_name = 'Tree Accession File';
+        $organism_selector = "";
+      }
+
+      $data["$organism_name Accession File"] = $fid;
+      if (!empty($groups[$loc_name]['#type']) and $groups[$loc_name]['#type'] == "gps") {
+        $data["#accession_settings"][$fid] = array(
+          'no_header' => $tree_acc["species-$i"]['file-no-header'] ?? '0',
+          'id_col' => $groups['Tree Id'][1],
+          'lat_col' => $groups[$loc_name][4],
+          'lng_col' => $groups[$loc_name][5],
+        );
+        /*$data["#{$organism_name}_accession_no_header"] = $tree_acc["species-$i"]['file-no-header'] ?? '0';
+        $data["#{$organism_name}_accession_id_col"] = $groups['Tree Id'][1];
+        $data["#{$organism_name}_accession_lat_col"] = $groups[$loc_name][4];
+        $data["#{$organism_name}_accession_long_col"] = $groups[$loc_name][5];*/
       }
     }
   }
@@ -286,16 +301,9 @@ function gttn_tpps_table_display(array &$state) {
         $val_str = "<a href='$file_url' target='blank'>$file_name</a>";
         $val_str .= "<br><input id=\"fid_$val\" class=\"preview_button\" type=\"button\" value=\"Preview file\"></input>";
         if (preg_match('/^(.*)Accession File/', $key, $matches)) {
-          $name = "";
-          if ($matches[1] != "Tree ") {
-            $parts = explode(" ", $matches[1]);
-            $name = implode("_", $parts);
-          }
-
-          $val_str .= "<div id=\"{$name}map_wrapper\"></div>"
-            . "<input id=\"{$name}map_button\" type=\"button\" value=\"Click here to view trees on map!\"></input>"
-            . "<div id=\"{$name}accession_fid\" style=\"display:none;\">$val</div>"
-            . "<script>jQuery('#{$name}map_button').click(getCoordinates);</script>";
+          $val_str .= "<div id=\"{$val}_map_wrapper\"></div>"
+            . "<input id=\"{$val}_map_button\" type=\"button\" value=\"Click here to view trees on map!\"></input>"
+            . "<script>jQuery('#{$val}_map_button').click(getCoordinates);</script>";
         }
       }
       elseif ($key == 'Publication DOI') {
@@ -305,11 +313,12 @@ function gttn_tpps_table_display(array &$state) {
 
       $rows[] = array($key_str, $val_str);
     }
-    elseif (preg_match('/^#(.*)accession_(.*)/', $key, $matches)) {
-      $val_str = filter_xss(check_plain($val));
-      $parts = explode(" ", substr($matches[0], 1));
-      $item_id = implode("_", $parts);
-      $content .= "<div id=\"$item_id\" style=\"display:none;\">$val_str</div>";
+    elseif ($key == '#accession_settings') {
+      drupal_add_js(array(
+        'tpps' => array(
+          'accession_settings' => $val,
+        ),
+      ), 'setting');
     }
   }
   if (!empty($map_api_key)) {
