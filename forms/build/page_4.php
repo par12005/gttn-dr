@@ -112,10 +112,9 @@ function page_4_create_form(&$form, &$form_state) {
   if (!empty($types['Isotope Reference Data'])) {
     $isotope_file_upload_location = 'public://' . variable_get('gttn_tpps_iso_files_dir', 'gttn_tpps_isotope');
 
-    $file_description = "Please upload a spreadsheet file containing Isotope Reference data. When your file is uploaded, you will be shown a table with your column header names, several drop-downs, and the first few rows of your file. You will be asked to define the data type for each column, using the drop-downs provided to you. If a column data type does not fit any of the options in the drop-down menu, you may omit that drop-down menu. Your file must contain columns with information about at least the sample ID each Isotope you indicated above.";
+    $file_description = "Please upload a spreadsheet file containing Isotope Reference data. When your file is uploaded, you will be shown a table with your column header names, several drop-downs, and the first few rows of your file. You will be asked to define the data type for each column, using the drop-downs provided to you. If a column data type does not fit any of the options in the drop-down menu, you may omit that drop-down menu.";
 
     $image_path = drupal_get_path('module', 'gttn_tpps') . '/images/';
-    $file_description .= " Please find an example of an Isotope Reference Data file below.<figure><img src=\"/{$image_path}example_isotope.png\"><figcaption>Example Isotope Reference Data File</figcaption></figure>";
 
     $title = t("Isotope Reference Data File: *") . "<br>$file_description";
 
@@ -204,6 +203,55 @@ function page_4_create_form(&$form, &$form_state) {
         );
         $col_index++;
       }
+    }
+
+    $form['isotope']['format'] = array(
+      '#type' => 'radios',
+      '#title' => t('Isotope file format'),
+      '#options' => array(
+        'type_1' => t('Type 1'),
+        'type_2' => t('Type 2'),
+      ),
+      '#default_value' => $form_state['saved_values'][GTTN_PAGE_4]['isotope']['format'] ?? 'type_1',
+      '#description' => t('Please select a file format type from the listed options. Below please see examples of each format type.'),
+      '#ajax' => array(
+        'callback' => 'gttn_tpps_isotope_callback',
+        'wrapper' => 'gttn_tpps_isotope',
+      ),
+    );
+
+    $form['isotope']['format']['type_1']['#prefix'] = "<figure><img src=\"/{$image_path}example_isotope_1.png\"><figcaption>";
+    $form['isotope']['format']['type_1']['#suffix'] = "</figcaption></figure>";
+    $form['isotope']['format']['type_2']['#prefix'] = "<figure><img src=\"/{$image_path}example_isotope_2.png\"><figcaption>";
+    $form['isotope']['format']['type_2']['#suffix'] = "</figcaption></figure>";
+
+    $format = gttn_tpps_get_ajax_value($form_state, array(
+      'isotope',
+      'format',
+    ), 'type_1');
+
+    if ($format == 'type_1') {
+      $title .= " Your file must contain columns with information about at least the sample ID, the Isotope being measured, and the measurement value.";
+    }
+    if ($format == 'type_2') {
+      $column_options = array(
+        'N/A',
+        'Sample ID',
+        'Isotope',
+        'Value',
+      );
+      $required_groups = array(
+        'Sample ID' => array(
+          'id' => array(1),
+        ),
+        'Isotope' => array(
+          'isotope' => array(2),
+        ),
+        'Value' => array(
+          'value' => array(3),
+        ),
+      );
+      $title .= " Your file must contain columns with information about at least the sample ID and each Isotope you indicated above.";
     }
 
     $form['isotope']['file'] = array(

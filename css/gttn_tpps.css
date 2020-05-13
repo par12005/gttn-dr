@@ -1,7 +1,7 @@
 .form-type-radios figure {
   display: inline-block;
   margin-top: 20px;
-  width: 50%;
+  width: 50% !important;
   padding-left: 10%;
   padding-right: 10%;
 }
