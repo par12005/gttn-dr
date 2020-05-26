@@ -185,34 +185,12 @@ function gttn_tpps_submit_organism(&$state) {
     $code_exists = gttn_tpps_chado_prop_exists('organism', $state['ids']['organism_ids'][$id], 'organism 4 letter code');
 
     if (!$code_exists) {
-      $g_offset = 0;
-      $s_offset = 0;
-      do {
-        if (isset($trial_code)) {
-          if ($s_offset < strlen($species) - 2) {
-            $s_offset++;
-          }
-          elseif ($g_offset < strlen($genus) - 2) {
-            $s_offset = 0;
-            $g_offset++;
-          }
-          else {
-            throw new Exception("GTTN-TPPS was unable to create a 4 letter species code for the species '$genus $species'.");
-          }
-        }
-        $trial_code = substr($genus, $g_offset, 2) . substr($species, $s_offset, 2);
-        $new_code_query = chado_select_record('organismprop', array('value'), array(
-          'type_id' => array(
-            'name' => 'organism 4 letter code',
-          ),
-          'value' => $trial_code,
-        ));
-      } while (!empty($new_code_query));
+      $new_code = gttn_tpps_create_organism_code($genus, $species);
 
       gttn_tpps_chado_insert_record('organismprop', array(
         'organism_id' => $state['ids']['organism_ids'][$id],
         'type_id' => chado_get_cvterm(array('name' => 'organism 4 letter code'))->cvterm_id,
-        'value' => $trial_code,
+        'value' => $new_code,
       ));
     }
 
@@ -228,6 +206,34 @@ function gttn_tpps_submit_organism(&$state) {
 
     gttn_tpps_tripal_entity_publish('Organism', array("$genus $species", $state['ids']['organism_ids'][$id]));
   }
+}
+
+/**
+ *
+ */
+function gttn_tpps_create_organism_code($genus, $species = "") {
+  $genus = ucfirst($genus);
+  $species = strtolower($species);
+  for ($g_idx_1 = 0; $g_idx_1 < strlen($genus) - 1; $g_idx_1++) {
+    for ($g_idx_2 = $g_idx_1 + 1; $g_idx_2 < strlen($genus); $g_idx_2++) {
+      $sp = !empty($species) ? $species : substr($genus, $g_idx_2 + 1);
+      for ($s_idx_1 = 0; $s_idx_1 < strlen($sp) - 1; $s_idx_1++) {
+        for ($s_idx_2 = $s_idx_1 + 1; $s_idx_2 < strlen($sp); $s_idx_2++) {
+          $trial_code = "{$genus[$g_idx_1]}{$genus[$g_idx_2]}{$sp[$s_idx_1]}{$sp[$s_idx_2]}";
+          $new_code_query = chado_select_record('organismprop', array('value'), array(
+            'type_id' => array(
+              'name' => 'organism 4 letter code',
+            ),
+            'value' => $trial_code,
+          ));
+          if (empty($new_code_query)) {
+            return $trial_code;
+          }
+        }
+      }
+    }
+  }
+  throw new Exception("GTTN-TPPS was unable to create a 4 letter species code for the species '$genus $species'.");
 }
 
 /**

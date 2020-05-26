@@ -144,9 +144,12 @@ function gttn_tpps_validate_organism(&$form, &$form_state, $value, $parents) {
   $genus = $parts[0];
   $species = implode(" ", array_slice($parts, 1));
   $empty_pattern = '/^ *$/';
-  $correct_pattern = '/^[A-Z|a-z|.| ]+$/';
-  if (!isset($genus) or !isset($species) or preg_match($empty_pattern, $genus) or preg_match($empty_pattern, $species) or !preg_match($correct_pattern, $genus) or !preg_match($correct_pattern, $species)) {
-    form_set_error("organism[$num", check_plain("Tree Species $num: please provide both genus and species in the form \"<genus> <species>\"."));
+  $correct_pattern = '/^[A-Z|a-z|.| ]*$/';
+  if (preg_match($empty_pattern, $species)) {
+    $species = "";
+  }
+  if (!isset($genus) or preg_match($empty_pattern, $genus) or !preg_match($correct_pattern, $genus) or !preg_match($correct_pattern, $species)) {
+    form_set_error("organism[$num", check_plain("Tree Species $num: please provide a valid genus/species name in the format \"<genus> [<species>]\"."));
   }
   else {
     $query = db_select('chado.organism', 'o')
