@@ -38,8 +38,8 @@ function gttn_tpps_front_create_form(&$form, $form_state) {
     foreach ($states as $state) {
       // If the state loads correctly and actually has data associated
       // with it, then add that state to the list of options to choose from.
-      if (!empty($state) and isset($state['saved_values'][GTTN_PAGE_1]['organism'][1])) {
-        $options_arr["{$state['accession']}"] = "{$state['accession']}";
+      if (!empty($state) and !empty($state['data']['project']['name']) and isset($state['saved_values'][GTTN_PAGE_1]['organism'][1])) {
+        $options_arr["{$state['accession']}"] = "{$state['data']['project']['name']}";
       }
       // Otherwise, if the state loads correctly and does not have data
       // associated with it, then remove the empty state variable from the
@@ -49,19 +49,11 @@ function gttn_tpps_front_create_form(&$form, $form_state) {
       }
     }
 
-  //Create a fieldset/fieldgroup
-  $form['group_welcome'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Welcome'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-  );
-
     // If the options array has more than one option, then that means that
     // the user has incomplete submissions that they can choose from, so we
     // should provide them with a drop-down menu.
     if (count($options_arr) > 1) {
-      $form['group_welcome']['accession'] = array(
+      $form['accession'] = array(
         '#type' => 'select',
         '#title' => t('Would you like to load an old GTTN-TPPS submission, or create a new one?'),
         '#options' => $options_arr,
@@ -74,20 +66,23 @@ function gttn_tpps_front_create_form(&$form, $form_state) {
   }
 
   // Create Continue to GTTN-TPPS button.
-  $form['group_welcome']['Next'] = array(
+  $form['Next'] = array(
     '#type' => 'submit',
     '#value' => t('Continue to GTTN-TPPS'),
   );
 
   // Front page introductory text.
-  $prefix_text = "<div>Welcome to GTTN-TPPS!<br><br>To get started, you will need to have a few things handy:<br><ul><li>An enabled and approved GTTN account - you can create one <a href='$base_url/user/register'>here</a>. There may be a waiting period to have your account approved by a GTTN administrator.</li></ul>If you would like to submit your data, you can click the button 'Continue to GTTN-TPPS' below!<br><br></div>";
+  $prefix_text = '<div class="gttn-fieldset"><span class="fieldset-legend"><span class="fieldset-legend-prefix element-invisible">Show</span> Welcome<span class="summary"></span></span><div class="gttn-fieldset-wrapper">';
+  $prefix_text .= "<div>Welcome to GTTN-TPPS!<br><br>To get started, you will need to have a few things handy:<br><ul><li>An enabled and approved GTTN account - you can create one <a href='$base_url/user/register'>here</a>. There may be a waiting period to have your account approved by a GTTN administrator.</li></ul>If you would like to submit your data, you can click the button 'Continue to GTTN-TPPS' below!<br><br></div>";
 
   // Add the introductory text to the first form element.
   if (isset($form['accession'])) {
-    $form['group_welcome']['accession']['#prefix'] = $prefix_text;
+    $form['accession']['#prefix'] = $prefix_text;
+    $form['accession']['#suffix'] = '</div></div>';
   }
   else {
-    $form['group_welcome']['Next']['#prefix'] = $prefix_text;
+    $form['Next']['#prefix'] = $prefix_text;
+    $form['Next']['#suffix'] = '</div></div>';
   }
 
   return $form;
