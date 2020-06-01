@@ -309,10 +309,11 @@ function gttn_tpps_reference_build_row($item, $params) {
           $date = date("jS F, Y", strtotime("{$date['day']}-{$date['month']}-{$date['year']}"));
         }
       }
+      $data_indicators = gttn_tpps_submission_data_indicators($state);
 
       $row = array(
         "<a href=\"$base_url/reference/submission/{$state['accession']}\">{$state['accession']}</a>",
-        "<a href=\"$base_url/reference/submission/{$state['accession']}\">{$state['data']['project']['name']}</a>",
+        "<a href=\"$base_url/reference/submission/{$state['accession']}\">{$state['data']['project']['name']}</a> $data_indicators",
         implode('<br>', $species),
         $tissues,
         implode('<br>', $data_types),

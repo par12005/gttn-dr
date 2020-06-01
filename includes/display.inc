@@ -297,6 +297,8 @@ function gttn_tpps_flatten($state) {
  *
  */
 function gttn_tpps_table_display(array &$state) {
+  global $base_url;
+
   $flat = gttn_tpps_flatten($state);
   $map_api_key = variable_get('gttn_tpps_maps_api_key', NULL);
 
@@ -326,6 +328,9 @@ function gttn_tpps_table_display(array &$state) {
       elseif ($key == 'Publication DOI') {
         $link = preg_match('/https?:\/\//', $val_str) ? $val_str : "https://doi.org/$val_str";
         $val_str = "<a href=\"$link\" target=\"blank\">$val_str</a>";
+      }
+      elseif ($key == 'Submission Name') {
+        $val_str .= ' ' . gttn_tpps_submission_data_indicators($state);
       }
 
       $rows[] = array($key_str, $val_str);
@@ -469,7 +474,7 @@ function gttn_tpps_tab_create($user) {
 
     $rows[] = array(
       $acc ?? "",
-      $type_page['project']['name'] ?? "",
+      ($type_page['project']['name'] ?? "") . ' ' . gttn_tpps_submission_data_indicators($state),
       $page_1['organism']['number'] ?? "",
       $state['status'] ?? "",
     );
@@ -565,7 +570,7 @@ function gttn_tpps_display_submission($accession = NULL) {
       drupal_add_js(array('gttn_tpps' => array('tree_info' => $tree_info)), 'setting');
     }
     $output .= $map_api_tools;
-    $title = $state['data']['project']['name'];
+    $title = $state['data']['project']['name'] . ' ' . gttn_tpps_submission_data_indicators($state);
     $output .= "<h2>$title</h2>";
     $org = gttn_profile_organization_load($state['data']['project']['props']['organization']);
     $output .= "<h4>Submitted by {$user->chado_record->name} for {$org->name}</h4>";

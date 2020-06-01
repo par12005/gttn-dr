@@ -1288,6 +1288,13 @@ function gttn_tpps_block_view_alter(&$data, $block) {
               continue;
             }
           }
+          elseif ($item == 'Publication DOI') {
+            $link = preg_match('/https?:\/\//', $val_str) ? $val_str : "https://doi.org/$val_str";
+            $val_str = "<a href=\"$link\" target=\"blank\">$val_str</a>";
+          }
+          elseif ($item == 'Submission Name') {
+            $val_str .= ' ' . gttn_tpps_submission_data_indicators($form_state);
+          }
           // Add the checkmark, the html-friendly field string, and the
           // html-friendly value string to the content string.
           $content .= "$ok $item_str: $val_str <br>";

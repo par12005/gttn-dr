@@ -38,7 +38,7 @@ function gttn_tpps_admin_panel($form, &$form_state, $accession = NULL) {
         //dpm($state);
         $row = array(
           l($state['accession'], "$base_url/gttn-admin-panel/{$state['accession']}"),
-          $state['data']['project']['name'],
+          $state['data']['project']['name'] . ' ' . gttn_tpps_submission_data_indicators($state),
           $state['status'],
         );
         if ($state['status'] == 'Pending Approval') {
