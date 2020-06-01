@@ -136,10 +136,10 @@ th > div.form-type-select > .ajax-progress {
 #edit-organism .fieldset-legend,
 #gttn_tpps_accession .fieldset-legend,
 #gttn_tpps_samples .fieldset-legend,
-#edit-dart .fieldset-legend,
-#edit-isotope .fieldset-legend,
-#edit-genetic .fieldset-legend,
-#edit-anatomy .fieldset-legend
+#gttn-tpps-dart .fieldset-legend,
+#gttn-tpps-isotope .fieldset-legend,
+#gttn-tpps-genetic .fieldset-legend,
+#gttn-tpps-anatomy .fieldset-legend
 {
   font-size: 20px;
   font-weight: bold;
@@ -165,10 +165,10 @@ th > div.form-type-select > .ajax-progress {
 #edit-organism .fieldset-wrapper,
 #gttn_tpps_accession > fieldset > .fieldset-wrapper,
 #gttn_tpps_samples > fieldset > .fieldset-wrapper,
-#edit-dart .fieldset-wrapper,
-#edit-isotope .fieldset-wrapper,
-#edit-genetic .fieldset-wrapper,
-#edit-anatomy .fieldset-wrapper
+#gttn-tpps-dart .fieldset-wrapper,
+#gttn-tpps-isotope .fieldset-wrapper,
+#gttn-tpps-genetic .fieldset-wrapper,
+#gttn-tpps-anatomy .fieldset-wrapper
 {
   border: 1px solid #1abc9c2e;
   padding: 10px;
