@@ -881,15 +881,7 @@ function gttn_tpps_main($form, &$form_state, $accession = NULL) {
       if (empty($old_form_state)) {
         drupal_goto('gttn-tpps');
       }
-      $form_state['saved_values'] = $old_form_state['saved_values'];
-      $form_state['stage'] = $old_form_state['stage'];
-      $form_state['accession'] = $old_form_state['accession'];
-      $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
-      $form_state['stats'] = $old_form_state['stats'] ?? NULL;
-      $form_state['data'] = $old_form_state['data'] ?? NULL;
-      $form_state['file_info'] = $old_form_state['file_info'] ?? NULL;
-      $form_state['owner_uid'] = $old_form_state['owner_uid'] ?? NULL;
-      $form_state['ids'] = $old_form_state['ids'] ?? NULL;
+      gttn_tpps_load_old_form_state($form_state, $old_form_state);
     }
   }
   else {
@@ -899,15 +891,7 @@ function gttn_tpps_main($form, &$form_state, $accession = NULL) {
       gttn_tpps_create_submission($form_state, $user->uid);
     }
     $old_form_state = gttn_tpps_load_submission($form_state['saved_values']['frontpage']['accession']);
-    $form_state['saved_values'] = $old_form_state['saved_values'];
-    $form_state['stage'] = $old_form_state['stage'];
-    $form_state['accession'] = $old_form_state['accession'];
-    $form_state['dbxref_id'] = $old_form_state['dbxref_id'];
-    $form_state['stats'] = $old_form_state['stats'] ?? NULL;
-    $form_state['data'] = $old_form_state['data'] ?? NULL;
-    $form_state['file_info'] = $old_form_state['file_info'] ?? NULL;
-    $form_state['owner_uid'] = $old_form_state['owner_uid'] ?? NULL;
-    $form_state['ids'] = $old_form_state['ids'] ?? NULL;
+    gttn_tpps_load_old_form_state($form_state, $old_form_state);
   }
 
   // Hidden form step (AKA stage) element.

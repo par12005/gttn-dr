@@ -295,3 +295,18 @@ function gttn_tpps_submission_files_download($accession = NULL, $file = NULL) {
   }
 
 }
+
+/**
+ *
+ */
+function gttn_tpps_load_old_form_state(&$new_form_state, $old_form_state) {
+  $new_form_state['saved_values'] = $old_form_state['saved_values'];
+  $new_form_state['stage'] = $old_form_state['stage'];
+  $new_form_state['accession'] = $old_form_state['accession'];
+  $new_form_state['dbxref_id'] = $old_form_state['dbxref_id'];
+  $new_form_state['stats'] = $old_form_state['stats'] ?? NULL;
+  $new_form_state['data'] = $old_form_state['data'] ?? NULL;
+  $new_form_state['file_info'] = $old_form_state['file_info'] ?? NULL;
+  $new_form_state['owner_uid'] = $old_form_state['owner_uid'] ?? NULL;
+  $new_form_state['ids'] = $old_form_state['ids'] ?? NULL;
+}
