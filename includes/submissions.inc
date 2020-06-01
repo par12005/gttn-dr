@@ -246,6 +246,10 @@ function gttn_tpps_submission_approval_access($uid = NULL, $accession = NULL) {
     return FALSE;
   }
 
+  if (gttn_tpps_access('administer gttn-tpps module')) {
+    return TRUE;
+  }
+
   // If accession was specified, check that user has approval access for that
   // submission.
   if (!empty($accession) and is_string($accession)) {
