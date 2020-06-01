@@ -142,7 +142,19 @@ function gttn_tpps_flatten($state) {
   else {
     $data['#page_4_cleared'] = FALSE;
   }
-  $data["DART File"] = !empty($page_4['dart']['file']) ? $page_4['dart']['file'] : NULL;
+  $data["DART Reference Metadata File"] = !empty($page_4['dart']['file']) ? $page_4['dart']['file'] : NULL;
+  $data["DART Reference Raw Data Archive File"] = !empty($page_4['dart']['raw']) ? $page_4['dart']['raw'] : NULL;
+  if (!empty($page_4['isotope']['used'])) {
+    $used_isotopes = array();
+    foreach ($page_4['isotope']['used'] as $iso) {
+      if (!empty($iso)) {
+        $used_isotopes[] = $iso;
+      }
+    }
+    if (!empty($used_isotopes)) {
+      $data["Isotopes Used"] = implode(", ", $used_isotopes);
+    }
+  }
   $data["Isotope File"] = !empty($page_4['isotope']['file']) ? $page_4['isotope']['file'] : NULL;
   // TODO
 
@@ -299,11 +311,16 @@ function gttn_tpps_table_display(array &$state) {
         // Create links to files.
         $file_url = check_plain(file_create_url(file_load($val)->uri));
         $val_str = "<a href='$file_url' target='blank'>$file_name</a>";
-        $val_str .= "<br><input id=\"fid_$val\" class=\"preview_button\" type=\"button\" value=\"Preview file\"></input>";
-        if (preg_match('/^(.*)Accession File/', $key, $matches)) {
-          $val_str .= "<div id=\"{$val}_map_wrapper\"></div>"
-            . "<input id=\"{$val}_map_button\" type=\"button\" value=\"Click here to view trees on map!\"></input>"
-            . "<script>jQuery('#{$val}_map_button').click(getCoordinates);</script>";
+        $file = file_load($val);
+        $location = drupal_realpath($file->uri);
+        $extension = gttn_tpps_get_path_extension($location);
+        if ($extension == 'xlsx' or $extension == 'csv' or $extension == 'vcf') {
+          $val_str .= "<br><input id=\"fid_$val\" class=\"preview_button\" type=\"button\" value=\"Preview file\"></input>";
+          if (preg_match('/^(.*)Accession File/', $key, $matches)) {
+            $val_str .= "<div id=\"{$val}_map_wrapper\"></div>"
+              . "<input id=\"{$val}_map_button\" type=\"button\" value=\"Click here to view trees on map!\"></input>"
+              . "<script>jQuery('#{$val}_map_button').click(getCoordinates);</script>";
+          }
         }
       }
       elseif ($key == 'Publication DOI') {
