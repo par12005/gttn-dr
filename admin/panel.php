@@ -34,10 +34,10 @@ function gttn_tpps_admin_panel($form, &$form_state, $accession = NULL) {
     $pending = array();
     $approved = array();
     foreach ($states as $state) {
-      if (!empty($state)) {
+      if (!empty($state) and gttn_tpps_submission_approval_access($user->uid, $state['accession'])) {
         //dpm($state);
         $row = array(
-          l($state['accession'], "$base_url/gttn-admin-panel/{$state['accession']}"),
+          l($state['accession'], "$base_url/gttn-approval-panel/{$state['accession']}"),
           $state['data']['project']['name'] . ' ' . gttn_tpps_submission_data_indicators($state),
           $state['status'],
         );
@@ -81,7 +81,7 @@ function gttn_tpps_admin_panel($form, &$form_state, $accession = NULL) {
   else {
     $submission_state = gttn_tpps_load_submission($accession);
     $status = $submission_state['status'];
-    $display = l(t("Back to GTTN-TPPS Admin Panel"), "$base_url/gttn-admin-panel");
+    $display = l(t("Back to GTTN-TPPS Admin Panel"), "$base_url/gttn-approval-panel");
     $display .= gttn_tpps_table_display($submission_state);
 
     // Add the overview link and detail table to the form.
@@ -224,7 +224,7 @@ function gttn_tpps_admin_panel_submit($form, &$form_state) {
     gttn_tpps_update_submission($state, array('status' => 'Incomplete'));
     // Let the admin know that the submission was successfully rejected.
     drupal_set_message(t('Submission Rejected. Message has been sent to user.'), 'status');
-    drupal_goto('gttn-admin-panel');
+    drupal_goto('gttn-approval-panel');
   }
   // If the reject button was not pressed, then the submission is approved.
   elseif ($form_state['triggering_element']['#value'] == 'Approve') {

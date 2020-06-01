@@ -121,7 +121,7 @@ function gttn_tpps_menu() {
   /*
    * Admin panel for approving/rejecting pending submisisons.
    */
-  $items['gttn-admin-panel'] = array(
+  $items['gttn-approval-panel'] = array(
     'title' => 'GTTN-TPPS Admin Panel',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('gttn_tpps_admin_panel'),
@@ -134,8 +134,9 @@ function gttn_tpps_menu() {
   /*
    * Admin panel with accession provided.
    */
-  $items['gttn-admin-panel/%'] = $items['gttn-admin-panel'];
-  $items['gttn-admin-panel/%']['page arguments'] = array('gttn_tpps_admin_panel', 1);
+  $items['gttn-approval-panel/%'] = $items['gttn-approval-panel'];
+  $items['gttn-approval-panel/%']['page arguments'] = array('gttn_tpps_admin_panel', 1);
+  $items['gttn-approval-panel/%']['access arguments'] = array('approve gttn-tpps submissions', 1);
 
   /*
    * GTTN-TPPS settings
@@ -294,7 +295,7 @@ function gttn_tpps_access($permission, $arg = array()) {
   }
 
   if (!$user->uid) {
-    if ($params['q'] == 'gttn-admin-panel') {
+    if ($params['q'] == 'gttn-approval-panel') {
       drupal_goto('user/login', array('query' => drupal_get_destination()));
     }
     elseif ($params['q'] == 'gttn-tpps' and !empty($accession)) {
@@ -344,6 +345,13 @@ function gttn_tpps_access($permission, $arg = array()) {
         }
 
         return FALSE;
+
+      case 'approve gttn-tpps submissions':
+        if (gttn_tpps_access('administer gttn-tpps module')) {
+          return TRUE;
+        }
+
+        return gttn_tpps_submission_approval_access($user->uid, $arg);
 
       case 'view own gttn-tpps submission':
         if (gttn_tpps_access('administer gttn-tpps module')) {
@@ -449,10 +457,7 @@ function gttn_tpps_mail($key, &$message, $params) {
     case 'user_recieved':
       // When the user completes their submission, just provide them with
       // a brief list of the organisms they submitted.
-      $message['body'][] = "Congratulations!<br><br>Your GTTN-TPPS submiss"
-            . "ion has been received and is pending approval from a TreeGenes adm"
-            . "inistrator! Here's a brief summary of the information you provided"
-            . ":<ul><li>Organisms: {$params['organisms']['number']}</li>";
+      $message['body'][] = "Congratulations!<br><br>Your GTTN-TPPS submission has been received and is pending approval from a TreeGenes administrator! Here's a brief summary of the information you provided:<ul><li>Organisms: {$params['organisms']['number']}</li>";
       for ($i = 1; $i <= $params['organisms']['number']; $i++) {
         $message['body'][] = "   <li>Organism $i: {$params['organisms'][$i]}</li>";
       }
@@ -461,12 +466,7 @@ function gttn_tpps_mail($key, &$message, $params) {
     case 'admin_recieved':
       // When the user completes their submission, notify the admin, and
       // provide them with a link to access the admin panel.
-      $message['body'][] = "Attention:<br><br>User {$params['user_mail']} "
-            . "has completed a GTTN-TPPS Submission, with accession number "
-            . "{$params['accession']}.<br>Click <a href='{$params['base_url']}/g"
-            . "ttn-admin-panel?accession={$params['accession']}' style='tex"
-            . "t-decoration: underline;'>here</a> to manage or approve this subm"
-            . "ission.";
+      $message['body'][] = "Attention:<br><br>User {$params['user_mail']} has completed a GTTN-TPPS Submission, with accession number {$params['accession']}.<br>Click <a href='{$params['base_url']}/gttn-approval-panel/{$params['accession']}' style='text-decoration: underline;'>here</a> to manage or approve this submission.";
       break;
 
     case 'user_rejected':
@@ -474,24 +474,13 @@ function gttn_tpps_mail($key, &$message, $params) {
       // them with a link to go back and edit their submission. Also
       // provide them with the reason the admin included as to why their
       // submission was rejected.
-      $message['body'][] = "To whom it may concern:<br><br>Unfortunately, "
-            . "your submission to GTTN-TPPS has been rejected. If you would like, you"
-            . " can log into the TreeGenes website and edit your submission <a h"
-            . "ref='{$params['base_url']}/user/{$params['uid']}/gttn-tpps'>here</a><b"
-            . "r><br>The administrator who rejected your submission provided the"
-            . " following reason:<br><blockquote>{$params['reject-reason']}</blo"
-            . "ckquote>";
+      $message['body'][] = "To whom it may concern:<br><br>Unfortunately, your submission to GTTN-TPPS has been rejected. If you would like, you can log into the TreeGenes website and edit your submission <a href='{$params['base_url']}/user/{$params['uid']}/gttn-tpps'>here</a><br><br>The administrator who rejected your submission provided the following reason:<br><blockquote>{$params['reject-reason']}</blockquote>";
       break;
 
     case 'user_approved':
       // When the user's submission is approved, notify them and provide
       // them with the link to view the completed submission.
-      $message['body'][] = "Congratulations! Your submission to GTTN-TPPS has b"
-            . "een approved!<br><br>You may now refer to your submitted data wit"
-            . "h accession number {$params['accession']}.<br><br>You can still v"
-            . "iew your submission from your <a href=\"{$params['base_url']}/gtt"
-            . "n-completed-submission?id={$params['accession']}\">GTTN-TPPS Comp"
-            . "leted Submissions</a> tab.<br>";
+      $message['body'][] = "Congratulations! Your submission to GTTN-TPPS has been approved!<br><br>You may now refer to your submitted data with accession number {$params['accession']}.<br><br>You can still view your submission from your <a href=\"{$params['base_url']}/gttn-completed-submission/{$params['accession']}\">GTTN-TPPS Completed Submissions</a> tab.<br>";
       break;
 
     default:

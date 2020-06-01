@@ -11,7 +11,7 @@ function gttn_tpps_submit_email($form, $form_state) {
 
   global $user;
   global $base_url;
-  $admin = variable_get('gttn_tpps_admin_email', "treegenesdb@gmail.com");
+  $contacts = gttn_profile_organization_primary_contact($form_state['data']['project']['props']['organization']);
 
   $params = array();
 
@@ -31,7 +31,9 @@ function gttn_tpps_submit_email($form, $form_state) {
 
   $params['user_mail'] = $user->mail;
 
-  drupal_mail('gttn_tpps', 'admin_recieved', $admin, user_preferred_language($user), $params, $from, TRUE);
+  foreach ($contacts as $contact) {
+    drupal_mail('gttn_tpps', 'admin_recieved', $contact->mail, user_preferred_language($user), $params, $from, TRUE);
+  }
 
   return;
 }

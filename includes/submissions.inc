@@ -236,6 +236,55 @@ function gttn_tpps_submission_access($state, $uid = NULL) {
 /**
  *
  */
+function gttn_tpps_submission_approval_access($uid = NULL, $accession = NULL) {
+  global $user;
+  if (isset($uid) and is_int($uid)) {
+    $user = user_load($uid);
+  }
+
+  if (empty($user)) {
+    return FALSE;
+  }
+
+  // If accession was specified, check that user has approval access for that
+  // submission.
+  if (!empty($accession) and is_string($accession)) {
+    $state = gttn_tpps_load_submission($accession);
+    if (empty($state)) {
+      return FALSE;
+    }
+
+    $org_id = $state['data']['project']['props']['organization'] ?? NULL;
+    if (!empty($org_id)) {
+      $contacts = gttn_profile_organization_primary_contact($org_id);
+      foreach ($contacts as $contact) {
+        if ($user->uid == $contact->uid) {
+          return TRUE;
+        }
+      }
+    }
+
+    return FALSE;
+  }
+
+  // Otherwise, check that user is a primary contact for at least one GTTN
+  // organization.
+  $user = user_load($user->uid);
+  foreach ($user->organizations as $org_id) {
+    $contacts = gttn_profile_organization_primary_contact($org_id);
+    foreach ($contacts as $contact) {
+      if ($user->uid == $contact->uid) {
+        return TRUE;
+      }
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ *
+ */
 function gttn_tpps_submission_data_indicators($state) {
   global $base_url;
 
