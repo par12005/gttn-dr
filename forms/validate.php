@@ -439,7 +439,7 @@ function gttn_tpps_update_data(&$form, &$form_state) {
       $types = $form_state['saved_values'][GTTN_PAGE_1]['data_type'];
       $form_state['file_info'][GTTN_PAGE_4] = array();
 
-      if (!empty($types['DART Reference Data'])) {
+      if (!empty($types['DART Reference Data']) and !$form_state['values']['dart']['meta_only']) {
         $fid = $form_state['values']['dart']['file'];
         $columns = $form_state['values']['dart']['file-columns'];
         $groups = $form_state['values']['dart']['file-groups'];
@@ -455,7 +455,7 @@ function gttn_tpps_update_data(&$form, &$form_state) {
         );
       }
 
-      if (!empty($types['Isotope Reference Data'])) {
+      if (!empty($types['Isotope Reference Data']) and !$form_state['values']['isotope']['meta_only']) {
         $fid = $form_state['values']['isotope']['file'];
         $columns = $form_state['values']['isotope']['file-columns'] ?? NULL;
         $groups = $form_state['values']['isotope']['file-groups'] ?? NULL;
@@ -468,11 +468,11 @@ function gttn_tpps_update_data(&$form, &$form_state) {
         // TODO
       }
 
-      if (!empty($types['Genetic Reference Data'])) {
+      if (!empty($types['Genetic Reference Data']) and !$form_state['values']['genetic']['meta_only']) {
         // TODO
       }
 
-      if (!empty($types['Anatomical Reference Data'])) {
+      if (!empty($types['Anatomical Reference Data']) and !$form_state['values']['anatomy']['meta_only']) {
         // TODO
       }
       break;
