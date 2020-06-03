@@ -658,12 +658,8 @@ function gttn_tpps_managed_file_process($element, &$form_state, $form) {
 
       $rows = $content;
       unset($rows['headers']);
-      $headers = array();
-      foreach ($content['headers'] as $col_name) {
-        $headers[] = $col_name;
-      }
       $vars = array(
-        'header' => $headers,
+        'header' => $content['headers'],
         'rows' => $rows,
         'attributes' => array('class' => array('view')),
         'caption' => '',
