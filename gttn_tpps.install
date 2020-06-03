@@ -816,3 +816,31 @@ function gttn_tpps_update_7002() {
     throw $e;
   }
 }
+
+/**
+ * Implements hook_update_N().
+ */
+function gttn_tpps_update_7003() {
+  $transaction = db_transaction();
+  try {
+    $submissions = gttn_tpps_load_submission_multiple(array(
+      'status' => 'Approved',
+    ));
+    foreach ($submissions as $state) {
+      if (!isset($state['data']['reference_provided']) and isset($state['saved_values'][GTTN_PAGE_3]['samples']['sharable'])) {
+        $state['data']['reference_provided'] = $state['saved_values'][GTTN_PAGE_3]['samples']['sharable'];
+        gttn_tpps_update_submission($state);
+      }
+      if (!isset($state['data']['samples_sharable']) and isset($state['saved_values'][GTTN_PAGE_4])) {
+        $page_4 = $state['saved_values'][GTTN_PAGE_4];
+        $sharable = !empty($page_4['dart']) or !empty($page_4['isotope']) or !empty($page_4['genetic']) or !empty($page_4['anatomy']);
+        $state['data']['samples_sharable'] = $sharable;
+        gttn_tpps_update_submission($state);
+      }
+    }
+  }
+  catch (\Exception $e) {
+    $transaction->rollback();
+    throw $e;
+  }
+}
