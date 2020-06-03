@@ -292,15 +292,18 @@ function gttn_tpps_submission_approval_access($uid = NULL, $accession = NULL) {
 function gttn_tpps_submission_data_indicators($state) {
   global $base_url;
 
-  $data_indicators = '';
-  if (isset($state['data']['reference_provided']) and isset($state['data']['samples_sharable'])) {
+  $data_indicators = array();
+  if (isset($state['data']['reference_provided'])) {
     $ref_indicator = $state['data']['reference_provided'] ? "$base_url/sites/all/modules/gttn-dr/images/unlock.png" : "$base_url/sites/all/modules/gttn-dr/images/lock.png";
     $ref_label = $state['data']['reference_provided'] ? "Both the metadata and the data for this submission are stored in the database" : "The metadata for this submission is stored in the database";
+    $data_indicators[] = "<img src=\"$ref_indicator\" title=\"$ref_label\">";
+  }
+  if (isset($state['data']['samples_sharable'])) {
     $share_indicator = $state['data']['samples_sharable'] ? "$base_url/sites/all/modules/gttn-dr/images/sharable_small.png" : "$base_url/sites/all/modules/gttn-dr/images/non_sharable_small.png";
     $share_label = $state['data']['samples_sharable'] ? "Samples used in this submission can be requested/shared" : "Samples used in this submission cannot be requested/shared";
-    $data_indicators = "<img src=\"$ref_indicator\" title=\"$ref_label\"> <img src=\"$share_indicator\" title=\"$share_label\">";
+    $data_indicators[] = "<img src=\"$share_indicator\" title=\"$share_label\">";
   }
-  return $data_indicators;
+  return implode(' ', $data_indicators);
 }
 
 /**
