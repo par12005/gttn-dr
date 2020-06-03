@@ -65,7 +65,7 @@ function gttn_tpps_submit_all($accession) {
       }
     }
 
-    $form_state['data']['reference_provided'] = $ref_data_provided;
+    $form_state['data']['reference_provided'] = $ref_data_provided ?? FALSE;
     $form_state['data']['samples_sharable'] = $form_state['saved_values'][GTTN_PAGE_3]['samples']['sharable'];
 
     //throw new Exception('Submission Completed');
