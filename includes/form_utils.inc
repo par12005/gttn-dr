@@ -127,7 +127,7 @@ function gttn_tpps_get_ajax_number(&$state, $parents, $up, $down, $default = 0, 
  * 
  */
 function gttn_tpps_get_ajax_value(&$state, $parents, $default = NULL, $file_name = "") {
-  $page = $state['stage'];
+  $page = $state['stage'] ?? '';
   $value_parents = $parents;
   array_unshift($value_parents, 'values');
   $element = drupal_array_get_nested_value($state, $value_parents);
