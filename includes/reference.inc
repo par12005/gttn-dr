@@ -217,6 +217,7 @@ function gttn_tpps_reference_filter_submission(&$item, $params) {
  */
 function gttn_tpps_reference_filter_sample(&$item, $params) {
   $value = $params['value'] ?? NULL;
+  $cvt = gttn_tpps_sample_cvterms();
   switch ($params['attribute']) {
     case 'sample_id':
       $id = substr($item->uniquename, 13);
@@ -240,6 +241,19 @@ function gttn_tpps_reference_filter_sample(&$item, $params) {
         if (!empty($part) and (preg_match("/$part/i", $organism->genus) or preg_match("/$part/i", $organism->species))) {
           return TRUE;
         }
+      }
+      return FALSE;
+
+    case 'tissue_type':
+      $query = db_select('chado.stockprop', 'sp')
+        ->fields('sp', array('value'))
+        ->condition('sp.type_id', $cvt['tissue'])
+        ->condition('sp.stock_id', $item->stock_id)
+        ->range(0, 1)
+        ->execute();
+      $result = $query->fetchObject()->value ?? NULL;
+      if (!empty($result) and preg_match("/$value/i", $result)) {
+        return TRUE;
       }
       return FALSE;
 
@@ -346,6 +360,7 @@ function gttn_tpps_reference_build_row($item, $params) {
 
       $tissue = db_select('chado.stockprop', 'sp')
         ->fields('sp', array('value'))
+        ->condition('sp.stock_id', $item->stock_id)
         ->condition('sp.type_id', $cvt['tissue'])
         ->range(0, 1)
         ->execute()->fetchObject()->value;
@@ -414,6 +429,7 @@ function gttn_tpps_reference_search(array $form, array $form_state) {
         $options = array(
           'sample_id' => 'Internal Sample ID',
           'species' => 'Species',
+          'tissue_type' => 'Tissue Type',
           // TODO
         );
         break;
@@ -432,6 +448,7 @@ function gttn_tpps_reference_search(array $form, array $form_state) {
       'callback' => 'gttn_tpps_reference_search_callback',
     ),
   );
+  $attribute = $form_state['values']['attribute'] ?? ($params['attribute'] ?? NULL);
 
   $form['value'] = array(
     '#type' => 'textfield',
@@ -439,10 +456,9 @@ function gttn_tpps_reference_search(array $form, array $form_state) {
     '#suffix' => '</div>',
   );
 
-  $attribute = gttn_tpps_get_ajax_value($form_state, array('attribute'), NULL);
   if (!empty($attribute) and $attribute == 'tissue_type') {
     $tissues = array(
-      '- Select -',
+      NULL => '- Select -',
     );
     $query = db_select('chado.stockprop', 'sp')
       ->fields('sp', array('value'))
