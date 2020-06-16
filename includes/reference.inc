@@ -198,6 +198,14 @@ function gttn_tpps_reference_filter_submission(&$item, $params) {
       }
       return FALSE;
 
+    case 'tissue_type':
+      foreach ($item['data']['samples'] as $id => $info) {
+        if (!empty($info['tissue'] and preg_match("/$value/i", $info['tissue']))) {
+          return TRUE;
+        }
+      }
+      return FALSE;
+
     default:
       break;
   }
@@ -397,6 +405,7 @@ function gttn_tpps_reference_search(array $form, array $form_state) {
           'submitting_org' => 'Submitting Organization',
           'species' => 'Species',
           'data_type' => 'Data Type',
+          'tissue_type' => 'Tissue Type',
           // TODO
         );
         break;
@@ -418,6 +427,10 @@ function gttn_tpps_reference_search(array $form, array $form_state) {
     '#type' => 'select',
     '#default_value' => $params['attribute'] ?? NULL,
     '#options' => $options,
+    '#ajax' => array(
+      'wrapper' => 'gttn-tpps-reference-search-wrapper',
+      'callback' => 'gttn_tpps_reference_search_callback',
+    ),
   );
 
   $form['value'] = array(
@@ -425,6 +438,28 @@ function gttn_tpps_reference_search(array $form, array $form_state) {
     '#default_value' => $params['value'] ?? NULL,
     '#suffix' => '</div>',
   );
+
+  $attribute = gttn_tpps_get_ajax_value($form_state, array('attribute'), NULL);
+  if (!empty($attribute) and $attribute == 'tissue_type') {
+    $tissues = array(
+      '- Select -',
+    );
+    $query = db_select('chado.stockprop', 'sp')
+      ->fields('sp', array('value'))
+      ->distinct()
+      ->condition('type_id', gttn_tpps_sample_cvterms()['tissue'])
+      ->execute();
+    while (($result = $query->fetchObject())) {
+      $tissues[$result->value] = $result->value;
+    }
+
+    $form['value'] = array(
+      '#type' => 'select',
+      '#options' => $tissues,
+      '#default_value' => $params['value'] ?? NULL,
+      '#suffix' => '</div>',
+    );
+  }
 
   $form['search'] = array(
     '#type' => 'button',

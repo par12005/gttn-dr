@@ -90,9 +90,13 @@ function referenceSearch() {
   }
 
   $('#gttn-tpps-reference-table')[0].innerHTML = 'Loading...';
+  var values = $('input').filter(function() { return this.id.match(/edit-value/); });
+  if (values.length == 0) {
+    values = $('select').filter(function() { return this.id.match(/edit-value/); });
+  }
   var request = $.post(path, {
     data_type: $('select').filter(function() { return this.id.match(/edit-data-type/); })[0].value,
-    value: $('input').filter(function() { return this.id.match(/edit-value/); })[0].value,
+    value: values[0].value,
     attribute: $('select').filter(function() { return this.id.match(/edit-attribute/); })[0].value,
     page: page
   });
