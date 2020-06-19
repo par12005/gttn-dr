@@ -547,6 +547,7 @@ function gttn_tpps_get_cvterms() {
       'Isotope',
       'Genetic Marker',
       'Barcode',
+      'Confidence',
     ),
     'sio' => array(
       'latitude',
