@@ -94,6 +94,7 @@ function page_3_create_form(&$form, &$form_state) {
       '12' => 'Population Group',
       '13' => 'Forest ID',
       '14' => 'Bar code',
+      '15' => 'Species Identification Confidence Score',
     );
 
     $title = t("@name Accession File: *", array('@name' => $name)) . "<br>$file_description";

@@ -346,6 +346,13 @@ function gttn_tpps_submit_trees(&$state) {
       'name' => 'Barcode',
       'is_obsolete' => 0,
     ))->cvterm_id,
+    'confidence' => chado_get_cvterm(array(
+      'cv_id' => array(
+        'name' => 'ncit',
+      ),
+      'name' => 'Confidence',
+      'is_obsolete' => 0,
+    ))->cvterm_id,
   );
 
   $records = array(
@@ -471,6 +478,16 @@ function gttn_tpps_submit_trees(&$state) {
       $records['stockprop']["$id-bar_code"] = array(
         'type_id' => $cvterms['bar_code'],
         'value' => $tree['bar_code'],
+        '#fk' => array(
+          'stock' => $id,
+        ),
+      );
+    }
+
+    if (!empty($tree['confidence'])) {
+      $records['stockprop']["$id-confidence"] = array(
+        'type_id' => $cvterms['confidence'],
+        'value' => $tree['confidence'],
         '#fk' => array(
           'stock' => $id,
         ),

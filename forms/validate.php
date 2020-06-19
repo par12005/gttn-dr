@@ -506,6 +506,7 @@ function gttn_tpps_update_tree_data(&$form, &$form_state) {
       $county = array_search('8', $column_vals);
       $district = array_search('9', $column_vals);
       $bar_code = array_search('14', $column_vals);
+      $confidence = array_search('15', $column_vals);
       $options = array(
         'cols' => array(
           'id' => $groups['Tree Id'][1],
@@ -517,6 +518,7 @@ function gttn_tpps_update_tree_data(&$form, &$form_state) {
           'district' => ($district !== FALSE) ? $district : NULL,
           'pop_group' => $groups[$loc_name]['12'] ?? ($groups[$loc_name]['13'] ?? NULL),
           'bar_code' => ($bar_code !== FALSE) ? $bar_code : NULL,
+          'confidence' => ($confidence !== FALSE) ? $confidence : NULL,
         ),
         'trees' => &$form_state['data']['trees'],
         'locations' => &$form_state['locations'],
@@ -654,5 +656,9 @@ function gttn_tpps_update_tree($row, array &$options) {
 
   if (!empty($row[$cols['bar_code']])) {
     $trees[$tree_id]['bar_code'] = $row[$cols['bar_code']];
+  }
+
+  if (!empty($row[$cols['confidence']])) {
+    $trees[$tree_id]['confidence'] = $row[$cols['bar_code']];
   }
 }
