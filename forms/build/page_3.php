@@ -425,6 +425,18 @@ function page_3_create_form(&$form, &$form_state) {
       }
     }
 
+    $form['samples']['tech_name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Technician Name'),
+      '#gttn_tpps_val' => array(),
+    );
+
+    $form['samples']['tech_email'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Technician Email'),
+      '#gttn_tpps_val' => array(),
+    );
+
     $form['samples']['sharable'] = array(
       '#type' => 'checkbox',
       '#title' => t('These samples can be shared'),

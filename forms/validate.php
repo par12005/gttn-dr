@@ -391,6 +391,8 @@ function gttn_tpps_update_data(&$form, &$form_state) {
           $analyzed_col = array_search(11, $columns);
         }
 
+        $tech_name = !empty($form_state['values']['samples']['tech_name']) ? $form_state['values']['samples']['tech_name'] : NULL;
+        $tech_email = !empty($form_state['values']['samples']['tech_email']) ? $form_state['values']['samples']['tech_email'] : NULL;
         $share = $form_state['values']['samples']['sharable'] ? TRUE : FALSE;
 
         for ($j = 0; $j < count($content) - 1; $j++) {
@@ -409,6 +411,8 @@ function gttn_tpps_update_data(&$form, &$form_state) {
               'analyzed' => $analyzed ?? ($content[$j][$analyzed_col] ?? NULL),
               'share' => $share ?? NULL,
               'storage' => $storage ?? ($content[$j][$storage_col] ?? NULL),
+              'tech_name' => $tech_name ?? NULL,
+              'tech_email' => $tech_email ?? NULL,
             );
           }
         }
