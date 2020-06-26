@@ -86,6 +86,9 @@ function gttn_tpps_load_sample($stock_id) {
   $query->leftJoin('chado.stockprop', 'sp8', 'sp8.stock_id = s.stock_id and sp8.type_id = ' . $cvt['analyzed']);
   $query->leftJoin('chado.stockprop', 'sp10', 'sp10.stock_id = s.stock_id and sp10.type_id = ' . $cvt['share']);
   $query->leftJoin('chado.stockprop', 'sp11', 'sp11.stock_id = s.stock_id and sp11.type_id = ' . $cvt['storage']);
+  $query->leftJoin('chado.project_stock', 'ps', 'ps.stock_id = s.stock_id');
+  $query->leftJoin('chado.project_dbxref', 'pdbx', 'pdbx.project_id = ps.project_id');
+  $query->leftJoin('chado.dbxref', 'dbx', 'dbx.dbxref_id = pdbx.dbxref_id');
   $query->addExpression('s.stock_id', 'stock_id');
   $query->addExpression('substring(s.uniquename from 14)', 'id');
   $query->addExpression('oi.organization_id', 'org');
@@ -100,6 +103,7 @@ function gttn_tpps_load_sample($stock_id) {
   $query->addExpression('sp8.value', 'analyzed');
   $query->addExpression('sp10.value', 'share');
   $query->addExpression('sp11.value', 'storage');
+  $query->addExpression('dbx.accession', 'submission_accession');
   $query->condition('s.stock_id', $stock_id);
   $query->condition('s.type_id', $cvt['sample']);
   $query->condition('sr.type_id', $cvt['has_part']);
@@ -122,14 +126,16 @@ function gttn_tpps_load_sample($stock_id) {
       'analyzed' => $result->analyzed,
       'share' => $result->share,
       'storage' => $result->storage,
+      'submission_accession' => $result->submission_accession,
     );
     $sample['matches'] = gttn_tpps_match_sample($sample);
     $sample['events'] = gttn_tpps_sample_events($sample);
     foreach ($sample['events'] as $event) {
       gttn_tpps_sample_update($sample, $event);
     }
+    return $sample;
   }
-  return $sample;
+  return NULL;
 }
 
 /**

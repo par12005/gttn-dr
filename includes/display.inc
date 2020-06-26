@@ -1040,6 +1040,66 @@ function gttn_tpps_display_submission_anatomy(array &$state) {
 }
 
 /**
+ *
+ */
+function gttn_tpps_display_sample($id = NULL) {
+  $output = '';
+
+  global $base_url;
+
+  $sample = gttn_tpps_load_sample($id);
+  if (!empty($sample)) {
+    $state = gttn_tpps_load_submission($sample['submission_accession']);
+    $tree_info = $state['data']['trees'];
+    $sample_info = $state['data']['samples'];
+    $id = $sample['id'];
+    $output .= "<h2>$id</h2>";
+
+    $rows = array();
+    $rows[] = array('Accession', $id);
+
+    $org_id = gttn_tpps_source_get_organism($sample['source'], $state);
+    $org_number = array_search($org_id, $state['ids']['organism_ids']);
+    $species_name = $state['saved_values'][GTTN_PAGE_1]['organism'][$org_number];
+    $rows[] = array('Species', gttn_tpps_entity_link($org_id, $species_name, 'Organism'));
+
+    $source = $tree_info[$sample['source']] ?? ($sample_info[$sample['source']] ?? NULL);
+    $rows[] = array('Source', gttn_tpps_entity_link($source['stock_id'], $source['id'], 'Stock'));
+
+    $rows[] = array('Tissue Type', $sample['tissue']);
+    if (!empty($sample['dimension'])) {
+      $rows[] = array('Dimensions', $sample['dimension']);
+    }
+    $rows[] = array('Collection Date', $sample['date']);
+    $rows[] = array('Collector', $sample['collector']);
+    $rows[] = array('Collection Method', $sample['method']);
+
+    if (!empty($sample['remaining'])) {
+      $rows[] = array('Remaining Volume', $sample['remaining']);
+    }
+
+    $rows[] = array('Sample Type', $sample['type']);
+
+    $link = "<a href=\"$base_url/reference/submission/{$sample['submission_accession']}\">{$sample['submission_accession']}</a>";
+    $rows[] = array('GTTN-TPPS Submission', $link);
+
+    $table = theme_table(array(
+      'header' => array(),
+      'rows' => $rows,
+      'attributes' => array('class' => array('view'), 'id' => 'gttn_tpps_table_display'),
+      'caption' => '',
+      'colgroups' => NULL,
+      'sticky' => FALSE,
+      'empty' => '',
+    ));
+
+    $output .= $table;
+  }
+
+  return $output;
+}
+
+/**
  * Returns an entity link based on an id and a name.
  *
  * @param int $id
