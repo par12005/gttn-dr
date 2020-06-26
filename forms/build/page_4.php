@@ -359,6 +359,12 @@ function page_4_create_form(&$form, &$form_state) {
           '#type' => 'textfield',
           '#title' => t('Other marker type: *'),
         );
+
+        $form['genetic']['other_description'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Other Marker Description'),
+          '#description' => t('Please provide a brief description of your genetic marker, including the sequence and protocol of analysis.'),
+        );
       }
 
       if (!empty($markers['SNPs'])) {
@@ -530,6 +536,13 @@ function page_4_create_form(&$form, &$form_state) {
             '#standard_name' => 'Assay_Genotype_Table',
           );
         }
+
+        $form['genetic']['snps_description'] = array(
+          '#type' => 'textfield',
+          '#title' => t('SNPs Description'),
+          '#description' => t('Please provide a brief description of your SNPs marker, including the sequence and protocol of analysis.'),
+          '#gttn_tpps_val' => array(),
+        );
       }
 
       if (!empty($markers['SSRs/cpSSRs'])) {
@@ -585,6 +598,13 @@ function page_4_create_form(&$form, &$form_state) {
           default:
             break;
         }
+
+        $form['genetic']['ssrs_description'] = array(
+          '#type' => 'textfield',
+          '#title' => t('SSRs/cpSSRs Description'),
+          '#description' => t('Please provide a brief description of your SSRs/cpSSRs marker, including the sequence and protocol of analysis.'),
+          '#gttn_tpps_val' => array(),
+        );
       }
 
       $form['genetic']['quality'] = array(
