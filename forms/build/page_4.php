@@ -592,6 +592,12 @@ function page_4_create_form(&$form, &$form_state) {
         '#title' => t('DNA Quality'),
         '#gttn_tpps_val' => array(),
       );
+
+      $form['genetic']['extraction'] = array(
+        '#type' => 'textfield',
+        '#title' => t('DNA Extraction Method'),
+        '#gttn_tpps_val' => array(),
+      );
     }
   }
 
