@@ -32,21 +32,23 @@ function gttn_tpps_submit_all($accession) {
       'anatomy',
     );
 
+    $ref_data_provided = FALSE;
     foreach ($data_types as $type) {
       if (!empty($form_state['saved_values'][GTTN_PAGE_4][$type])) {
-        $ref_data_provided = $ref_data_provided ?? TRUE;
         if (!$form_state['saved_values'][GTTN_PAGE_4][$type]['meta_only']) {
+          $ref_data_provided = TRUE;
           $func = "gttn_tpps_submit_$type";
           if (function_exists($func)) {
             $func($form_state);
           }
-          continue;
         }
-        $ref_data_provided = FALSE;
       }
     }
 
     $form_state['data']['reference_provided'] = $ref_data_provided ?? FALSE;
+    if ($form_state['data']['reference_provided'] and !empty($form_state['saved_values'][GTTN_PAGE_4]['permissions_options']['data_permissions'])) {
+      $form_state['data']['reference_provided'] = 'permission';
+    }
     $form_state['data']['samples_sharable'] = $form_state['saved_values'][GTTN_PAGE_3]['samples']['sharable'];
 
     //throw new Exception('Submission Completed');

@@ -214,7 +214,7 @@ function gttn_tpps_submission_permissions($state) {
 /**
  *
  */
-function gttn_tpps_submission_access($state, $uid = NULL) {
+function gttn_tpps_submission_access($state, $uid = NULL, $permissions = NULL, $permission_orgs = NULL) {
   global $user;
   if (!is_array($state) and is_string($state)) {
     $state = gttn_tpps_load_submission($state) ?? NULL;
@@ -227,7 +227,7 @@ function gttn_tpps_submission_access($state, $uid = NULL) {
     return FALSE;
   }
 
-  $permissions = $state['data']['project']['props']['permissions'] ?? NULL;
+  $permissions = $permissions ?? ($state['data']['project']['props']['permissions'] ?? NULL);
   switch ($permissions) {
     case 'public':
       return TRUE;
@@ -240,7 +240,7 @@ function gttn_tpps_submission_access($state, $uid = NULL) {
       return !($law === FALSE);
 
     case 'org':
-      $orgs = $state['data']['project']['props']['permission-orgs'] ?? array();
+      $orgs = $permission_orgs ?? ($state['data']['project']['props']['permission-orgs'] ?? array());
       foreach ($orgs as $org) {
         if (!empty($org)) {
           $members = gttn_profile_organization_get_members($org);
@@ -266,6 +266,18 @@ function gttn_tpps_submission_access($state, $uid = NULL) {
       return FALSE;
   }
   return FALSE;
+}
+
+/**
+ *
+ */
+function gttn_tpps_submission_reference_access($state, $uid = NULL) {
+  $result = $state['data']['reference_provided'] ?? FALSE;
+  if ($result == 'permission') {
+    $perms = $state['saved_values'][GTTN_PAGE_4]['permissions_options'];
+    $result = gttn_tpps_submission_access($state, $uid, $perms['data_permissions'], $perms['permission_orgs']);
+  }
+  return $result;
 }
 
 /**
@@ -329,8 +341,9 @@ function gttn_tpps_submission_data_indicators($state) {
 
   $data_indicators = array();
   if (isset($state['data']['reference_provided'])) {
-    $ref_indicator = $state['data']['reference_provided'] ? "$base_url/sites/all/modules/gttn-dr/images/unlock.png" : "$base_url/sites/all/modules/gttn-dr/images/lock.png";
-    $ref_label = $state['data']['reference_provided'] ? "Both the metadata and the data for this submission are stored in the database" : "The metadata for this submission is stored in the database";
+    $ref_provided = gttn_tpps_submission_reference_access($state);
+    $ref_indicator = $ref_provided ? "$base_url/sites/all/modules/gttn-dr/images/unlock.png" : "$base_url/sites/all/modules/gttn-dr/images/lock.png";
+    $ref_label = $ref_provided ? "Both the metadata and the data for this submission are stored in the database" : "The metadata for this submission is stored in the database";
     $data_indicators[] = "<img src=\"$ref_indicator\" title=\"$ref_label\">";
   }
   if (isset($state['data']['samples_sharable'])) {

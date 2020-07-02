@@ -598,15 +598,18 @@ function gttn_tpps_display_submission_tabs(array &$state) {
     <li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#study">Study Details</a></li>
     <li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#trees">Trees</a></li>
     <li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#samples">Samples</a></li>';
-  $dart_exist = !empty($state['saved_values'][GTTN_PAGE_4]['dart']);
-  $isotope_exist = !empty($state['saved_values'][GTTN_PAGE_4]['isotope']);
-  $genetic_exist = !empty($state['saved_values'][GTTN_PAGE_4]['genetic']);
-  $anatomy_exist = !empty($state['saved_values'][GTTN_PAGE_4]['anatomy']);
 
-  $output .= $dart_exist ? '<li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#dart">DART</a></li>' : "";
-  $output .= $isotope_exist ? '<li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#isotope">Isotope</a></li>' : "";
-  $output .= $genetic_exist ? '<li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#genetic">Genetic</a></li>' : "";
-  $output .= $anatomy_exist ? '<li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#anatomy">Anatomy</a></li>' : "";
+  if (gttn_tpps_submission_reference_access($state)) {
+    $dart_exist = !empty($state['saved_values'][GTTN_PAGE_4]['dart']) and !$state['saved_values'][GTTN_PAGE_4]['dart']['meta_only'];
+    $isotope_exist = !empty($state['saved_values'][GTTN_PAGE_4]['isotope']) and !$state['saved_values'][GTTN_PAGE_4]['isotope']['meta_only'];
+    $genetic_exist = !empty($state['saved_values'][GTTN_PAGE_4]['genetic']) and !$state['saved_values'][GTTN_PAGE_4]['genetic']['meta_only'];
+    $anatomy_exist = !empty($state['saved_values'][GTTN_PAGE_4]['anatomy']) and !$state['saved_values'][GTTN_PAGE_4]['anatomy']['meta_only'];
+
+    $output .= $dart_exist ? '<li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#dart">DART</a></li>' : "";
+    $output .= $isotope_exist ? '<li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#isotope">Isotope</a></li>' : "";
+    $output .= $genetic_exist ? '<li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#genetic">Genetic</a></li>' : "";
+    $output .= $anatomy_exist ? '<li class="nav-item"><a class="nav-link" role="tab" data-toggle="tab" href="#anatomy">Anatomy</a></li>' : "";
+  }
 
   $output .= '</ul><div id="tab-content" class="tab-content">';
 
@@ -615,10 +618,12 @@ function gttn_tpps_display_submission_tabs(array &$state) {
   $output .= "<div id=\"trees\" role=\"tabpanel\" class=\"tab-pane fade\"></div>";
   $output .= "<div id=\"samples\" role=\"tabpanel\" class=\"tab-pane fade\"></div>";
 
-  $output .= $dart_exist ? "<div id=\"dart\" role=\"tabpanel\" class=\"tab-pane fade\"></div>" : "";
-  $output .= $isotope_exist ? "<div id=\"isotope\" role=\"tabpanel\" class=\"tab-pane fade\"></div>" : "";
-  $output .= $genetic_exist ? "<div id=\"genetic\" role=\"tabpanel\" class=\"tab-pane fade\"></div>" : "";
-  $output .= $anatomy_exist ? "<div id=\"anatomy\" role=\"tabpanel\" class=\"tab-pane fade\"></div>" : "";
+  if (gttn_tpps_submission_reference_access($state)) {
+    $output .= $dart_exist ? "<div id=\"dart\" role=\"tabpanel\" class=\"tab-pane fade\"></div>" : "";
+    $output .= $isotope_exist ? "<div id=\"isotope\" role=\"tabpanel\" class=\"tab-pane fade\"></div>" : "";
+    $output .= $genetic_exist ? "<div id=\"genetic\" role=\"tabpanel\" class=\"tab-pane fade\"></div>" : "";
+    $output .= $anatomy_exist ? "<div id=\"anatomy\" role=\"tabpanel\" class=\"tab-pane fade\"></div>" : "";
+  }
 
   $output .= '</div>';
   return $output;
