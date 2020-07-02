@@ -7,6 +7,13 @@
 /**
  *
  */
+function gttn_tpps_reference_permissions_callback(&$form, $form_state) {
+  return $form['permissions_options'];
+}
+
+/**
+ *
+ */
 function gttn_tpps_dart_callback(&$form, $form_state) {
   return $form['dart'];
 }

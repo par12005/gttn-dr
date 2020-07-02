@@ -18,10 +18,79 @@ require_once 'page_4_ajax.php';
  * @return array The populated form element.
  */
 function page_4_create_form(&$form, &$form_state) {
+
+  global $user;
+  $user = user_load($user->uid);
+
   // Load saved values for the fourth page if they are available.
   $values = $form_state['saved_values'][GTTN_PAGE_4] ?? array();
 
   $types = $form_state['saved_values'][GTTN_PAGE_1]['data_type'];
+
+  $main_perm = $form_state['data']['project']['props']['permissions'];
+
+  if ($main_perm != 'current') {
+    $form['permissions_options'] = array(
+      '#type' => 'fieldset',
+      '#prefix' => '<div id="ref_permissions">',
+      '#suffix' => '</div>',
+    );
+
+    $permissions_check = gttn_tpps_get_ajax_value($form_state, array('permissions_options', 'data_permissions_check'), TRUE);
+
+    $form['permissions_options']['data_permissions_check'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('The reference data for this submission can use the same permissions as the rest of the submission'),
+      '#default_value' => $permissions_check,
+      '#ajax' => array(
+        'callback' => 'gttn_tpps_reference_permissions_callback',
+        'wrapper' => 'ref_permissions',
+      ),
+    );
+
+    if (!$permissions_check) {
+      $options = gttn_tpps_submission_permission_options($main_perm);
+      $permission = gttn_tpps_get_ajax_value($form_state, array('permissions_options', 'data_permissions'), $main_perm);
+
+      $form['permissions_options']['data_permissions'] = array(
+        '#type' => 'radios',
+        '#title' => t('Please indicate who is allowed to view or browse this reference data'),
+        '#options' => $options,
+        '#ajax' => array(
+          'callback' => 'gttn_tpps_reference_permissions_callback',
+          'wrapper' => 'ref_permissions',
+        ),
+        '#default_value' => !empty($options[$permission]) ? $permission : NULL,
+      );
+
+      if ($permission == 'org') {
+        $form['permissions_options']['permission_orgs'] = array(
+          '#type' => 'checkboxes',
+          '#title' => t('Selected organizations'),
+          '#description' => t('Please select the organizations which are allowed to view or browse this data'),
+          '#options' => array(),
+          '#suffix' => '</div></div>',
+        );
+        $query = db_select('gttn_profile_organization', 'o')
+          ->fields('o', array('organization_id', 'name'))
+          ->execute();
+
+        while (($org = $query->fetchObject())) {
+          $form['permissions_options']['permission_orgs']['#options'][$org->organization_id] = $org->name;
+          $and = db_and()
+            ->condition('uid', $user->uid)
+            ->condition('organization_id', $org->organization_id);
+          $member_query = db_select('gttn_profile_organization_members', 'm')
+            ->fields('m', array('organization_id'))
+            ->condition($and)
+            ->execute();
+          if (!empty($member_query->fetchObject()->organization_id)) {
+            $form['permissions_options']['permission_orgs'][$org->organization_id]['#default_value'] = $values['permissions_options']['permission_orgs'][$org->organization_id] ?? $org->organization_id;
+          }
+        }
+      }
+    }
+  }
 
   if (!empty($types['DART Reference Data'])) {
     $dart_file_upload_location = 'public://' . variable_get('gttn_tpps_dart_files_dir', 'gttn_tpps_dart');

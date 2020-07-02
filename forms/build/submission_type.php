@@ -116,13 +116,7 @@ function gttn_tpps_submission_type_create_form(&$form, &$form_state) {
   $form['project']['props']['permissions'] = array(
     '#type' => 'radios',
     '#description' => t('Please indicate who is allowed to view or browse this data'),
-    '#options' => array(
-      'public' => t('Public'),
-      'gttn' => t('All registered GTTN organizations'),
-      'law' => t('Law enforcement members only'),
-      'org' => t('Select organizations'),
-      'current' => t('Current organization only'),
-    ),
+    '#options' => gttn_tpps_submission_permission_options(),
     '#prefix' => '<div class="gttn-fieldset"><span class="fieldset-legend"><span class="fieldset-legend-prefix element-invisible">Show</span>Data Permissions<span class="summary"></span></span><div class="gttn-fieldset-wrapper">',
     '#ajax' => array(
       'callback' => 'gttn_tpps_props_ajax',

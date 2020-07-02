@@ -159,6 +159,41 @@ function gttn_tpps_submission_clear_db($accession) {
 }
 
 /**
+ * Returns an array of all possible permission options.
+ *
+ * Also accepts a minimum permission level option. For example, if $minimum is
+ * 'law', then this function will return the permissions array with 'law',
+ * 'org', and 'current' only.
+ *
+ * @param mixed $minimum
+ *   The minimum permission we want to accept.
+ *
+ * @return array
+ *   The array of permissions options.
+ */
+function gttn_tpps_submission_permission_options($minimum = NULL) {
+  $perms = array(
+    'public' => t('Public'),
+    'gttn' => t('All registered GTTN organizations'),
+    'law' => t('Law enforcement members only'),
+    'org' => t('Select organizations'),
+    'current' => t('Current organization only'),
+  );
+
+  if (!empty($minimum)) {
+    foreach ($perms as $key => $perm) {
+      if ($key != $minimum) {
+        unset($perms[$key]);
+        continue;
+      }
+      break;
+    }
+  }
+
+  return $perms;
+}
+
+/**
  *
  */
 function gttn_tpps_submission_permissions($state) {
