@@ -475,19 +475,44 @@ function gttn_tpps_update_data(&$form, &$form_state) {
       if (!empty($types['Genetic Reference Data']) and !$form_state['values']['genetic']['meta_only']) {
         $genetic = $form_state['values']['genetic'];
 
-        if (!empty($genetic['marker']['SNPs']) and !empty($genetic['assay_genotype_table'])) {
-          $form_state['file_info'][GTTN_PAGE_4][] = array(
-            'fid' => $genetic['assay_genotype_table'],
-            'name' => 'Genotype_Assay',
-          );
+        if (!empty($genetic['marker']['SNPs'])) {
+
+          if (!empty($genetic['manual_reference']) and file_load($genetic['manual_reference'])) {
+            $form_state['file_info'][GTTN_PAGE_4][] = array(
+              'fid' => $genetic['manual_reference'],
+              'name' => 'Reference_Genome',
+            );
+          }
+
+          if (!empty($genetic['gbs_align']) and file_load($genetic['gbs_align'])) {
+            $form_state['file_info'][GTTN_PAGE_4][] = array(
+              'fid' => $genetic['gbs_align'],
+              'name' => 'GBS_Alignment',
+            );
+          }
+
+          if (!empty($genetic['vcf']) and file_load($genetic['vcf'])) {
+            $form_state['file_info'][GTTN_PAGE_4][] = array(
+              'fid' => $genetic['vcf'],
+              'name' => 'VCF',
+            );
+          }
+
+          if (!empty($genetic['assay_genotype_table']) and file_load($genetic['assay_genotype_table'])) {
+            $form_state['file_info'][GTTN_PAGE_4][] = array(
+              'fid' => $genetic['assay_genotype_table'],
+              'name' => 'Genotype_Assay',
+            );
+          }
+
+          if (!empty($genetic['assay_design_file']) and file_load($genetic['assay_design_file'])) {
+            $form_state['file_info'][GTTN_PAGE_4][] = array(
+              'fid' => $genetic['assay_design_file'],
+              'name' => 'Assay_Design',
+            );
+          }
         }
 
-        if (!empty($genetic['marker']['SNPs']) and !empty($genetic['assay_design_file'])) {
-          $form_state['file_info'][GTTN_PAGE_4][] = array(
-            'fid' => $genetic['assay_design_file'],
-            'name' => 'Assay_Design',
-          );
-        }
         // TODO
       }
 
