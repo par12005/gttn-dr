@@ -296,7 +296,6 @@ function page_4_create_form(&$form, &$form_state) {
         'empty' => array(
           '#default_value' => $values['isotope']['file']['empty'] ?? 'NA',
         ),
-
         '#required_groups' => $required_groups,
         '#gttn_tpps_val' => array(
           'standard' => TRUE,
@@ -514,6 +513,20 @@ function page_4_create_form(&$form, &$form_state) {
             ),
           );
 
+          $column_options = array(
+            'N/A',
+            'Locus ID',
+            'Forward Primer',
+            'Reverse Primer',
+            'Extension Primer',
+          );
+
+          $required_groups = array(
+            'Locus ID' => array(
+              'id' => array(1),
+            ),
+          );
+
           $form['genetic']['assay_design_file'] = array(
             '#type' => 'managed_file',
             '#title' => t('Assay Design File: *'),
@@ -523,6 +536,37 @@ function page_4_create_form(&$form, &$form_state) {
             ),
             '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: txt csv xlsx</span>',
             '#standard_name' => 'Assay_Design',
+            'empty' => array(
+              '#default_value' => $values['genetic']['assay_design_file']['empty'] ?? 'NA',
+            ),
+            '#required_groups' => $required_groups,
+            '#gttn_tpps_val' => array(
+              'standard' => TRUE,
+              'function' => 'gttn_tpps_managed_file_validate',
+            ),
+            'columns' => array(
+              '#description' => 'Please define which columns hold the required data',
+            ),
+            'no-header' => array(),
+            'columns-options' => array(
+              '#type' => 'hidden',
+              '#value' => $column_options,
+            ),
+          );
+
+          $column_options = array(
+            'SNP Data',
+            'Sample ID',
+            'N/A',
+          );
+
+          $required_groups = array(
+            'Sample ID' => array(
+              'id' => array(1),
+            ),
+            'SNP Data' => array(
+              'snp' => array(0),
+            ),
           );
 
           $form['genetic']['assay_genotype_table'] = array(
@@ -534,6 +578,22 @@ function page_4_create_form(&$form, &$form_state) {
             ),
             '#field_prefix' => '<span style="width: 100%;display: block;text-align: right;padding-right: 2%;">Allowed file extensions: txt csv xlsx</span>',
             '#standard_name' => 'Assay_Genotype_Table',
+            'empty' => array(
+              '#default_value' => $values['genetic']['assay_genotype_table']['empty'] ?? 'NA',
+            ),
+            '#required_groups' => $required_groups,
+            '#gttn_tpps_val' => array(
+              'standard' => TRUE,
+              'function' => 'gttn_tpps_managed_file_validate',
+            ),
+            'columns' => array(
+              '#description' => 'Please define which columns hold the required data',
+            ),
+            'no-header' => array(),
+            'columns-options' => array(
+              '#type' => 'hidden',
+              '#value' => $column_options,
+            ),
           );
         }
 
