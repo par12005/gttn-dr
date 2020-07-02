@@ -502,6 +502,8 @@ function gttn_tpps_update_data(&$form, &$form_state) {
             $form_state['file_info'][GTTN_PAGE_4][] = array(
               'fid' => $genetic['assay_genotype_table'],
               'name' => 'Genotype_Assay',
+              'columns' => $genetic['assay_genotype_table-columns'] ?? NULL,
+              'groups' => $genetic['assay_genotype_table-groups'] ?? NULL,
             );
           }
 
@@ -509,7 +511,21 @@ function gttn_tpps_update_data(&$form, &$form_state) {
             $form_state['file_info'][GTTN_PAGE_4][] = array(
               'fid' => $genetic['assay_design_file'],
               'name' => 'Assay_Design',
+              'columns' => $genetic['assay_design_file-columns'] ?? NULL,
+              'groups' => $genetic['assay_design_file-groups'] ?? NULL,
             );
+          }
+
+          if (!empty($genetic['assay_genotype_table']) and !empty($genetic['assay_design_file'])) {
+            $snp_cols = $genetic['assay_genotype_table-groups']['SNP Data'][0];
+            $loci_col = $genetic['assay_design_file-groups']['Locus ID'][1];
+            $diff = gttn_tpps_assay_diff($genetic['assay_genotype_table'], $genetic['assay_design_file'], $snp_cols, $loci_col);
+
+            if (!empty($diff)) {
+              $form_state['data']['genetic']['assay_missing_design'] = $diff;
+              $diff = implode(', ', $diff);
+              drupal_set_message("Attention: The following loci are present in your assay but not in your assay design file: $diff. You can choose to continue with these loci missing, but this may lead to lack of functionality for your assay in the future, and your submission may be marked as incomplete.");
+            }
           }
         }
 
@@ -522,8 +538,6 @@ function gttn_tpps_update_data(&$form, &$form_state) {
             );
           }
         }
-
-        // TODO
       }
 
       if (!empty($types['Anatomical Reference Data']) and !$form_state['values']['anatomy']['meta_only']) {
@@ -534,6 +548,36 @@ function gttn_tpps_update_data(&$form, &$form_state) {
     default:
       break;
   }
+}
+
+/**
+ * Finds the difference between an assay and its design file.
+ *
+ * @param int $assay_fid
+ *   The fid of the assay file.
+ * @param int $design_fid
+ *   The fid of the assay design file.
+ * @param array $snp_cols
+ *   The columns holding SNP data.
+ * @param string $locus_col
+ *   The column holding locus ids.
+ *
+ * @return mixed
+ *   The loci in the assay file that are not found in the assay design file.
+ */
+function gttn_tpps_assay_diff($assay_fid, $design_fid, $snp_cols, $locus_col) {
+  $results = array();
+
+  $loci = array_unique(gttn_tpps_parse_file($assay_fid, 1, TRUE, $snp_cols)[0]);
+  $design_loci = gttn_tpps_parse_file_column($design_fid, $locus_col);
+
+  foreach ($loci as $locus) {
+    if (array_search($locus, $design_loci) === FALSE) {
+      $results[] = $locus;
+    }
+  }
+
+  return $results;
 }
 
 /**
