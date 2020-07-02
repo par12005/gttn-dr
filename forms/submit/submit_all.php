@@ -25,42 +25,23 @@ function gttn_tpps_submit_all($accession) {
 
     gttn_tpps_submit_trees($form_state);
 
-    if (!empty($form_state['saved_values'][GTTN_PAGE_4]['dart'])) {
-      $ref_data_provided = TRUE;
-      if (!$form_state['saved_values'][GTTN_PAGE_4]['dart']['meta_only']) {
-        gttn_tpps_submit_dart($form_state);
-      }
-      else {
-        $ref_data_provided = FALSE;
-      }
-    }
+    $data_types = array(
+      'dart',
+      'isotope',
+      'genetic',
+      'anatomy',
+    );
 
-    if (!empty($form_state['saved_values'][GTTN_PAGE_4]['isotope'])) {
-      $ref_data_provided = $ref_data_provided ?? TRUE;
-      if (!$form_state['saved_values'][GTTN_PAGE_4]['isotope']['meta_only']) {
-        gttn_tpps_submit_isotope($form_state);
-      }
-      else {
-        $ref_data_provided = FALSE;
-      }
-    }
-
-    if (!empty($form_state['saved_values'][GTTN_PAGE_4]['genetic'])) {
-      $ref_data_provided = $ref_data_provided ?? TRUE;
-      if (!$form_state['saved_values'][GTTN_PAGE_4]['genetic']['meta_only']) {
-        gttn_tpps_submit_genetic($form_state);
-      }
-      else {
-        $ref_data_provided = FALSE;
-      }
-    }
-
-    if (!empty($form_state['saved_values'][GTTN_PAGE_4]['anatomy'])) {
-      $ref_data_provided = $ref_data_provided ?? TRUE;
-      if (!$form_state['saved_values'][GTTN_PAGE_4]['anatomy']['meta_only']) {
-        // TODO.
-      }
-      else {
+    foreach ($data_types as $type) {
+      if (!empty($form_state['saved_values'][GTTN_PAGE_4][$type])) {
+        $ref_data_provided = $ref_data_provided ?? TRUE;
+        if (!$form_state['saved_values'][GTTN_PAGE_4][$type]['meta_only']) {
+          $func = "gttn_tpps_submit_$type";
+          if (function_exists($func)) {
+            $func($form_state);
+          }
+          continue;
+        }
         $ref_data_provided = FALSE;
       }
     }
