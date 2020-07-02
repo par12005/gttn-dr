@@ -473,6 +473,21 @@ function gttn_tpps_update_data(&$form, &$form_state) {
       }
 
       if (!empty($types['Genetic Reference Data']) and !$form_state['values']['genetic']['meta_only']) {
+        $genetic = $form_state['values']['genetic'];
+
+        if (!empty($genetic['marker']['SNPs']) and !empty($genetic['assay_genotype_table'])) {
+          $form_state['file_info'][GTTN_PAGE_4][] = array(
+            'fid' => $genetic['assay_genotype_table'],
+            'name' => 'Genotype_Assay',
+          );
+        }
+
+        if (!empty($genetic['marker']['SNPs']) and !empty($genetic['assay_design_file'])) {
+          $form_state['file_info'][GTTN_PAGE_4][] = array(
+            'fid' => $genetic['assay_design_file'],
+            'name' => 'Assay_Design',
+          );
+        }
         // TODO
       }
 
