@@ -513,6 +513,16 @@ function gttn_tpps_update_data(&$form, &$form_state) {
           }
         }
 
+        if (!empty($genetic['marker']['SSRs/cpSSRs'])) {
+
+          if (!empty($genetic['ssr_spreadsheet']) and file_load($genetic['ssr_spreadsheet'])) {
+            $form_state['file_info'][GTTN_PAGE_4][] = array(
+              'fid' => $genetic['ssr_spreadsheet'],
+              'name' => 'SSR_Spreadsheet',
+            );
+          }
+        }
+
         // TODO
       }
 
