@@ -274,8 +274,9 @@ function gttn_tpps_submission_access($state, $uid = NULL, $permissions = NULL, $
 function gttn_tpps_submission_reference_access($state, $uid = NULL) {
   $result = $state['data']['reference_provided'] ?? FALSE;
   if ($result == 'permission') {
-    $perms = $state['saved_values'][GTTN_PAGE_4]['permissions_options'];
-    $result = gttn_tpps_submission_access($state, $uid, $perms['data_permissions'], $perms['permission_orgs']);
+    $perms = $state['saved_values'][GTTN_PAGE_4]['permissions_options']['data_permissions'] ?? NULL;
+    $orgs = $state['saved_values'][GTTN_PAGE_4]['permissions_options']['permission_orgs'] ?? NULL;
+    $result = gttn_tpps_submission_access($state, $uid, $perms, $orgs);
   }
   return $result;
 }
