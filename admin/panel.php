@@ -29,6 +29,7 @@ function gttn_tpps_admin_panel($form, &$form_state, $accession = NULL) {
         'Approved',
         'Approved - Delayed Submission Release',
       ),
+      'archived' => array(0, 1),
     ));
 
     $pending = array();
@@ -156,12 +157,37 @@ function gttn_tpps_admin_panel($form, &$form_state, $accession = NULL) {
         ),
       ),
     );
+
+    if ($status == "Approved") {
+      $form['ARCHIVE'] = array(
+        '#type' => 'button',
+        '#value' => t('Archive this data'),
+        '#description' => 'This button will archive this submission so it no longer appears in the browse reference data section.',
+        '#ajax' => array(
+          'callback' => 'gttn_tpps_archive_data',
+          'wrapper' => 'archive-wrapper',
+        ),
+        '#prefix' => '<div id="archive-wrapper">',
+        '#suffix' => '</div>',
+      );
+    }
   }
 
   drupal_add_js(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_JS_PATH);
   drupal_add_css(drupal_get_path('module', 'gttn_tpps') . GTTN_TPPS_CSS_PATH);
 
   return $form;
+}
+
+/**
+ *
+ */
+function gttn_tpps_archive_data($form, $form_state) {
+  $state = gttn_tpps_load_submission($form_state['values']['form_table']);
+  gttn_tpps_update_submission($state, array(
+    'archived' => 1,
+  ));
+  return $form['ARCHIVE'];
 }
 
 /**

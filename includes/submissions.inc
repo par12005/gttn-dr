@@ -50,6 +50,10 @@ function gttn_tpps_load_submission_multiple(array $conditions = array(), $state 
     }
   }
 
+  if (empty($conditions['archived'])) {
+    $query->condition('archived', 0);
+  }
+
   $results = $query->execute()->fetchAll();
   foreach ($results as $result) {
     $submissions[] = gttn_tpps_load_submission($result->accession, $state);
