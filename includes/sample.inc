@@ -90,6 +90,7 @@ function gttn_tpps_load_sample($stock_id) {
   $query->leftJoin('chado.project_dbxref', 'pdbx', 'pdbx.project_id = ps.project_id');
   $query->leftJoin('chado.dbxref', 'dbx', 'dbx.dbxref_id = pdbx.dbxref_id');
   $query->addExpression('s.stock_id', 'stock_id');
+  $query->addExpression('s.organism_id', 'species');
   $query->addExpression('substring(s.uniquename from 14)', 'id');
   $query->addExpression('oi.organization_id', 'org');
   $query->addExpression('sp1.value', 'tissue');
@@ -114,6 +115,7 @@ function gttn_tpps_load_sample($stock_id) {
     $sample = array(
       'id' => $result->id,
       'stock_id' => $result->stock_id,
+      'species' => $result->species,
       'org' => $result->org,
       'tissue' => $result->tissue,
       'source' => $result->source,
