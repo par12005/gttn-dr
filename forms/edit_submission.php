@@ -51,6 +51,43 @@ function gttn_tpps_main_edit($form, &$form_state, $accession = NULL) {
     );
   }
 
+  $form['samples'] = array(
+    '#type' => 'fieldset',
+    '#title' => '<div class="fieldset-title">' . t('individual samples') . '</div>',
+    '#tree' => TRUE,
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $samples = $state['data']['samples'];
+  foreach ($samples as $id => $info) {
+    $info = gttn_tpps_load_sample($info['stock_id']);
+    $form['samples'][$id] = array(
+      '#type' => 'fieldset',
+      '#title' => t("Edit Sample !id", array('!id' => $id)),
+    );
+
+    $result = db_select('chado.organism', 'o')
+      ->fields('o', array('genus', 'species'))
+      ->condition('o.organism_id', $info['species'])
+      ->range(0, 1)
+      ->execute()->fetchObject();
+    $species = "{$result->genus} {$result->species}";
+
+    $form['samples'][$id]['species'] = array(
+      '#type' => 'textfield',
+      '#title' => t("Sample $id Species: *"),
+      '#default_value' => $species,
+      '#autocomplete_path' => 'gttn-species/autocomplete',
+      '#attributes' => array(
+        'data-toggle' => array('tooltip'),
+        'data-placement' => array('left'),
+        'title' => array('If your species is not in the autocomplete list, don\'t worry about it! We will create a new organism entry in the database for you.'),
+      ),
+      '#description' => 'Please select your species from the autocomplete list. If your species is not in the autocomplete list, then a new species will be added to the database.',
+    );
+  }
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
@@ -96,6 +133,50 @@ function gttn_tpps_main_edit_submit($form, &$form_state) {
       );
     }
   }
+
+  $old_samples = $state['data']['samples'];
+  $new_samples = $form_state['values']['samples'];
+  $orgs = $state['data']['organism'];
+
+  foreach ($old_samples as $id => $info) {
+    $old_info = gttn_tpps_load_sample($info['stock_id']);
+    $result = db_select('chado.organism', 'o')
+      ->fields('o', array('genus', 'species'))
+      ->condition('o.organism_id', $old_info['species'])
+      ->range(0, 1)
+      ->execute()->fetchObject();
+    $old_species = "{$result->genus} {$result->species}";
+    $new_species = $new_samples[$id]['species'];
+    if ($old_species != $new_species) {
+      $parts = explode(' ', $new_species);
+      $genus = $parts[0];
+      $species = implode(' ', array_slice($parts, 1));
+      $source_id = gttn_tpps_source_tree($id, $state);
+      $source_tree = $state['data']['trees'][$source_id];
+      unset($source_tree['organism_id']);
+
+      $org_number = NULL;
+      foreach ($orgs as $num => $info) {
+        if ($info['genus'] == $genus and $info['species'] == $species) {
+          $org_number = $num;
+          break;
+        }
+      }
+
+      if (empty($org_number)) {
+        $orgs[count($orgs) + 1] = array(
+          'genus' => $genus,
+          'species' => $species,
+        );
+        $org_number = count($orgs) + 1;
+      }
+
+      $source_tree['organism_number'] = $org_number;
+      $state['data']['trees'][$source_id] = $source_tree;
+    }
+  }
+
+  $state['data']['organism'] = $orgs;
 
   gttn_tpps_update_submission($state);
 
