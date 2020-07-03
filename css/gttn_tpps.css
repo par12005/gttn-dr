@@ -130,6 +130,7 @@ th > div.form-type-select > .ajax-progress {
 
 #gttn-tpps-main .gttn-fieldset .fieldset-legend,
 #gttn-tpps-main-edit .gttn-fieldset .fieldset-legend,
+#edit-samples .fieldset-legend,
 #edit-group-welcome .fieldset-legend,
 #edit-project-props .fieldset-legend,
 #edit-data-type-fieldset .fieldset-legend,
@@ -159,6 +160,7 @@ th > div.form-type-select > .ajax-progress {
 
 #gttn-tpps-main .gttn-fieldset .gttn-fieldset-wrapper,
 #gttn-tpps-main-edit .gttn-fieldset .gttn-fieldset-wrapper,
+#edit-samples .fieldset-wrapper,
 #edit-group-welcome .fieldset-wrapper,
 #edit-project-props .fieldset-wrapper,
 #edit-data-type-fieldset .fieldset-wrapper,
