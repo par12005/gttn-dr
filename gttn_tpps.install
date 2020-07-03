@@ -276,6 +276,13 @@ function gttn_tpps_schema() {
           'size' => 'big',
           'not null' => TRUE,
         ),
+        'archived' => array(
+          'description' => 'whether the submission is archived.',
+          'type' => 'int',
+          'size' => 'tiny',
+          'not null' => TRUE,
+          'default' => 0,
+        ),
       ),
       'foreign keys' => array(
         'uid' => array(
@@ -851,4 +858,13 @@ function gttn_tpps_update_7003() {
     $transaction->rollback();
     throw $e;
   }
+}
+
+/**
+ * Implements hook_update_N().
+ *
+ * Adds archive column to gttn_tpps_submission table.
+ */
+function gttn_tpps_update_7004() {
+  db_query('ALTER TABLE gttn_tpps_submission ADD COLUMN archived int NOT NULL DEFAULT 0');
 }
