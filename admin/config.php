@@ -49,6 +49,19 @@ function gttn_tpps_admin_settings(array $form, array &$form_state) {
     '#description' => t('This is the amount of error GTTN-TPPS should allow for when trying to match trees. An epsilon value of 1 is around 100km, and an epsilon value of .001 is around 100 m.'),
   );
 
+  $form['gttn_tpps_zenodo_api_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('GTTN-TPPS Zenodo API Key'),
+    '#default_value' => variable_get('gttn_tpps_zenodo_api_key', NULL),
+  );
+
+  $form['gttn_tpps_zenodo_prefix'] = array(
+    '#type' => 'textfield',
+    '#title' => t('GTTN-TPPS Zenodo Prefix'),
+    '#default_value' => variable_get('gttn_tpps_zenodo_prefix', ''),
+    '#description' => 'For testing and development purposes. Set this field to "sandbox." to create dois in the Zenodo sandbox rather than the real site. Please keep in mind that you will need a separate API key for sandbox.zenodo.org.',
+  );
+
   // Create the admin email field.
   $form['gttn_tpps_admin_email'] = array(
     '#type' => 'textfield',

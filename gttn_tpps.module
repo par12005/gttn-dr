@@ -29,6 +29,7 @@ require_once 'includes/opencage_utils.inc';
 require_once 'includes/match_trees.inc';
 require_once 'includes/sample.inc';
 require_once 'includes/reference.inc';
+require_once 'includes/zenodo.inc';
 require_once 'forms/edit_submission.php';
 
 /**
@@ -207,6 +208,16 @@ function gttn_tpps_menu() {
   $items['reference/%/%/%']['page arguments'] = array(1, 2, 3);
   $items['reference/%/%/%']['page callback'] = 'gttn_tpps_reference_tab';
   $items['reference/%/%/%']['type'] = MENU_CALLBACK;
+
+  $items['gttn-tpps/doi/%'] = array(
+    'title' => 'GTTN-TPPS DOI',
+    'page callback' => 'gttn_tpps_manage_doi',
+    'page arguments' => array(2),
+    'access callback' => 'gttn_tpps_access',
+    'access arguments' => array('access content'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/manage_doi.inc',
+  );
 
   return $items;
 }
@@ -480,7 +491,9 @@ function gttn_tpps_mail($key, &$message, $params) {
     case 'user_approved':
       // When the user's submission is approved, notify them and provide
       // them with the link to view the completed submission.
-      $message['body'][] = "Congratulations! Your submission to GTTN-TPPS has been approved!<br><br>You may now refer to your submitted data with accession number {$params['accession']}.<br><br>You can still view your submission from your <a href=\"{$params['base_url']}/gttn-completed-submission/{$params['accession']}\">GTTN-TPPS Completed Submissions</a> tab.<br>";
+      $message['body'][] = "Congratulations! Your submission to GTTN-TPPS has been approved!<br><br>You may now refer to your submitted data with accession number {$params['accession']}.<br><br>You can still view your submission from your <a href=\"{$params['base_url']}/gttn-completed-submission/{$params['accession']}\">GTTN-TPPS Completed Submissions</a> tab.<br>
+      Your submission should be public on the <a href=\"{$params['base_url']}/gttn-tpps/reference\">Reference Data Page</a> within the next 24 hours.<br>
+      To generate a DOI for your submission, please click <a href=\"{$params['base_url']}/gttn-tpps/doi/{$params['accession']}\">here</a>. NOTE: Clicking this link will change the permissions on your submission to \"All GTTN Organizations\", meaning that anyone with an approved GTTN user account will be able to see your data, regardless of the permissions you set while you were submitting this data. <strong>Only click this link if you want your data to be available to the entire GTTN community</strong>.";
       break;
 
     default:
