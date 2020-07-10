@@ -418,6 +418,74 @@ function gttn_tpps_schema() {
     );
   }
 
+  //submission history
+  if (!db_table_exists('gttn_tpps_submission_history')) {
+    $schema['gttn_tpps_submission_history'] = array(
+      'description' => '',
+      'fields' => array(
+        'gttn_tpps_submission_history_id' => array(
+          'description' => '',
+          'type' => 'serial',
+          'size' => 'normal',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'submission_id' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'event_type_id' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'comment' => array(
+          'description' => '',
+          'type' => 'text',
+          'size' => 'normal',
+        ),
+        'timestamp' => array(
+          'description' => '',
+          'pgsql_type' => 'timestamp',
+          'size' => 'normal',
+          'not null' => TRUE,
+        ),
+        'uid' => array(
+          'description' => '',
+          'type' => 'int',
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+      ),
+      'foreign keys' => array(
+        'submission' => array(
+          'table' => 'gttn_tpps_submission',
+          'columns' => array(
+            'submission_id' => 'gttn_tpps_submission_id',
+          ),
+        ),
+        'cvterm' => array(
+          'table' => 'chado.cvterm',
+          'columns' => array(
+            'event_type_id' => 'cvterm_id',
+          ),
+        ),
+        'user' => array(
+          'table' => 'users',
+          'columns' => array(
+            'uid' => 'uid',
+          ),
+        ),
+      ),
+      'primary key' => array(
+        'gttn_tpps_submission_history_id',
+      ),
+    );
+  }
+
   if (!db_table_exists('gttn_tpps_organization_project')) {
     $schema['gttn_tpps_organization_project'] = array(
       'description' => '',
@@ -501,6 +569,16 @@ function gttn_tpps_alter_tables() {
     db_query('ALTER TABLE gttn_tpps_sample_event ADD CONSTRAINT gttn_tpps_sample_event_sample_id_fkey FOREIGN KEY (sample_id) REFERENCES chado.stock(stock_id) ON DELETE CASCADE;');
     db_query('ALTER TABLE gttn_tpps_sample_event ADD CONSTRAINT gttn_tpps_sample_event_event_type_id_fkey FOREIGN KEY (event_type_id) REFERENCES chado.cvterm(cvterm_id) ON DELETE CASCADE;');
     db_query('ALTER TABLE gttn_tpps_sample_event ADD CONSTRAINT gttn_tpps_sample_event_project_id_fkey FOREIGN KEY (project_id) REFERENCES chado.project(project_id) ON DELETE CASCADE;');
+  }
+
+  //gttn_tpps_submission_history
+  $results = db_query("SELECT contype "
+    . "FROM pg_catalog.pg_constraint con JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
+    . "WHERE rel.relname = 'gttn_tpps_submission_history' AND contype like 'f';");
+  if (!$results->rowCount()) {
+    db_query('ALTER TABLE gttn_tpps_submission_history ADD CONSTRAINT gttn_tpps_submission_history_submission_id_fkey FOREIGN KEY (submission_id) REFERENCES gttn_tpps_submission(gttn_tpps_submission_id) ON DELETE CASCADE;');
+    db_query('ALTER TABLE gttn_tpps_submission_history ADD CONSTRAINT gttn_tpps_submission_history_event_type_id_fkey FOREIGN KEY (event_type_id) REFERENCES chado.cvterm(cvterm_id) ON DELETE CASCADE;');
+    db_query('ALTER TABLE gttn_tpps_submission_history ADD CONSTRAINT gttn_tpps_submission_history_uid_fkey FOREIGN KEY (uid) REFERENCES users(uid) ON DELETE CASCADE;');
   }
 }
 
@@ -609,6 +687,15 @@ function gttn_tpps_get_cvterms() {
       'analyzed event' => 'Event when the sample was analyzed.',
       'dimension changed event' => 'Event when the dimension of the sample was changed.',
       'remaining changed event' => 'Event when the remaining amount of the sample was changed.',
+      // Submission history
+      'Submission created' => 'Submission created event.',
+      'Submission submitted' => 'Submission submitted event.',
+      'Submission approved' => 'Submission approved event.',
+      'Submission archived' => 'Submission archived event.',
+      'Submission edited' => 'Submission edited event.',
+      'Submission title changed' => 'Submission title changed event.',
+      'Submission species changed' => 'Submission species changed event.',
+      'Submission sample species changed' => 'Submission sample species changed event.',
     ),
   );
 }
