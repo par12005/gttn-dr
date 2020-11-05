@@ -72,7 +72,7 @@ function gttn_tpps_front_create_form(&$form, $form_state) {
   );
 
   // Front page introductory text.
-  $prefix_text = '<div class="gttn-fieldset"><span class="fieldset-legend"><span class="fieldset-legend-prefix element-invisible">Show</span> Welcome<span class="summary"></span></span><div class="gttn-fieldset-wrapper">';
+  $prefix_text = '<div class="gttn-fieldset"><span class="fieldset-legend"><span class="fieldset-legend-prefix element-invisible">Show</span><span class="summary"></span></span><div class="gttn-fieldset-wrapper">';
   $prefix_text .= "<div>Welcome to GTTN-TPPS!<br><br>To get started, you will need to have a few things handy:<br><ul><li>An enabled and approved GTTN account - you can create one <a href='$base_url/user/register'>here</a>. There may be a waiting period to have your account approved by a GTTN administrator.</li></ul>If you would like to submit your data, you can click the button 'Continue to GTTN-TPPS' below!<br><br></div>";
 
   // Add the introductory text to the first form element.

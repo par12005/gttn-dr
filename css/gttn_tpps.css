@@ -60,13 +60,6 @@ th > div.form-type-select > .ajax-progress {
 .form-item > label {
   display: inline-block;
 }
-.form-type-textfield,
-.form-type-select,
-.form-managed-file,
-.form-type-checkbox,
-.form-type-radios {
-  text-align: right;
-}
 .form-item {
   margin-bottom: 5px;
 }
@@ -77,9 +70,6 @@ th > div.form-type-select > .ajax-progress {
 }
 .form-type-managed-file {
   padding: 10px 20px 0px;
-}
-.form-managed-file {
-  text-align: right;
 }
 .form-managed-file legend {
   text-align: left;
@@ -106,9 +96,6 @@ th > div.form-type-select > .ajax-progress {
 #gttn-tpps-reference-search {
   margin-bottom: 10px;
 }
-#gttn-tpps-reference-search select {
-  height: 28px;
-}
 #gttn-tpps-reference-search-wrapper  {
   margin: 10px 0px;
 }
@@ -127,6 +114,9 @@ th > div.form-type-select > .ajax-progress {
 #gttn-tpps-main fieldset input[id*='map_button'] {
   margin-bottom: 10px;
 }
+.form-type-managed-file .form-managed-file {
+  display: inline-block;
+}
 
 #gttn-tpps-main .gttn-fieldset .fieldset-legend,
 #gttn-tpps-main-edit .gttn-fieldset .fieldset-legend,
@@ -142,7 +132,7 @@ th > div.form-type-select > .ajax-progress {
 #gttn-tpps-genetic .fieldset-legend,
 #gttn-tpps-anatomy .fieldset-legend
 {
-  font-size: 20px;
+  /*font-size: 20px;
   font-weight: bold;
   text-transform: uppercase;
   display: inline-block;
@@ -155,7 +145,7 @@ th > div.form-type-select > .ajax-progress {
   border-right: 1px solid #1abc9c;
   border-top: 1px solid #1abc9c;
   border-bottom: 1px solid #1abc9c;
-  margin-bottom: 15px;
+  margin-bottom: 15px;*/
 }
 
 #gttn-tpps-main .gttn-fieldset .gttn-fieldset-wrapper,
@@ -175,4 +165,8 @@ th > div.form-type-select > .ajax-progress {
   border: 1px solid #1abc9c2e;
   padding: 10px;
   border-radius: 2px;
+}
+#gttn-tpps-main {
+  margin-bottom: 50px;
+  width: 80%;
 }
