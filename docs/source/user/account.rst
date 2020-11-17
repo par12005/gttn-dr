@@ -5,7 +5,7 @@ Before we can start submitting data through the form, we must create an account 
 
 You will be asked to provide your full name, your email address, and indicate which organizations you are a part of:
 
-.. image:: ../../../images/register.png
+.. image:: ../../../images/spd_new_lab_registration.png
 
 After you have provided all of the required information, an admin will need to approve your account and the primary contacts of each organization you indicated will need to verify that you are part of that organization. Once your account has been approved and verified, you should receive an email notification and you will be able to set a password and log in.
 
