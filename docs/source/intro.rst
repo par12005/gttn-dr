@@ -1,7 +1,7 @@
 Introduction
 ============
 
-A collaboration between University of Connecticut's Plant Computational Genomics lab and the Global Timber Tracking Network. Allows for secure and convenient submission of multiple tree descriptors through a web-based interface.
+GTTN-TPPS module, as a part of GTTN Information System, is a result of collaboration between University of Connecticut's Plant Computational Genomics lab and the Global Timber Tracking Network. It allows for secure and convenient submission of multiple tree descriptors through a web-based interface.
 
 This module is a modified extension of the Tripal Plant PopGen submit Pipeline (TPPS), which can be found here: http://tpps.rtfd.io
 
@@ -11,6 +11,6 @@ The first page of the module prompts the user for information about each species
 
 The second page of the module asks for information about the sampling and analysis dates of each species, as well as any phenotypic or genotypic data files the users have.
 
-Unlike TPPS, this form can only be accessed by members of the 'gttn' or 'administrator' groups on the TreeGenes site.
+This form can only be accessed by registered GTTN users who authorized for sample/reference data upload.
 
 .. _YouTube: https://www.youtube.com/watch?v=qLO1Bm8QUK4
