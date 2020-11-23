@@ -5,7 +5,7 @@ GTTN-TPPS module, as a part of GTTN Information System, is a result of collabora
 
 This module is a modified extension of the Tripal Plant PopGen submit Pipeline (TPPS), which can be found here: http://tpps.rtfd.io
 
-The comprehensive video lesson on how to use GTTN-TPPS is available on YouTube_
+The comprehensive video tutorial on how to use GTTN-TPPS is available on YouTube_
 
 The first page of the module prompts the user for information about each species they are uploading data about, as well as a file with location information and unique identifiers for each tree.
 
