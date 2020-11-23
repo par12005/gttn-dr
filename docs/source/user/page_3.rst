@@ -55,8 +55,9 @@ This section collects information about an Isotope analysis:
 
 .. image:: ../../../images/isotope_information.png
 
-You will be required to indicate which isotopes you used, which isotope standard you used for each isotope, and the type of each isotope (whole wood or cellulose). You will then be required to provide an isotope data file, which contains an entry for each analyzed sample. Each entry must contain a column with the sample ID, and a column with the measurement for each isotope used. Here is a simple example of an isotope data file:
+You will be required to indicate which isotopes you used, which isotope standard you used for each isotope, and the type of each isotope (whole wood or cellulose). You will then be required to provide an isotope data file, which contains an entry for each analyzed sample. Each entry must contain a column with the sample ID, and a column with the measurement for each isotope used. GTTN-TPPS accepts two formats of an isotope data file - one with separate column for each isotope (example on the left below) and another with 3 columns: sample ID, isotope and measurement (example on the right):
 
+.. image:: ../../../images/example_isotope_1.png 
 .. image:: ../../../images/example_isotope_2.png
 
 Genetics
