@@ -13,4 +13,4 @@ The second page of the module asks for information about the sampling and analys
 
 This form can only be accessed by registered GTTN users who authorized for sample/reference data upload.
 
-.. _YouTube: https://www.youtube.com/watch?v=qLO1Bm8QUK4
+.. _YouTube: https://www.youtube.com/watch?v=yqawoudxJdI
