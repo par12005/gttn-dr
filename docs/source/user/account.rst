@@ -1,11 +1,11 @@
 Creating an Account
 -------------------
 
-Before we can start submitting data through the form, we must create an account so that GTTN-TPPS knows who is submitting data and which organization that data is coming from. To create an account, navigate to `gttn.treegenesdb.org/user/register`_.
+Before we can start submitting data through the GTTN pipeline, we must create an account so that GTTN-TPPS knows who is submitting data and which organization that data is coming from. To create an account, navigate to `SPD account register`_.
 
-You will be asked to provide your full name, your email address, and indicate which organizations you are a part of:
+You will be asked to provide your full name, your email address, and all necessary information about organizations you are a part of:
 
-.. image:: ../../../images/register.png
+.. image:: ../../../images/spd_new_lab_registration.png
 
 After you have provided all of the required information, an admin will need to approve your account and the primary contacts of each organization you indicated will need to verify that you are part of that organization. Once your account has been approved and verified, you should receive an email notification and you will be able to set a password and log in.
 
@@ -31,5 +31,5 @@ These roles are for users who serve a special purpose in the GTTN community, and
 Please note that the access that these roles provide is subject to change, and additional custom user roles are likely to be added in the future!
 
 .. _gttn.treegenesdb.org: https://gttn.treegenesdb.org
-
+.. _SPD account register: https://form.spd.globaltimbertrackingnetwork.org/registration.html
 .. _gttn.treegenesdb.org/user/register: https://gttn.treegenesdb.org/user/register
