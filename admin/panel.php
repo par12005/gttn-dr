@@ -266,6 +266,26 @@ function gttn_tpps_admin_panel_submit($form, &$form_state) {
     drupal_set_message(t('Submission Approved! Message has been sent to user.'), 'status');
     drupal_mail('gttn_tpps', 'user_approved', $to, user_preferred_language(user_load_by_name($to)), $params, $from, TRUE);
 
+    // Send email to all admins
+    try {
+        $rid = 3; // Administrator role id
+        $query = db_select('users', 'u');
+        $query->fields('u', array('uid', 'name'));
+        $query->innerJoin('users_roles', 'r', 'r.uid = u.uid');
+        $query->condition('r.rid', $rid);
+        $query->orderBy('u.name');
+
+        $result = $query->execute();
+        foreach ($result as $admin_user) {
+            $to = $admin_user->name;
+            drupal_mail('gttn_tpps', 'user_approved', $to, user_preferred_language(user_load_by_name($to)), $params, $from, TRUE);
+        }
+    }
+    catch (Exception $e) {
+
+    }
+
+
     $includes = array();
     $includes[] = module_load_include('php', 'gttn_tpps', 'forms/submit/submit_all');
     // TODO: evaluate whether file parsing file is needed.
