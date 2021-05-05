@@ -547,9 +547,9 @@ function gttn_tpps_display_submission($accession = NULL) {
 
   global $user;
   global $base_url;
-  $user = user_load($user->uid);
 
   $state = gttn_tpps_load_submission($accession);
+  $user_owner = user_load($state['owner_uid']);  
   if (!empty($state)) {
     $map_api_key = variable_get('gttn_tpps_maps_api_key', '');
     $map_api_tools = "<script src=\"https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js\"></script><script src=\"https://maps.googleapis.com/maps/api/js?key=$map_api_key&callback=initMap\"
@@ -573,7 +573,7 @@ function gttn_tpps_display_submission($accession = NULL) {
     $title = $state['data']['project']['name'] . ' ' . gttn_tpps_submission_data_indicators($state);
     $output .= "<h2>$title</h2>";
     $org = gttn_profile_organization_load($state['data']['project']['props']['organization']);
-    $output .= "<h4>Submitted by {$user->chado_record->name} for {$org->name}</h4>";
+    $output .= "<h4>Submitted by {$user_owner->chado_record->name} for {$org->name}</h4>";
     $output .= "<div id=\"reason\"><a href=\"#reason\">Click to show data collection reason</a></div>"
       . "<script>jQuery(document).ready(jQuery('#reason').on('click', function() {
           jQuery('#reason')[0].innerHTML = \"{$state['data']['project']['description']}\";
