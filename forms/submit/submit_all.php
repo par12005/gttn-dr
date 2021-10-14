@@ -51,6 +51,17 @@ function gttn_tpps_submit_all($accession) {
     }
     $form_state['data']['samples_sharable'] = $form_state['saved_values'][GTTN_PAGE_3]['samples']['sharable'];
 
+    $options = array(
+      'org_id' => $form_state['saved_values'][GTTN_TYPE_PAGE]['project']['props']['organization'],
+      'methods' => $form_state['saved_values'][GTTN_PAGE_1]['data_type'],
+      'species' => $form_state['data']['organism'],
+    );
+    unset($options['methods']['Sample Data']);
+    $result = gttn_profile_efi_sync($options);
+    if (!$result) {
+      watchdog('gttn_tpps', "There was a problem with syncing data for GTTN-DR submission {$form_state['accession']}", array(), WATCHDOG_WARNING);
+    }
+
     //throw new Exception('Submission Completed');
     $form_state['status'] = 'Approved';
     gttn_tpps_update_submission($form_state);
