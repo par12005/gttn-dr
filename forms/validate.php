@@ -193,7 +193,14 @@ function gttn_tpps_validate_accession(&$form, &$form_state, $value, $parents) {
         foreach ($location_types as $type) {
           $valid_combination = TRUE;
           foreach ($location_options[$type] as $column) {
-            if (empty($vals[$location_columns[$column]]) or $vals[$location_columns[$column]] == $empty) {
+            // OLD CODE prior to 2/1/2022 where empty function could equal 0 according to resource
+            // https://www.w3schools.com/php/func_var_empty.asp#:~:text=The%20empty()%20function%20checks,0
+            // if (empty($vals[$location_columns[$column]]) or $vals[$location_columns[$column]] == $empty) {
+            //   $valid_combination = FALSE;
+            // }
+
+            // NEW INTERPRETATION AS OF 2/1/2022 (RISH) subject to correction
+            if (($vals[$location_columns[$column]] == null or $vals[$location_columns[$column]] == '') or $vals[$location_columns[$column]] == $empty) {
               $valid_combination = FALSE;
             }
           }
