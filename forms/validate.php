@@ -178,6 +178,74 @@ function gttn_tpps_validate_accession(&$form, &$form_state, $value, $parents) {
     $groups = $values['file-groups'];
     $id_name = $groups['Tree Id'][1];
     $content = gttn_tpps_parse_file($value, 0, !empty($values['file-no-header']));
+
+
+    // If the form checkbox for tree-accessio check is 0, this means
+    // all accessions are in one file.
+    // Perform check - species within the excel sheet should match with those on page 1
+    if($form_state['values']['tree-accession']['check'] == 0) {
+
+      // Step 1 - get the correct column (example A, B, C etc from the groups variable)
+      $genus_species_column = 'NA';
+      foreach($groups['Genus and Species'] as $key => $item) {
+        if($key != '#type') {
+          $genus_species_column = $item;
+        }
+      }
+      // If it could not find a genus species column, display form error
+      if($genus_species_column == 'NA') {
+        form_set_error('Tree Accession file field', 'Could not find a column for Genus and Species, please ensure you selected the Genus and Species column within the accession file');
+      }
+
+      // Step 2 - get all organisms from the accession file
+      $organisms_list_from_file = []; // key -> value (TRUE)
+      $lines_count = count($content);
+      if(isset($content['headers'])) {
+        $lines_count = $lines_count - 1;
+      }
+      for($i=0; $i<$lines_count; $i++) {
+        $organisms_list_from_file[$content[$i][$genus_species_column]] = TRUE;
+      }
+      
+
+      // Step 3 - get all organisms from page 1
+      // dpm(array_keys($form_state));
+      // dpm($form_state['saved_values']);
+      $organisms_list = []; // key -> value (TRUE)
+      if(!isset($form_state['saved_values'][2]['organism']['number'])) {
+        form_set_error('GTTN Page 2 missing organisms', 'No organisms seem to be added on page 2 while accession file contains organisms - they must contain values and match in order to continue.');
+      }
+      $organisms_count = $form_state['saved_values'][2]['organism']['number'];
+
+      for($i = 1; $i <= $organisms_count; $i++) {
+        $organisms_list[$form_state['saved_values'][2]['organism'][$i]] = true;
+      }
+
+
+
+      // Step 4 - for each organism in the $organisms_list (accession file), check if exists in 
+      // $organisms_list_from_file
+      $organisms_list_kv = $organisms_list; // keep the key value pairs for message output if necessary
+      $organisms_list = array_keys($organisms_list);
+      $organisms_list_count = count($organisms_list);
+      $missing_organisms_status = false;
+      $missing_organisms = [];
+      for($i=0; $i<$organisms_list_count; $i++) {
+        if(!isset($organisms_list_from_file[$organisms_list[$i]])) {
+          $missing_organisms_status = true;
+          $missing_organisms[$organisms_list[$i]] = TRUE;
+        }
+      }
+      if($missing_organisms_status == true) {
+        $message = "Accession file contains species that are not specified in page 2 organisms section, cannot continue until resolved.<br/>";
+        $message .= "- Organisms specified in GTTN form on page 2: " . implode(', ', array_keys($organisms_list_kv)) . "<br />";
+        $message .= "- Organisms in accession file: " . implode(', ', array_keys($organisms_list_from_file)) . "<br />";          
+        $message .= "<b>Missing organisms (absent from page 2): " . implode(', ', array_keys($missing_organisms)) . "</b><br />"; 
+        form_set_error('GTTN Page 3',$message);
+      }
+
+    }
+
     $empty = $values['file-empty'];
     $location_options = $required_groups['Location (latitude/longitude or country/state or population group)'];
     $location_columns = $groups['Location (latitude/longitude or country/state or population group)'];
