@@ -223,24 +223,45 @@ function gttn_tpps_validate_accession(&$form, &$form_state, $value, $parents) {
 
 
 
-      // Step 4 - for each organism in the $organisms_list (accession file), check if exists in 
+      // Step 4 - for each organism in the $organisms_list (page 1), check if exists in 
       // $organisms_list_from_file
       $organisms_list_kv = $organisms_list; // keep the key value pairs for message output if necessary
       $organisms_list = array_keys($organisms_list);
       $organisms_list_count = count($organisms_list);
-      $missing_organisms_status = false;
-      $missing_organisms = [];
+      $missing_organisms_not_in_file_status = false;
+      $missing_organisms_not_in_page = [];
+      // This checks if page 2 organisms are in the file
       for($i=0; $i<$organisms_list_count; $i++) {
         if(!isset($organisms_list_from_file[$organisms_list[$i]])) {
-          $missing_organisms_status = true;
-          $missing_organisms[$organisms_list[$i]] = TRUE;
+          $missing_organisms_not_in_file_status = true;
+          $missing_organisms_not_in_file[$organisms_list[$i]] = TRUE;
         }
       }
-      if($missing_organisms_status == true) {
-        $message = "Accession file contains species that are not specified in page 2 organisms section, cannot continue until resolved.<br/>";
-        $message .= "- Organisms specified in GTTN form on page 2: " . implode(', ', array_keys($organisms_list_kv)) . "<br />";
-        $message .= "- Organisms in accession file: " . implode(', ', array_keys($organisms_list_from_file)) . "<br />";          
-        $message .= "<b>Missing organisms (absent from page 2): " . implode(', ', array_keys($missing_organisms)) . "</b><br />"; 
+
+      // Step 5 - for each organism in the $organisms_list_from_file (accession), check if exists in 
+      // $organisms_list_from_file array
+      $organisms_list_from_file_kv = array_keys($organisms_list_from_file); // keep the key value pairs for message output if necessary
+      $organisms_list_from_file_count = count($organisms_list_from_file_kv);
+      $missing_organisms_not_in_page_status = false;
+      $missing_organisms_not_in_page = [];
+      // This checks if organisms in file accession exist on the page
+      for($i=0; $i<$organisms_list_from_file_count; $i++) {
+        if(in_array($organisms_list_from_file_kv[$i], $organisms_list) == FALSE) {
+          $missing_organisms_not_in_page_status = true;
+          $missing_organisms_not_in_page[$organisms_list_from_file_kv[$i]] = TRUE;
+        }
+      }
+
+      $message = "Accession file contains species that are not specified in page 2 organisms section, cannot continue until resolved.<br/>";
+      $message .= "- Organisms specified in GTTN form on page 2: " . implode(', ', array_keys($organisms_list_kv)) . "<br />";
+      $message .= "- Organisms in accession file: " . implode(', ', array_keys($organisms_list_from_file)) . "<br />"; 
+      if($missing_organisms_not_in_page_status == true) {   
+        $message .= "<b>Missing organisms (absent from page 2): " . implode(', ', array_keys($missing_organisms_not_in_page)) . "</b><br />"; 
+      }
+      if($missing_organisms_not_in_file_status == true) {
+        $message .= "<b>Missing organisms (absent from accession file): " . implode(', ', array_keys($missing_organisms_not_in_file)) . "</b><br />"; 
+      }
+      if($missing_organisms_not_in_file == true || $missing_organisms_not_in_page == true) {
         form_set_error('GTTN Page 3',$message);
       }
 
