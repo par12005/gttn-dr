@@ -252,8 +252,8 @@ function gttn_tpps_validate_accession(&$form, &$form_state, $value, $parents) {
         }
       }
 
-      $message = "Accession file contains species that are not specified in page 2 organisms section, cannot continue until resolved.<br/>";
-      $message .= "- Organisms specified in GTTN form on page 2: " . implode(', ', array_keys($organisms_list_kv)) . "<br />";
+      // $message = "Accession file contains species that are not specified in page 2 organisms section, cannot continue until resolved.<br/>";
+      $message = "- Organisms specified in GTTN form on page 2: " . implode(', ', array_keys($organisms_list_kv)) . "<br />";
       $message .= "- Organisms in accession file: " . implode(', ', array_keys($organisms_list_from_file)) . "<br />"; 
       if($missing_organisms_not_in_page_status == true) {   
         $message .= "<b>Missing organisms (absent from page 2): " . implode(', ', array_keys($missing_organisms_not_in_page)) . "</b><br />"; 
